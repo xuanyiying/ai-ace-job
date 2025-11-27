@@ -1,0 +1,6 @@
+# Provider implementations will be added here
+# - openai.provider.ts
+# - qwen.provider.ts
+# - deepseek.provider.ts
+# - gemini.provider.ts
+# - ollama.provider.ts

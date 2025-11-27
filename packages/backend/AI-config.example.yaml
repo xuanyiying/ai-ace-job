@@ -1,0 +1,416 @@
+# ============================================================================
+# AI Provider Configuration Example
+# ============================================================================
+# Copy this file to AI-config.yaml and fill in your API keys and settings.
+# This YAML configuration provides more detailed control over AI providers
+# compared to environment variables.
+#
+# Configuration Priority:
+# 1. Environment variables (highest priority)
+# 2. YAML configuration file
+# 3. Default values (lowest priority)
+#
+# Only providers with valid API keys will be initialized and available.
+
+# Security Configuration
+security:
+  # Encryption key for securing API keys in the database
+  encryptionKey: "your-super-secret-encryption-key-here"
+  
+  # Encrypt API keys in database
+  encryptApiKeys: true
+  
+  # Encryption algorithm
+  encryptionAlgorithm: "aes-256-gcm"
+  
+  # Rotate API keys periodically (days)
+  keyRotationInterval: 90
+  
+  # Audit logging for API key access
+  auditLogging: true
+  
+  # Mask API keys in logs (show only last 4 characters)
+  maskApiKeysInLogs: true
+
+# ============================================================================
+# PROVIDERS CONFIGURATION
+# ============================================================================
+
+providers:
+  # ========================================================================
+  # OpenAI Configuration
+  # ========================================================================
+  # Documentation: https://platform.openai.com/docs/api-reference
+  # Get API Key: https://platform.openai.com/api-keys
+  #
+  # Available Models:
+  # - gpt-4: Most capable model, best for complex tasks
+  # - gpt-4-turbo: Faster and cheaper than gpt-4
+  # - gpt-3.5-turbo: Fast and cost-effective
+  openai:
+    apiKey: "your-openai-api-key"
+    endpoint: "https://api.openai.com/v1"
+    organization: ""  # Optional: your organization ID
+    
+    # Default parameters for all requests
+    defaultTemperature: 0.7  # 0.0 (deterministic) to 2.0 (creative)
+    defaultMaxTokens: 2000   # Maximum tokens in response
+    defaultTopP: 1.0         # Nucleus sampling parameter
+    
+    # Request timeout in milliseconds
+    timeout: 30000
+    
+    # Rate limiting
+    rateLimitPerMinute: 3500
+    rateLimitPerDay: 200000
+    
+    # Cost parameters (in USD per 1K tokens)
+    costPerInputToken: 0.00003
+    costPerOutputToken: 0.00006
+    
+    # Enable/disable this provider
+    isActive: true
+
+  # ========================================================================
+  # Alibaba Qwen Configuration
+  # ========================================================================
+  # Documentation: https://help.aliyun.com/zh/dashscope/
+  # Get API Key: https://dashscope.console.aliyun.com/
+  #
+  # Available Models:
+  # - qwen-max: Most capable model
+  # - qwen-plus: Balanced performance and cost
+  # - qwen-turbo: Fast and cost-effective
+  qwen:
+    apiKey: "your-qwen-api-key"
+    endpoint: "https://dashscope.aliyuncs.com/api/v1"
+    
+    # Default parameters
+    defaultTemperature: 0.7
+    defaultMaxTokens: 2000
+    defaultTopP: 1.0
+    
+    # Request timeout in milliseconds
+    timeout: 30000
+    
+    # Rate limiting
+    rateLimitPerMinute: 2000
+    rateLimitPerDay: 100000
+    
+    # Cost parameters (in CNY per 1K tokens, approximate)
+    costPerInputToken: 0.0001
+    costPerOutputToken: 0.0002
+    
+    # Enable/disable this provider
+    isActive: false
+
+  # ========================================================================
+  # DeepSeek Configuration
+  # ========================================================================
+  # Documentation: https://platform.deepseek.com/docs
+  # Get API Key: https://platform.deepseek.com/
+  #
+  # Available Models:
+  # - deepseek-chat: General purpose chat model
+  # - deepseek-coder: Specialized for code generation
+  deepseek:
+    apiKey: "your-deepseek-api-key"
+    endpoint: "https://api.deepseek.com/v1"
+    
+    # Default parameters
+    defaultTemperature: 0.7
+    defaultMaxTokens: 2000
+    defaultTopP: 1.0
+    
+    # Request timeout in milliseconds
+    timeout: 30000
+    
+    # Rate limiting
+    rateLimitPerMinute: 2000
+    rateLimitPerDay: 100000
+    
+    # Cost parameters (in USD per 1K tokens)
+    costPerInputToken: 0.00001
+    costPerOutputToken: 0.00002
+    
+    # Enable/disable this provider
+    isActive: false
+
+  # ========================================================================
+  # Google Gemini Configuration
+  # ========================================================================
+  # Documentation: https://ai.google.dev/docs
+  # Get API Key: https://makersuite.google.com/app/apikey
+  #
+  # Available Models:
+  # - gemini-pro: General purpose model
+  # - gemini-pro-vision: Multimodal model with vision capabilities
+  gemini:
+    apiKey: "your-gemini-api-key"
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models"
+    
+    # Default parameters
+    defaultTemperature: 0.7
+    defaultMaxTokens: 2000
+    defaultTopP: 1.0
+    
+    # Request timeout in milliseconds
+    timeout: 30000
+    
+    # Rate limiting
+    rateLimitPerMinute: 60
+    rateLimitPerDay: 1000
+    
+    # Cost parameters (free tier available)
+    costPerInputToken: 0.0
+    costPerOutputToken: 0.0
+    
+    # Enable/disable this provider
+    isActive: false
+
+  # ========================================================================
+  # Ollama Configuration (Local Deployment)
+  # ========================================================================
+  # Documentation: https://ollama.ai/
+  # Download: https://ollama.ai/download
+  #
+  # Ollama allows you to run open-source models locally without API keys.
+  # Supported models: Llama 2, Mistral, Neural Chat, and many others
+  #
+  # Installation:
+  # 1. Download Ollama from https://ollama.ai/
+  # 2. Run: ollama pull llama2  (or other model)
+  # 3. Ollama will start on http://localhost:11434 by default
+  ollama:
+    # Ollama doesn't require an API key for local deployment
+    apiKey: ""
+    
+    # Base URL of your Ollama instance
+    baseUrl: "http://localhost:11434"
+    
+    # Default parameters
+    defaultTemperature: 0.7
+    defaultMaxTokens: 2000
+    defaultTopP: 1.0
+    
+    # Request timeout in milliseconds (local requests are usually fast)
+    timeout: 60000
+    
+    # Rate limiting (local, so can be higher)
+    rateLimitPerMinute: 10000
+    rateLimitPerDay: 1000000
+    
+    # Cost parameters (free for local deployment)
+    costPerInputToken: 0.0
+    costPerOutputToken: 0.0
+    
+    # Enable/disable this provider
+    isActive: false
+
+# ============================================================================
+# SCENARIO-BASED MODEL SELECTION STRATEGIES
+# ============================================================================
+# Define which models to use for different scenarios.
+# The system will automatically select the best model based on the strategy.
+
+scenarios:
+  # Resume parsing: prioritize cost efficiency
+  resumeParsing:
+    strategy: "cost-optimized"
+    preferredModels:
+      - "gpt-3.5-turbo"
+      - "qwen-turbo"
+      - "deepseek-chat"
+    fallbackModels:
+      - "ollama:llama2"
+
+  # Resume optimization: prioritize quality
+  resumeOptimization:
+    strategy: "quality-optimized"
+    preferredModels:
+      - "gpt-4"
+      - "gpt-4-turbo"
+      - "qwen-max"
+    fallbackModels:
+      - "gpt-3.5-turbo"
+
+  # Interview question generation: balance quality and speed
+  interviewQuestionGeneration:
+    strategy: "balanced"
+    preferredModels:
+      - "gpt-4-turbo"
+      - "qwen-plus"
+      - "deepseek-chat"
+    fallbackModels:
+      - "gpt-3.5-turbo"
+
+  # Job description parsing: prioritize cost efficiency
+  jobDescriptionParsing:
+    strategy: "cost-optimized"
+    preferredModels:
+      - "gpt-3.5-turbo"
+      - "qwen-turbo"
+      - "deepseek-chat"
+    fallbackModels:
+      - "ollama:llama2"
+
+  # Match score calculation: prioritize speed
+  matchScoreCalculation:
+    strategy: "latency-optimized"
+    preferredModels:
+      - "gpt-3.5-turbo"
+      - "qwen-turbo"
+      - "deepseek-chat"
+    fallbackModels:
+      - "ollama:mistral"
+
+# ============================================================================
+# PROMPT TEMPLATES
+# ============================================================================
+# Define prompt templates for different scenarios.
+# These templates support variable substitution using {variable_name} syntax.
+
+promptTemplates:
+  resumeParsing:
+    template: |
+      Extract structured information from the following resume:
+      
+      {resume_content}
+      
+      Return the extracted information in JSON format with the following fields:
+      - name
+      - email
+      - phone
+      - location
+      - summary
+      - experience (array of jobs)
+      - education (array of degrees)
+      - skills (array of skills)
+    variables:
+      - resume_content
+
+  jobDescriptionParsing:
+    template: |
+      Extract structured information from the following job description:
+      
+      {job_description}
+      
+      Return the extracted information in JSON format with the following fields:
+      - title
+      - company
+      - location
+      - salary_range
+      - job_type
+      - required_skills (array)
+      - preferred_skills (array)
+      - responsibilities (array)
+      - requirements (array)
+    variables:
+      - job_description
+
+  resumeOptimization:
+    template: |
+      Based on the following resume and job description, provide specific suggestions
+      to improve the resume's match with the job requirements.
+      
+      Resume:
+      {resume_content}
+      
+      Job Description:
+      {job_description}
+      
+      Provide 5-10 specific, actionable suggestions to improve the resume.
+    variables:
+      - resume_content
+      - job_description
+
+  interviewQuestionGeneration:
+    template: |
+      Generate 5 interview questions for a candidate applying for the following position:
+      
+      Job Title: {job_title}
+      Company: {company}
+      Key Requirements: {key_requirements}
+      
+      The questions should assess the candidate's fit for the role.
+    variables:
+      - job_title
+      - company
+      - key_requirements
+
+  matchScoreCalculation:
+    template: |
+      Calculate a match score (0-100) between the following resume and job description.
+      
+      Resume Summary:
+      {resume_summary}
+      
+      Job Requirements:
+      {job_requirements}
+      
+      Return a JSON object with:
+      - score (0-100)
+      - reasoning (brief explanation)
+      - matched_skills (array)
+      - missing_skills (array)
+    variables:
+      - resume_summary
+      - job_requirements
+
+# ============================================================================
+# MONITORING AND ALERTING
+# ============================================================================
+# Configure monitoring thresholds and alerting
+
+monitoring:
+  # Performance thresholds
+  performance:
+    # Alert if average response time exceeds this (milliseconds)
+    maxAverageLatency: 30000
+    
+    # Alert if failure rate exceeds this (percentage)
+    maxFailureRate: 10
+    
+    # Alert if success rate drops below this (percentage)
+    minSuccessRate: 90
+
+  # Cost thresholds
+  cost:
+    # Alert if daily cost exceeds this (USD)
+    maxDailyCost: 100
+    
+    # Alert if monthly cost exceeds this (USD)
+    maxMonthlyCost: 3000
+
+  # Logging
+  logging:
+    # Log level: debug, info, warn, error
+    level: "info"
+    
+    # Include request/response bodies in logs
+    logRequestBody: false
+    logResponseBody: false
+    
+    # Mask sensitive information in logs
+    maskSensitiveData: true
+
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+# Configure security settings for API keys and sensitive data
+
+security:
+  # Encrypt API keys in database
+  encryptApiKeys: true
+  
+  # Encryption algorithm
+  encryptionAlgorithm: "aes-256-gcm"
+  
+  # Rotate API keys periodically (days)
+  keyRotationInterval: 90
+  
+  # Audit logging for API key access
+  auditLogging: true
+  
+  # Mask API keys in logs (show only last 4 characters)
+  maskApiKeysInLogs: true

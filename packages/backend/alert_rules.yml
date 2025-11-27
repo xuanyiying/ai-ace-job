@@ -1,0 +1,135 @@
+groups:
+  - name: resume-optimizer-alerts
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          (sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Slow API response time alert
+      - alert: SlowApiResponse
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API response time detected"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2s)"
+
+      # High memory usage alert
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes / 1024 / 1024 / 1024) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}GB"
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: |
+          database_connection_pool_size > 90
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool exhaustion"
+          description: "Connection pool usage is {{ $value }}%"
+
+      # Redis connection down
+      - alert: RedisConnectionDown
+        expr: |
+          redis_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis connection is down"
+          description: "Redis service is not responding"
+
+      # AI API call failures
+      - alert: HighAiApiErrorRate
+        expr: |
+          (sum(rate(ai_api_call_errors_total[5m])) / sum(rate(ai_api_call_duration_seconds_count[5m]))) > 0.1
+        for: 5m
+        labels:
+          severity: high
+        annotations:
+          summary: "High AI API error rate"
+          description: "AI API error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # PDF generation timeout
+      - alert: PdfGenerationTimeout
+        expr: |
+          histogram_quantile(0.95, sum(rate(pdf_generation_duration_seconds_bucket[5m])) by (le)) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PDF generation is slow"
+          description: "95th percentile PDF generation time is {{ $value }}s (threshold: 10s)"
+
+      # Resume upload failures
+      - alert: HighResumeUploadFailureRate
+        expr: |
+          (sum(rate(resume_uploads_total{status="failure"}[5m])) / sum(rate(resume_uploads_total[5m]))) > 0.1
+        for: 5m
+        labels:
+          severity: high
+        annotations:
+          summary: "High resume upload failure rate"
+          description: "Resume upload failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Optimization request failures
+      - alert: HighOptimizationFailureRate
+        expr: |
+          (sum(rate(optimizations_total{status="failure"}[5m])) / sum(rate(optimizations_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: high
+        annotations:
+          summary: "High optimization failure rate"
+          description: "Optimization failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Service down (no requests in 5 minutes)
+      - alert: ServiceDown
+        expr: |
+          increase(http_requests_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service appears to be down"
+          description: "No HTTP requests received in the last 5 minutes"
+
+      # High CPU usage
+      - alert: HighCpuUsage
+        expr: |
+          (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance)) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanizePercentage }} (threshold: 80%)"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{fstype!~"tmpfs"} / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Available disk space is {{ $value | humanizePercentage }} (threshold: 10%)"

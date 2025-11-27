@@ -1,0 +1,34 @@
+# Global owners
+* @your-github-username
+
+# Backend owners
+packages/backend/ @your-github-username
+packages/backend/src/ai/ @your-github-username
+packages/backend/src/user/ @your-github-username
+packages/backend/src/resume/ @your-github-username
+packages/backend/src/job/ @your-github-username
+packages/backend/src/optimization/ @your-github-username
+packages/backend/src/generate/ @your-github-username
+packages/backend/src/interview/ @your-github-username
+
+# Frontend owners
+packages/frontend/ @your-github-username
+packages/frontend/src/pages/ @your-github-username
+packages/frontend/src/components/ @your-github-username
+packages/frontend/src/stores/ @your-github-username
+packages/frontend/src/services/ @your-github-username
+
+# Infrastructure and CI/CD
+.github/ @your-github-username
+docker-compose.yml @your-github-username
+packages/backend/Dockerfile @your-github-username
+packages/frontend/Dockerfile @your-github-username
+
+# Database
+packages/backend/prisma/ @your-github-username
+
+# Configuration
+package.json @your-github-username
+tsconfig.json @your-github-username
+.eslintrc.json @your-github-username
+.prettierrc @your-github-username

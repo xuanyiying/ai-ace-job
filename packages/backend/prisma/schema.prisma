@@ -1,0 +1,439 @@
+// Prisma Schema for Resume Optimizer MVP
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+    id                    String           @id @default(uuid())
+    email                 String           @unique
+    passwordHash          String
+    username              String?
+    phone                 String?
+    avatarUrl             String?
+    subscriptionTier      SubscriptionTier @default(FREE)
+    subscriptionExpiresAt DateTime?
+    createdAt             DateTime         @default(now())
+    updatedAt             DateTime         @updatedAt
+    lastLoginAt           DateTime?
+    isActive              Boolean          @default(true)
+    emailVerified         Boolean          @default(false)
+
+    // Relations
+    resumes       Resume[]
+    jobs          Job[]
+    optimizations Optimization[]
+    generatedPdfs GeneratedPDF[]
+    conversations Conversation[]
+    messages      Message[]
+
+    @@index([email])
+    @@map("users")
+}
+
+enum SubscriptionTier {
+    FREE
+    PRO
+    ENTERPRISE
+}
+
+// Resume model
+model Resume {
+    id               String      @id @default(uuid())
+    userId           String
+    title            String
+    originalFilename String?
+    fileUrl          String?
+    fileType         String?
+    fileSize         Int?
+    parsedData       Json?
+    version          Int         @default(1)
+    isPrimary        Boolean     @default(false)
+    parseStatus      ParseStatus @default(PENDING)
+    createdAt        DateTime    @default(now())
+    updatedAt        DateTime    @updatedAt
+
+    // Relations
+    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    optimizations Optimization[]
+
+    @@index([userId])
+    @@index([userId, isPrimary])
+    @@map("resumes")
+}
+
+enum ParseStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+}
+
+// Job model
+model Job {
+    id                 String   @id @default(uuid())
+    userId             String
+    title              String
+    company            String
+    location           String?
+    jobType            String?
+    salaryRange        String?
+    jobDescription     String   @db.Text
+    requirements       String   @db.Text
+    parsedRequirements Json?
+    sourceUrl          String?
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    // Relations
+    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    optimizations Optimization[]
+
+    @@index([userId])
+    @@map("jobs")
+}
+
+// Optimization model
+model Optimization {
+    id               String             @id @default(uuid())
+    userId           String
+    resumeId         String
+    jobId            String
+    matchScore       Json?
+    suggestions      Json[]
+    optimizedContent Json?
+    status           OptimizationStatus @default(PENDING)
+    createdAt        DateTime           @default(now())
+    completedAt      DateTime?
+
+    // Relations
+    user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+    resume             Resume              @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+    job                Job                 @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    generatedPdfs      GeneratedPDF[]
+    interviewQuestions InterviewQuestion[]
+
+    @@index([userId])
+    @@index([resumeId])
+    @@index([jobId])
+    @@map("optimizations")
+}
+
+enum OptimizationStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+}
+
+// Generated PDF model
+model GeneratedPDF {
+    id             String    @id @default(uuid())
+    userId         String
+    optimizationId String
+    templateId     String
+    fileUrl        String
+    fileSize       Int
+    downloadCount  Int       @default(0)
+    createdAt      DateTime  @default(now())
+    expiresAt      DateTime?
+
+    // Relations
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    optimization Optimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
+    template     Template     @relation(fields: [templateId], references: [id])
+
+    @@index([userId])
+    @@index([optimizationId])
+    @@map("generated_pdfs")
+}
+
+// Template model
+model Template {
+    id            String   @id @default(uuid())
+    name          String   @unique
+    category      String
+    description   String
+    previewUrl    String
+    isPremium     Boolean  @default(false)
+    isActive      Boolean  @default(true)
+    configuration Json
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    // Relations
+    generatedPdfs GeneratedPDF[]
+
+    @@index([category])
+    @@index([isActive])
+    @@map("templates")
+}
+
+// Interview Question model
+model InterviewQuestion {
+    id              String       @id @default(uuid())
+    optimizationId  String
+    questionType    QuestionType
+    question        String       @db.Text
+    suggestedAnswer String       @db.Text
+    tips            String[]
+    difficulty      Difficulty
+    createdAt       DateTime     @default(now())
+
+    // Relations
+    optimization Optimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
+
+    @@index([optimizationId])
+    @@map("interview_questions")
+}
+
+// Model Configuration model
+model ModelConfig {
+    id                 String   @id @default(uuid())
+    name               String   @unique
+    provider           String
+    apiKey             String   @db.Text // Encrypted in storage
+    endpoint           String?
+    defaultTemperature Float    @default(0.7)
+    defaultMaxTokens   Int      @default(2000)
+    costPerInputToken  Float    @default(0)
+    costPerOutputToken Float    @default(0)
+    rateLimitPerMinute Int      @default(0)
+    rateLimitPerDay    Int      @default(0)
+    isActive           Boolean  @default(true)
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    @@index([provider])
+    @@index([isActive])
+    @@map("model_configs")
+}
+
+// Prompt Template model
+model PromptTemplate {
+    id          String   @id @default(uuid())
+    name        String
+    scenario    String
+    language    String   @default("en") // Language code: 'en', 'zh-CN', etc.
+    template    String   @db.Text
+    variables   String[]
+    provider    String?
+    isEncrypted Boolean  @default(false)
+    version     Int      @default(1)
+    isActive    Boolean  @default(true)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    // Relations
+    versions PromptTemplateVersion[]
+
+    @@unique([name, language]) // Allow same name in different languages
+    @@index([scenario])
+    @@index([language])
+    @@index([provider])
+    @@index([isActive])
+    @@map("prompt_templates")
+}
+
+// Prompt Template Version model
+model PromptTemplateVersion {
+    id         String   @id @default(uuid())
+    templateId String
+    version    Int
+    content    String   @db.Text
+    variables  String[]
+    author     String
+    reason     String?
+    isActive   Boolean  @default(false)
+    createdAt  DateTime @default(now())
+
+    // Relations
+    promptTemplate PromptTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+    @@unique([templateId, version])
+    @@index([templateId])
+    @@map("prompt_template_versions")
+}
+
+// Usage Record model
+model UsageRecord {
+    id           String   @id @default(uuid())
+    userId       String
+    model        String
+    provider     String
+    scenario     String?
+    inputTokens  Int
+    outputTokens Int
+    cost         Float
+    latency      Int
+    success      Boolean
+    errorCode    String?
+    timestamp    DateTime @default(now())
+
+    @@index([userId])
+    @@index([model])
+    @@index([provider])
+    @@index([timestamp])
+    @@map("usage_records")
+}
+
+// Performance Metrics model
+model PerformanceMetrics {
+    id              String   @id @default(uuid())
+    model           String   @unique
+    provider        String
+    totalCalls      Int      @default(0)
+    successfulCalls Int      @default(0)
+    failedCalls     Int      @default(0)
+    averageLatency  Float    @default(0)
+    maxLatency      Int      @default(0)
+    minLatency      Int      @default(0)
+    successRate     Float    @default(0)
+    failureRate     Float    @default(0)
+    lastUpdated     DateTime @default(now())
+
+    @@index([provider])
+    @@map("performance_metrics")
+}
+
+// Audit Log model
+model AuditLog {
+    id        String   @id @default(uuid())
+    action    String
+    resource  String
+    userId    String?
+    details   Json?
+    timestamp DateTime @default(now())
+
+    @@index([action])
+    @@index([resource])
+    @@index([userId])
+    @@index([timestamp])
+    @@map("audit_logs")
+}
+
+enum QuestionType {
+    BEHAVIORAL
+    TECHNICAL
+    SITUATIONAL
+    RESUME_BASED
+}
+
+enum Difficulty {
+    EASY
+    MEDIUM
+    HARD
+}
+
+// AI Call Log model
+model AICallLog {
+    id              String   @id @default(uuid())
+    model           String
+    provider        String
+    scenario        String?
+    requestContent  String?  @db.Text
+    responseContent String?  @db.Text
+    inputTokens     Int?
+    outputTokens    Int?
+    latency         Int
+    success         Boolean
+    errorCode       String?
+    errorMessage    String?
+    stackTrace      String?  @db.Text
+    userId          String?
+    timestamp       DateTime @default(now())
+
+    @@index([model])
+    @@index([provider])
+    @@index([scenario])
+    @@index([success])
+    @@index([timestamp])
+    @@index([userId])
+    @@map("ai_call_logs")
+}
+
+// AI Retry Log model
+model AIRetryLog {
+    id           String   @id @default(uuid())
+    model        String
+    provider     String
+    attempt      Int
+    maxAttempts  Int
+    errorCode    String?
+    errorMessage String?
+    timestamp    DateTime @default(now())
+
+    @@index([model])
+    @@index([provider])
+    @@index([timestamp])
+    @@map("ai_retry_logs")
+}
+
+// AI Degradation Log model
+model AIDegradationLog {
+    id               String   @id @default(uuid())
+    model            String
+    provider         String
+    reason           String
+    fallbackModel    String?
+    fallbackProvider String?
+    timestamp        DateTime @default(now())
+
+    @@index([model])
+    @@index([provider])
+    @@index([timestamp])
+    @@map("ai_degradation_logs")
+}
+
+// Conversation model
+model Conversation {
+    id            String    @id @default(uuid())
+    userId        String
+    title         String
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    lastMessageAt DateTime?
+    messageCount  Int       @default(0)
+    isActive      Boolean   @default(true)
+
+    // Relations
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    messages Message[]
+
+    @@index([userId])
+    @@index([userId, isActive])
+    @@map("conversations")
+}
+
+enum MessageRole {
+    USER
+    ASSISTANT
+    SYSTEM
+}
+
+// Message model
+model Message {
+    id             String      @id @default(uuid())
+    conversationId String
+    userId         String
+    role           MessageRole
+    content        String      @db.Text
+    attachments    Json?
+    metadata       Json?
+    createdAt      DateTime    @default(now())
+
+    // Relations
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([conversationId])
+    @@index([userId])
+    @@index([conversationId, createdAt])
+    @@map("messages")
+}

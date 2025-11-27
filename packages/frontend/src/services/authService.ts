@@ -1,0 +1,52 @@
+import axios from '../config/axios';
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  username?: string;
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    subscriptionTier: 'free' | 'pro' | 'enterprise';
+  };
+  token?: string;
+  accessToken?: string;
+}
+
+export const authService = {
+  register: async (data: RegisterData): Promise<AuthResponse> => {
+    const response = await axios.post('/auth/register', data);
+    // Map accessToken to token if needed
+    if (response.data.accessToken && !response.data.token) {
+      response.data.token = response.data.accessToken;
+    }
+    return response.data;
+  },
+
+  login: async (data: LoginData): Promise<AuthResponse> => {
+    const response = await axios.post('/auth/login', data);
+    // Map accessToken to token if needed
+    if (response.data.accessToken && !response.data.token) {
+      response.data.token = response.data.accessToken;
+    }
+    return response.data;
+  },
+
+  logout: async (): Promise<void> => {
+    await axios.post('/auth/logout');
+  },
+
+  getCurrentUser: async () => {
+    const response = await axios.get('/auth/me');
+    return response.data;
+  },
+};
