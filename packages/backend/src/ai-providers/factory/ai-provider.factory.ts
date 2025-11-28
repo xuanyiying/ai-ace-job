@@ -9,6 +9,9 @@ import { AIProvider, ProviderConfigMap } from '../interfaces';
 import { ProviderConfigService } from '../config/provider.config';
 import { QwenProvider } from '../providers/qwen.provider';
 import { OllamaProvider } from '../providers/ollama.provider';
+import { OpenAIProvider } from '../providers/openai.provider';
+import { DeepSeekProvider } from '../providers/deepseek.provider';
+import { GeminiProvider } from '../providers/gemini.provider';
 import {
   QwenConfig,
   OllamaConfig,
@@ -138,19 +141,13 @@ export class AIProviderFactory implements OnModuleInit {
         return new OllamaProvider(config as OllamaConfig);
 
       case 'openai':
-        // TODO: Implement OpenAI provider
-        this.logger.warn('OpenAI provider not yet implemented');
-        return null;
+        return new OpenAIProvider(config as OpenAIConfig);
 
       case 'deepseek':
-        // TODO: Implement DeepSeek provider
-        this.logger.warn('DeepSeek provider not yet implemented');
-        return null;
+        return new DeepSeekProvider(config as DeepSeekConfig);
 
       case 'gemini':
-        // TODO: Implement Gemini provider
-        this.logger.warn('Gemini provider not yet implemented');
-        return null;
+        return new GeminiProvider(config as GeminiConfig);
 
       default:
         throw new Error(`Unknown provider: ${providerName}`);
@@ -189,8 +186,8 @@ export class AIProviderFactory implements OnModuleInit {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
 
-          this.logger.error(
-            `Health check failed for provider ${providerName}: ${errorMessage}`
+          this.logger.warn(
+            `Health check failed for provider ${providerName}: ${errorMessage}. Provider will be unavailable.`
           );
 
           const status = this.providerStatus.get(providerName);

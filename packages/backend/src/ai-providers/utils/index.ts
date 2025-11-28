@@ -1,7 +1,6 @@
 /**
- * AI Providers Utilities
- * Exports all utility functions and classes
+ * Utility exports for AI providers
  */
-
 export * from './ai-error';
 export * from './retry-handler';
+export * from './http-client';

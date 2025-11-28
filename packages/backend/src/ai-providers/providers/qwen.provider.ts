@@ -5,7 +5,7 @@
  */
 
 import { Logger } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import {
   AIProvider,
   AIRequest,
@@ -16,6 +16,7 @@ import {
 import { QwenConfig } from '../interfaces/model-config.interface';
 import { AIError, AIErrorCode, toAIError } from '../utils/ai-error';
 import { RetryHandler } from '../utils/retry-handler';
+import { AIHttpClient } from '../utils/http-client';
 
 /**
  * Qwen API Response structure
@@ -76,15 +77,19 @@ export class QwenProvider implements AIProvider {
     this.config = config;
     this.retryHandler = new RetryHandler();
 
-    // Initialize HTTP client
-    this.httpClient = axios.create({
+    // Initialize HTTP client using AIHttpClient with Bearer token authentication
+    const httpClient = new AIHttpClient({
       baseURL: config.endpoint || 'https://dashscope.aliyuncs.com/api/v1',
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
       timeout: config.timeout || 30000,
+      authentication: {
+        type: 'bearer',
+        token: config.apiKey,
+      },
+      logger: this.logger,
+      providerName: 'Qwen',
     });
+
+    this.httpClient = httpClient.getInstance();
 
     this.logger.log('Qwen provider initialized');
   }

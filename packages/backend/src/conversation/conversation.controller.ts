@@ -15,7 +15,7 @@ import {
 import { ConversationService } from './conversation.service';
 import { JwtAuthGuard } from '../user/guards/jwt-auth.guard';
 
-@Controller('api/v1/conversations')
+@Controller('conversations')
 @UseGuards(JwtAuthGuard)
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}

@@ -6,22 +6,22 @@ import { SubscriptionTier } from '@prisma/client';
 
 @Injectable()
 export class PaymentService {
-  private stripe: Stripe;
+  private readonly stripe: Stripe | null = null;
 
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService
   ) {
-    this.stripe = new Stripe(
-      this.configService.get('STRIPE_SECRET_KEY') || '',
-      {
+    const stripeKey = this.configService.get('STRIPE_SECRET_KEY');
+    if (stripeKey) {
+      this.stripe = new Stripe(stripeKey, {
         apiVersion: '2025-02-24.acacia',
-      }
-    );
+      });
+    }
   }
 
   async createCheckoutSession(userId: string, priceId: string) {
-    if (!this.configService.get('STRIPE_SECRET_KEY')) {
+    if (!this.stripe || !this.configService.get('STRIPE_SECRET_KEY')) {
       // Mock for development if no key provided
       return { url: 'http://localhost:5173/payment/success?mock=true' };
     }
@@ -47,7 +47,7 @@ export class PaymentService {
   }
 
   async handleWebhook(signature: string, payload: Buffer) {
-    if (!this.configService.get('STRIPE_WEBHOOK_SECRET')) {
+    if (!this.stripe || !this.configService.get('STRIPE_WEBHOOK_SECRET')) {
       console.log('Webhook received (Mock mode)');
       return { received: true };
     }

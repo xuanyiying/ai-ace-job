@@ -5,7 +5,7 @@
  */
 
 import { Logger } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import {
   AIProvider,
   AIRequest,
@@ -16,6 +16,7 @@ import {
 import { OllamaConfig } from '../interfaces/model-config.interface';
 import { toAIError } from '../utils/ai-error';
 import { RetryHandler } from '../utils/retry-handler';
+import { AIHttpClient } from '../utils/http-client';
 
 /**
  * Ollama API Response structure
@@ -66,15 +67,16 @@ export class OllamaProvider implements AIProvider {
     this.config = config;
     this.retryHandler = new RetryHandler();
 
-    // Initialize HTTP client
+    // Initialize HTTP client using AIHttpClient
     const baseUrl = config.baseUrl || 'http://localhost:11434';
-    this.httpClient = axios.create({
+    const httpClient = new AIHttpClient({
       baseURL: baseUrl,
-      headers: {
-        'Content-Type': 'application/json',
-      },
       timeout: config.timeout || 30000,
+      logger: this.logger,
+      providerName: 'Ollama',
     });
+
+    this.httpClient = httpClient.getInstance();
 
     this.logger.log(`Ollama provider initialized with base URL: ${baseUrl}`);
   }
@@ -198,8 +200,10 @@ export class OllamaProvider implements AIProvider {
 
       return isHealthy;
     } catch (error) {
-      this.logger.error(
-        `Ollama provider health check failed: ${error instanceof Error ? error.message : String(error)}`
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Ollama provider health check failed: ${errorMessage}. This is expected if Ollama is not running locally.`
       );
       return false;
     }
