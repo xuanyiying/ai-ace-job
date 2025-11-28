@@ -4,20 +4,20 @@ import { PromptScenario } from '../interfaces/prompt-template.interface';
  * Predefined template definitions with multi-language support
  */
 export const PREDEFINED_TEMPLATES: Array<{
-    name: string;
-    scenario: string;
-    language: string;
-    template: string;
-    variables: string[];
-    provider?: string;
-    isEncrypted: boolean;
+  name: string;
+  scenario: string;
+  language: string;
+  template: string;
+  variables: string[];
+  provider?: string;
+  isEncrypted: boolean;
 }> = [
-        // ============ ENGLISH TEMPLATES ============
-        {
-            name: 'resume_parsing_default',
-            scenario: PromptScenario.RESUME_PARSING,
-            language: 'en',
-            template: `Please parse the following resume and extract the key information in JSON format:
+  // ============ ENGLISH TEMPLATES ============
+  {
+    name: 'resume_parsing_default',
+    scenario: PromptScenario.RESUME_PARSING,
+    language: 'en',
+    template: `Please parse the following resume and extract the key information in JSON format:
 
 Resume Content:
 {resume_content}
@@ -32,14 +32,14 @@ Extract the following information:
 7. Languages
 
 Return the result as valid JSON.`,
-            variables: ['resume_content'],
-            isEncrypted: false,
-        },
-        {
-            name: 'job_description_parsing_default',
-            scenario: PromptScenario.JOB_DESCRIPTION_PARSING,
-            language: 'en',
-            template: `Please parse the following job description and extract the key requirements:
+    variables: ['resume_content'],
+    isEncrypted: false,
+  },
+  {
+    name: 'job_description_parsing_default',
+    scenario: PromptScenario.JOB_DESCRIPTION_PARSING,
+    language: 'en',
+    template: `Please parse the following job description and extract the key requirements:
 
 Job Description:
 {job_description}
@@ -57,14 +57,14 @@ Extract the following information:
 10. Benefits
 
 Return the result as valid JSON.`,
-            variables: ['job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'resume_optimization_default',
-            scenario: PromptScenario.RESUME_OPTIMIZATION,
-            language: 'en',
-            template: `Based on the following resume and job description, provide specific optimization suggestions:
+    variables: ['job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'resume_optimization_default',
+    scenario: PromptScenario.RESUME_OPTIMIZATION,
+    language: 'en',
+    template: `Based on the following resume and job description, provide specific optimization suggestions:
 
 Resume:
 {resume_content}
@@ -80,14 +80,14 @@ Please provide:
 5. Any gaps that need to be addressed
 
 Format each suggestion with a clear explanation of why it matters.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'interview_question_generation_default',
-            scenario: PromptScenario.INTERVIEW_QUESTION_GENERATION,
-            language: 'en',
-            template: `Generate interview questions based on the following resume and job description:
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'interview_question_generation_default',
+    scenario: PromptScenario.INTERVIEW_QUESTION_GENERATION,
+    language: 'en',
+    template: `Generate interview questions based on the following resume and job description:
 
 Resume:
 {resume_content}
@@ -108,14 +108,14 @@ For each question, provide:
 - Tips for evaluating the response
 
 Return as JSON array.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'match_score_calculation_default',
-            scenario: PromptScenario.MATCH_SCORE_CALCULATION,
-            language: 'en',
-            template: `Calculate a match score between the resume and job description:
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'match_score_calculation_default',
+    scenario: PromptScenario.MATCH_SCORE_CALCULATION,
+    language: 'en',
+    template: `Calculate a match score between the resume and job description:
 
 Resume:
 {resume_content}
@@ -138,16 +138,16 @@ For each dimension, provide:
 
 Calculate an overall match score (0-100) as a weighted average.
 Return as JSON with detailed breakdown.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
 
-        // ============ CHINESE TEMPLATES ============
-        {
-            name: 'resume_parsing_default',
-            scenario: PromptScenario.RESUME_PARSING,
-            language: 'zh-CN',
-            template: `请解析以下简历并以JSON格式提取关键信息：
+  // ============ CHINESE TEMPLATES ============
+  {
+    name: 'resume_parsing_default',
+    scenario: PromptScenario.RESUME_PARSING,
+    language: 'zh-CN',
+    template: `请解析以下简历并以JSON格式提取关键信息：
 
 简历内容：
 {resume_content}
@@ -162,14 +162,14 @@ Return as JSON with detailed breakdown.`,
 7. 语言能力
 
 返回有效的JSON格式结果。`,
-            variables: ['resume_content'],
-            isEncrypted: false,
-        },
-        {
-            name: 'job_description_parsing_default',
-            scenario: PromptScenario.JOB_DESCRIPTION_PARSING,
-            language: 'zh-CN',
-            template: `请解析以下职位描述并提取关键要求：
+    variables: ['resume_content'],
+    isEncrypted: false,
+  },
+  {
+    name: 'job_description_parsing_default',
+    scenario: PromptScenario.JOB_DESCRIPTION_PARSING,
+    language: 'zh-CN',
+    template: `请解析以下职位描述并提取关键要求：
 
 职位描述：
 {job_description}
@@ -187,14 +187,14 @@ Return as JSON with detailed breakdown.`,
 10. 福利待遇
 
 返回有效的JSON格式结果。`,
-            variables: ['job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'resume_optimization_default',
-            scenario: PromptScenario.RESUME_OPTIMIZATION,
-            language: 'zh-CN',
-            template: `基于以下简历和职位描述，提供具体的优化建议：
+    variables: ['job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'resume_optimization_default',
+    scenario: PromptScenario.RESUME_OPTIMIZATION,
+    language: 'zh-CN',
+    template: `基于以下简历和职位描述，提供具体的优化建议：
 
 简历：
 {resume_content}
@@ -210,14 +210,14 @@ Return as JSON with detailed breakdown.`,
 5. 需要解决的任何不足之处
 
 为每条建议提供清晰的解释，说明其重要性。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'interview_question_generation_default',
-            scenario: PromptScenario.INTERVIEW_QUESTION_GENERATION,
-            language: 'zh-CN',
-            template: `基于以下简历和职位描述生成面试问题：
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'interview_question_generation_default',
+    scenario: PromptScenario.INTERVIEW_QUESTION_GENERATION,
+    language: 'zh-CN',
+    template: `基于以下简历和职位描述生成面试问题：
 
 简历：
 {resume_content}
@@ -238,14 +238,14 @@ Return as JSON with detailed breakdown.`,
 - 评估回答的技巧
 
 以JSON数组格式返回。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
-        {
-            name: 'match_score_calculation_default',
-            scenario: PromptScenario.MATCH_SCORE_CALCULATION,
-            language: 'zh-CN',
-            template: `计算简历和职位描述的匹配度：
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'match_score_calculation_default',
+    scenario: PromptScenario.MATCH_SCORE_CALCULATION,
+    language: 'zh-CN',
+    template: `计算简历和职位描述的匹配度：
 
 简历：
 {resume_content}
@@ -268,7 +268,7 @@ Return as JSON with detailed breakdown.`,
 
 计算加权平均后的总体匹配分数（0-100）。
 以JSON格式返回详细分解结果。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-        },
-    ];
+    variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+];

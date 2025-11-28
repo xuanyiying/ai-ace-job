@@ -34,7 +34,7 @@ export class AIController {
     private usageTrackerService: UsageTrackerService,
     private performanceMonitorService: PerformanceMonitorService,
     private aiLogger: AILogger
-  ) { }
+  ) {}
 
   @Post('call')
   async callAI(

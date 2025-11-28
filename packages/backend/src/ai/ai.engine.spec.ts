@@ -242,7 +242,7 @@ describe('AIEngine', () => {
         education: [],
         experience: [],
         skills: [],
-        projects: []
+        projects: [],
       };
 
       const result = await engine.generateOptimizationSuggestions(
@@ -281,7 +281,7 @@ describe('AIEngine', () => {
         education: [],
         experience: [],
         skills: ['React', 'TypeScript'],
-        projects: []
+        projects: [],
       };
 
       const jobDescription = 'Frontend developer role';
@@ -313,7 +313,7 @@ describe('AIEngine', () => {
         education: [],
         experience: [],
         skills: [],
-        projects: []
+        projects: [],
       };
 
       const result = await engine.generateInterviewQuestions(

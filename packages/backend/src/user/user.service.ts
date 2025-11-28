@@ -3,21 +3,25 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User, SubscriptionTier } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { PrismaService } from '../prisma/prisma.service';
-import { Sanitizer } from '../common/utils/sanitizer';
+import { PrismaService } from '@/prisma/prisma.service';
+import { Sanitizer } from '@/common/utils/sanitizer';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { EmailService } from '@/email/email.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly emailService: EmailService
   ) {}
 
   /**
@@ -49,6 +53,9 @@ export class UserService {
       : undefined;
     const sanitizedPhone = phone ? Sanitizer.sanitizeString(phone) : undefined;
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
     // Create new user
     const user = await this.prisma.user.create({
       data: {
@@ -59,8 +66,21 @@ export class UserService {
         subscriptionTier: SubscriptionTier.FREE,
         isActive: true,
         emailVerified: false,
+        verificationToken,
       },
     });
+
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        verificationToken,
+        user.username || undefined
+      );
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      // Don't fail registration if email fails, user can resend later
+    }
 
     // Generate JWT token
     const accessToken = this.generateToken(user);
@@ -73,6 +93,7 @@ export class UserService {
         username: user.username ?? undefined,
         subscriptionTier: user.subscriptionTier,
         emailVerified: user.emailVerified,
+        role: user.role,
       },
     };
   }
@@ -120,6 +141,7 @@ export class UserService {
         username: user.username ?? undefined,
         subscriptionTier: user.subscriptionTier,
         emailVerified: user.emailVerified,
+        role: user.role,
       },
     };
   }
@@ -299,5 +321,90 @@ export class UserService {
       generatedPdfs,
       exportedAt: new Date(),
     };
+  }
+
+  /**
+   * Verify email address
+   */
+  async verifyEmail(token: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { verificationToken: token },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid verification token');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        verificationToken: null, // Clear token after usage
+      },
+    });
+  }
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Don't reveal if user exists
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: resetExpires,
+      },
+    });
+
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+        user.username || undefined
+      );
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+    }
+  }
+
+  /**
+   * Reset password
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
   }
 }

@@ -9,6 +9,12 @@ import ProfilePage from '../pages/ProfilePage';
 import SettingsPage from '../pages/SettingsPage';
 import PromptManagementPage from '../pages/PromptManagementPage';
 import ModelManagementPage from '../pages/ModelManagementPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
+import PricingPage from '../pages/PricingPage';
+import TermsOfServicePage from '../pages/TermsOfServicePage';
+import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 
 const routes: RouteObject[] = [
   {
@@ -18,6 +24,26 @@ const routes: RouteObject[] = [
   {
     path: '/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/verify-email',
+    element: <VerifyEmailPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
+  },
+  {
+    path: '/terms-of-service',
+    element: <TermsOfServicePage />,
+  },
+  {
+    path: '/privacy-policy',
+    element: <PrivacyPolicyPage />,
   },
   {
     path: '/',
@@ -38,6 +64,10 @@ const routes: RouteObject[] = [
       {
         path: 'settings',
         element: <SettingsPage />,
+      },
+      {
+        path: 'pricing',
+        element: <PricingPage />,
       },
       {
         path: 'admin/prompts',

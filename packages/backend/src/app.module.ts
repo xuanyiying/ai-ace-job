@@ -19,6 +19,8 @@ import { QuotaModule } from './quota/quota.module';
 import { LoggerModule } from './logger/logger.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { ConversationModule } from './conversation/conversation.module';
+import { EmailModule } from './email/email.module';
+import { PaymentModule } from './payment/payment.module';
 import { AIProvidersModule } from './ai-providers/ai-providers.module';
 import { loggerConfig } from './logger/logger.config';
 import {
@@ -50,6 +52,8 @@ import { RequestLoggingMiddleware } from './common/middleware/request-logging.mi
     InterviewModule,
     QuotaModule,
     MonitoringModule,
+    EmailModule,
+    PaymentModule,
     AIProvidersModule,
   ],
   controllers: [AppController],

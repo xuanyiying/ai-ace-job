@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { Layout, Avatar, Dropdown, Button, theme, Modal, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
+import { useNavigate, Outlet } from 'react-router-dom';
 import {
   UserOutlined,
-  PlusOutlined,
-  MessageOutlined,
   SettingOutlined,
   LogoutOutlined,
-  DeleteOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  DollarOutlined,
+  PlusOutlined,
+  MessageOutlined,
   EditOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import CookieConsent from '../components/CookieConsent';
 import './AppLayout.css';
 
 const { Sider, Content } = Layout;
@@ -74,8 +78,15 @@ const AppLayout: React.FC = () => {
     },
     {
       key: 'settings',
-      label: '设置',
       icon: <SettingOutlined />,
+      label: 'Settings',
+      onClick: () => navigate('/settings'),
+    },
+    {
+      key: 'pricing',
+      icon: <DollarOutlined />,
+      label: 'Pricing',
+      onClick: () => navigate('/pricing'),
     },
     {
       type: 'divider',
@@ -108,7 +119,7 @@ const AppLayout: React.FC = () => {
           console.log(collapsed, type);
         }}
         style={{
-          borderRight: `1px solid ${colorBorderSecondary}`,
+          borderRight: `1px solid ${colorBorderSecondary} `,
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
@@ -239,7 +250,7 @@ const AppLayout: React.FC = () => {
         <div
           style={{
             padding: '16px',
-            borderTop: `1px solid ${colorBorderSecondary}`,
+            borderTop: `1px solid ${colorBorderSecondary} `,
             display: 'flex',
             alignItems: 'center',
             cursor: 'pointer',
@@ -278,6 +289,7 @@ const AppLayout: React.FC = () => {
           <Outlet />
         </Content>
       </Layout>
+      <CookieConsent />
     </Layout>
   );
 };

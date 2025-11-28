@@ -7,15 +7,15 @@ const prisma = new PrismaClient();
  * in both English and Chinese
  */
 async function seedPromptsTemplates() {
-    console.log('🌱 Seeding prompt templates...');
+  console.log('🌱 Seeding prompt templates...');
 
-    const templates = [
-        // Resume Parsing - English
-        {
-            name: 'resume_parsing_default',
-            scenario: 'resume_parsing',
-            language: 'en',
-            template: `Please parse the following resume and extract the key information in JSON format:
+  const templates = [
+    // Resume Parsing - English
+    {
+      name: 'resume_parsing_default',
+      scenario: 'resume_parsing',
+      language: 'en',
+      template: `Please parse the following resume and extract the key information in JSON format:
 
 Resume Content:
 {resume_content}
@@ -30,16 +30,16 @@ Extract the following information:
 7. Languages
 
 Return the result as valid JSON.`,
-            variables: ['resume_content'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Resume Parsing - Chinese
-        {
-            name: 'resume_parsing_default',
-            scenario: 'resume_parsing',
-            language: 'zh-CN',
-            template: `请解析以下简历并以JSON格式提取关键信息：
+      variables: ['resume_content'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Resume Parsing - Chinese
+    {
+      name: 'resume_parsing_default',
+      scenario: 'resume_parsing',
+      language: 'zh-CN',
+      template: `请解析以下简历并以JSON格式提取关键信息：
 
 简历内容：
 {resume_content}
@@ -54,16 +54,16 @@ Return the result as valid JSON.`,
 7. 语言能力
 
 返回有效的JSON格式结果。`,
-            variables: ['resume_content'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Job Description Parsing - English
-        {
-            name: 'job_description_parsing_default',
-            scenario: 'job_description_parsing',
-            language: 'en',
-            template: `Please parse the following job description and extract the key requirements:
+      variables: ['resume_content'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Job Description Parsing - English
+    {
+      name: 'job_description_parsing_default',
+      scenario: 'job_description_parsing',
+      language: 'en',
+      template: `Please parse the following job description and extract the key requirements:
 
 Job Description:
 {job_description}
@@ -81,16 +81,16 @@ Extract the following information:
 10. Benefits
 
 Return the result as valid JSON.`,
-            variables: ['job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Job Description Parsing - Chinese
-        {
-            name: 'job_description_parsing_default',
-            scenario: 'job_description_parsing',
-            language: 'zh-CN',
-            template: `请解析以下职位描述并提取关键要求：
+      variables: ['job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Job Description Parsing - Chinese
+    {
+      name: 'job_description_parsing_default',
+      scenario: 'job_description_parsing',
+      language: 'zh-CN',
+      template: `请解析以下职位描述并提取关键要求：
 
 职位描述：
 {job_description}
@@ -108,16 +108,16 @@ Return the result as valid JSON.`,
 10. 福利待遇
 
 返回有效的JSON格式结果。`,
-            variables: ['job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Resume Optimization - English
-        {
-            name: 'resume_optimization_default',
-            scenario: 'resume_optimization',
-            language: 'en',
-            template: `Based on the following resume and job description, provide specific optimization suggestions:
+      variables: ['job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Resume Optimization - English
+    {
+      name: 'resume_optimization_default',
+      scenario: 'resume_optimization',
+      language: 'en',
+      template: `Based on the following resume and job description, provide specific optimization suggestions:
 
 Resume:
 {resume_content}
@@ -133,16 +133,16 @@ Please provide:
 5. Any gaps that need to be addressed
 
 Format each suggestion with a clear explanation of why it matters.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Resume Optimization - Chinese
-        {
-            name: 'resume_optimization_default',
-            scenario: 'resume_optimization',
-            language: 'zh-CN',
-            template: `基于以下简历和职位描述，提供具体的优化建议：
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Resume Optimization - Chinese
+    {
+      name: 'resume_optimization_default',
+      scenario: 'resume_optimization',
+      language: 'zh-CN',
+      template: `基于以下简历和职位描述，提供具体的优化建议：
 
 简历：
 {resume_content}
@@ -158,16 +158,16 @@ Format each suggestion with a clear explanation of why it matters.`,
 5. 需要解决的任何不足之处
 
 为每条建议提供清晰的解释，说明其重要性。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Interview Question Generation - English
-        {
-            name: 'interview_question_generation_default',
-            scenario: 'interview_question_generation',
-            language: 'en',
-            template: `Generate interview questions based on the following resume and job description:
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Interview Question Generation - English
+    {
+      name: 'interview_question_generation_default',
+      scenario: 'interview_question_generation',
+      language: 'en',
+      template: `Generate interview questions based on the following resume and job description:
 
 Resume:
 {resume_content}
@@ -188,16 +188,16 @@ For each question, provide:
 - Tips for evaluating the response
 
 Return as JSON array.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Interview Question Generation - Chinese
-        {
-            name: 'interview_question_generation_default',
-            scenario: 'interview_question_generation',
-            language: 'zh-CN',
-            template: `基于以下简历和职位描述生成面试问题：
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Interview Question Generation - Chinese
+    {
+      name: 'interview_question_generation_default',
+      scenario: 'interview_question_generation',
+      language: 'zh-CN',
+      template: `基于以下简历和职位描述生成面试问题：
 
 简历：
 {resume_content}
@@ -218,16 +218,16 @@ Return as JSON array.`,
 - 评估回答的技巧
 
 以JSON数组格式返回。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Match Score Calculation - English
-        {
-            name: 'match_score_calculation_default',
-            scenario: 'match_score_calculation',
-            language: 'en',
-            template: `Calculate a match score between the resume and job description:
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Match Score Calculation - English
+    {
+      name: 'match_score_calculation_default',
+      scenario: 'match_score_calculation',
+      language: 'en',
+      template: `Calculate a match score between the resume and job description:
 
 Resume:
 {resume_content}
@@ -250,16 +250,16 @@ For each dimension, provide:
 
 Calculate an overall match score (0-100) as a weighted average.
 Return as JSON with detailed breakdown.`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
-        },
-        // Match Score Calculation - Chinese
-        {
-            name: 'match_score_calculation_default',
-            scenario: 'match_score_calculation',
-            language: 'zh-CN',
-            template: `计算简历和职位描述的匹配度：
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+    // Match Score Calculation - Chinese
+    {
+      name: 'match_score_calculation_default',
+      scenario: 'match_score_calculation',
+      language: 'zh-CN',
+      template: `计算简历和职位描述的匹配度：
 
 简历：
 {resume_content}
@@ -282,66 +282,65 @@ Return as JSON with detailed breakdown.`,
 
 计算加权平均后的总体匹配分数（0-100）。
 以JSON格式返回详细分解结果。`,
-            variables: ['resume_content', 'job_description'],
-            isEncrypted: false,
-            isActive: true,
+      variables: ['resume_content', 'job_description'],
+      isEncrypted: false,
+      isActive: true,
+    },
+  ];
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const template of templates) {
+    try {
+      const existing = await prisma.promptTemplate.findFirst({
+        where: {
+          name: template.name,
+          language: template.language,
         },
-    ];
+      });
 
-    let created = 0;
-    let skipped = 0;
+      if (existing) {
+        console.log(
+          `⏭️  Skipped: ${template.name} (${template.language}) - already exists`
+        );
+        skipped++;
+        continue;
+      }
 
-    for (const template of templates) {
-        try {
-            const existing = await prisma.promptTemplate.findFirst({
-                where: {
-                    name: template.name,
-                    language: template.language,
-                },
-            });
+      await prisma.promptTemplate.create({
+        data: template,
+      });
 
-            if (existing) {
-                console.log(
-                    `⏭️  Skipped: ${template.name} (${template.language}) - already exists`
-                );
-                skipped++;
-                continue;
-            }
-
-            await prisma.promptTemplate.create({
-                data: template,
-            });
-
-            console.log(`✅ Created: ${template.name} (${template.language})`);
-            created++;
-        } catch (error) {
-            console.error(
-                `❌ Failed to create template ${template.name} (${template.language}):`,
-                error
-            );
-        }
+      console.log(`✅ Created: ${template.name} (${template.language})`);
+      created++;
+    } catch (error) {
+      console.error(
+        `❌ Failed to create template ${template.name} (${template.language}):`,
+        error
+      );
     }
+  }
 
-    console.log(`\n📊 Summary:`);
-    console.log(`   ✅ Created: ${created}`);
-    console.log(`   ⏭️  Skipped: ${skipped}`);
-    console.log(`   📝 Total: ${templates.length}\n`);
+  console.log(`\n📊 Summary:`);
+  console.log(`   ✅ Created: ${created}`);
+  console.log(`   ⏭️  Skipped: ${skipped}`);
+  console.log(`   📝 Total: ${templates.length}\n`);
 }
 
 async function main() {
-    try {
-        await seedPromptsTemplates();
-        console.log('✨ Seeding completed successfully!');
-    } catch (error) {
-        console.error('❌ Seeding failed:', error);
-        throw error;
-    } finally {
-        await prisma.$disconnect();
-    }
+  try {
+    await seedPromptsTemplates();
+    console.log('✨ Seeding completed successfully!');
+  } catch (error) {
+    console.error('❌ Seeding failed:', error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

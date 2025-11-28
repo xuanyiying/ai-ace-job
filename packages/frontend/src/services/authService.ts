@@ -49,4 +49,16 @@ export const authService = {
     const response = await axios.get('/auth/me');
     return response.data;
   },
+
+  verifyEmail: async (token: string): Promise<void> => {
+    await axios.post('/auth/verify-email', { token });
+  },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    await axios.post('/auth/forgot-password', { email });
+  },
+
+  resetPassword: async (token: string, newPassword: string): Promise<void> => {
+    await axios.post('/auth/reset-password', { token, newPassword });
+  },
 };

@@ -53,4 +53,4 @@ import { PrismaModule } from '../prisma/prisma.module';
     AIEngineService,
   ],
 })
-export class AIProvidersModule { }
+export class AIProvidersModule {}

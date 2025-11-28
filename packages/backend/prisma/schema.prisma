@@ -36,6 +36,11 @@ model User {
     lastLoginAt           DateTime?
     isActive              Boolean          @default(true)
     emailVerified         Boolean          @default(false)
+    verificationToken     String?
+    resetPasswordToken    String?
+    resetPasswordExpires  DateTime?
+    stripeCustomerId      String?
+    stripeSubscriptionId  String?
 
     // Relations
     resumes       Resume[]

@@ -9,7 +9,10 @@ interface ProtectedRouteProps {
   requiredRole?: 'USER' | 'ADMIN';
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRole,
+}) => {
   const { isAuthenticated, token, user, setAuth, clearAuth } = useAuthStore();
   const [loading, setLoading] = useState(true);
 

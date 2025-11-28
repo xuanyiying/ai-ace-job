@@ -36,8 +36,8 @@ export class PromptTemplateManager {
           where: {
             name_language: {
               name: template.name,
-              language: template.language
-            }
+              language: template.language,
+            },
           },
         });
 
@@ -54,7 +54,9 @@ export class PromptTemplateManager {
               isActive: true,
             },
           });
-          this.logger.log(`Created predefined template: ${template.name} (${template.language})`);
+          this.logger.log(
+            `Created predefined template: ${template.name} (${template.language})`
+          );
         }
       } catch (error) {
         this.logger.error(
@@ -433,7 +435,9 @@ export class PromptTemplateManager {
       // Clear cache
       this.templateCache.clear();
 
-      this.logger.log(`Created template: ${data.name} (${data.language || 'en'})`);
+      this.logger.log(
+        `Created template: ${data.name} (${data.language || 'en'})`
+      );
 
       return created as PromptTemplate;
     } catch (error) {
