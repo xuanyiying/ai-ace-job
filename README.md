@@ -151,61 +151,61 @@ The platform follows a modern microservices-inspired architecture within a monor
 
 ## Detailed Architecture Diagram
 
-```
-graph TD
-    A["User Interface"] --> B["Load Balancer/Nginx"]
-    B --> C["Frontend App React/Vite"]
-    B --> D["Backend Service NestJS"]
+```mermaid
+flowchart TD
+    A[User Interface] --> B[Load Balancer/Nginx]
+    B --> C[Frontend App React/Vite]
+    B --> D[Backend Service NestJS]
     
     C <--> D
     
-    D --> E["PostgreSQL Database"]
-    D --> F["Redis Cache"]
+    D --> E[PostgreSQL Database]
+    D --> F[Redis Cache]
     
-    D --> G["AI Providers"]
-    G --> G1["OpenAI"]
-    G --> G2["Qwen"]
-    G --> G3["DeepSeek"]
-    G --> G4["Gemini"]
-    G --> G5["Ollama"]
+    D --> G[AI Providers]
+    G --> G1[OpenAI]
+    G --> G2[Qwen]
+    G --> G3[DeepSeek]
+    G --> G4[Gemini]
+    G --> G5[Ollama]
     
-    D --> H["Object Storage"]
-    H --> H1["AWS S3"]
-    H --> H2["Aliyun OSS"]
-    H --> H3["Tencent COS"]
-    H --> H4["MinIO"]
+    D --> H[Object Storage]
+    H --> H1[AWS S3]
+    H --> H2[Aliyun OSS]
+    H --> H3[Tencent COS]
+    H --> H4[MinIO]
     
-    D --> I["Payment Gateways"]
-    I --> I1["Stripe"]
-    I --> I2["Paddle"]
+    D --> I[Payment Gateways]
+    I --> I1[Stripe]
+    I --> I2[Paddle]
     
-    J["Monitoring System"] --> D
-    J --> K["Prometheus"]
-    J --> L["Grafana"]
-    J --> M["Loki"]
+    J[Monitoring System] --> D
+    J --> K[Prometheus]
+    J --> L[Grafana]
+    J --> M[Loki]
     
-    subgraph "User Entry"
+    subgraph UserEntry [User Entry]
         A
         B
     end
     
-    subgraph "Application Services"
+    subgraph AppServices [Application Services]
         C
         D
     end
     
-    subgraph "Data Storage"
+    subgraph DataStorage [Data Storage]
         E
         F
     end
     
-    subgraph "Third-party Integrations"
+    subgraph Integrations [Third-party Integrations]
         G
         H
         I
     end
     
-    subgraph "Monitoring & Operations"
+    subgraph Monitoring [Monitoring & Operations]
         J
         K
         L

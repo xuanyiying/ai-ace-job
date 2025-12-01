@@ -148,63 +148,63 @@
 6. 生成优化后的 PDF 简历
 7. 根据内容准备面试问题
 
-## 详细架构图
+## 架构图
 
-```
-graph TD
-    A["用户界面"] --> B["负载均衡器/Nginx"]
-    B --> C["前端应用 React/Vite"]
-    B --> D["后端服务 NestJS"]
+```mermaid
+flowchart TD
+    A[用户界面] --> B[负载均衡器/Nginx]
+    B --> C[前端应用 React/Vite]
+    B --> D[后端服务 NestJS]
     
     C <--> D
     
-    D --> E["PostgreSQL数据库"]
-    D --> F["Redis缓存"]
+    D --> E[PostgreSQL数据库]
+    D --> F[Redis缓存]
     
-    D --> G["AI提供商"]
-    G --> G1["OpenAI"]
-    G --> G2["通义千问"]
-    G --> G3["DeepSeek"]
-    G --> G4["Gemini"]
-    G --> G5["Ollama"]
+    D --> G[AI提供商]
+    G --> G1[OpenAI]
+    G --> G2[通义千问]
+    G --> G3[DeepSeek]
+    G --> G4[Gemini]
+    G --> G5[Ollama]
     
-    D --> H["对象存储"]
-    H --> H1["AWS S3"]
-    H --> H2["阿里云 OSS"]
-    H --> H3["腾讯 COS"]
-    H --> H4["MinIO"]
+    D --> H[对象存储]
+    H --> H1[AWS S3]
+    H --> H2[阿里云 OSS]
+    H --> H3[腾讯 COS]
+    H --> H4[MinIO]
     
-    D --> I["支付网关"]
-    I --> I1["Stripe"]
-    I --> I2["Paddle"]
+    D --> I[支付网关]
+    I --> I1[Stripe]
+    I --> I2[Paddle]
     
-    J["监控系统"] --> D
-    J --> K["Prometheus"]
-    J --> L["Grafana"]
-    J --> M["Loki"]
+    J[监控系统] --> D
+    J --> K[Prometheus]
+    J --> L[Grafana]
+    J --> M[Loki]
     
-    subgraph "用户入口"
+    subgraph UserEntry [用户入口]
         A
         B
     end
     
-    subgraph "应用服务"
+    subgraph AppServices [应用服务]
         C
         D
     end
     
-    subgraph "数据存储"
+    subgraph DataStorage [数据存储]
         E
         F
     end
     
-    subgraph "第三方集成"
+    subgraph Integrations [第三方集成]
         G
         H
         I
     end
     
-    subgraph "监控运维"
+    subgraph Monitoring [监控运维]
         J
         K
         L
