@@ -17,6 +17,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
+RUN cd packages/backend && pnpm prisma generate
 RUN pnpm run build --filter=@resume-optimizer/backend...
 
 # Stage 3: Runtime
