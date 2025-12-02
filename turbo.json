@@ -15,6 +15,14 @@
             ]
         },
         "lint": {},
+        "test": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "coverage/**"
+            ]
+        },
         "dev": {
             "cache": false,
             "persistent": true

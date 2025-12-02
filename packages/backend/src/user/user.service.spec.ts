@@ -76,6 +76,13 @@ describe('UserService', () => {
             sendPasswordResetEmail: jest.fn(),
           },
         },
+        {
+          provide: 'InvitationService',
+          useValue: {
+            validateCode: jest.fn().mockResolvedValue(true),
+            markAsUsed: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

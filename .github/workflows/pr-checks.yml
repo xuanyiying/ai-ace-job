@@ -109,12 +109,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        working-directory: packages/backend
+        run: pnpm prisma generate
+
       - name: Setup database
         working-directory: packages/backend
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/resume_optimizer_test
         run: |
-          npx prisma migrate deploy
+          pnpm prisma migrate deploy
 
       - name: Run backend tests
         working-directory: packages/backend
