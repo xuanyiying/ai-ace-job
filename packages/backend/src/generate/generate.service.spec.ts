@@ -71,6 +71,7 @@ describe('GenerateService', () => {
   const mockQuotaService = {
     enforcePDFGenerationQuota: jest.fn(),
     incrementPDFCount: jest.fn(),
+    enforcePdfQuota: jest.fn(),
   };
 
   const mockTemplate = {

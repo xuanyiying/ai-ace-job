@@ -107,7 +107,7 @@ describe('OptimizationService', () => {
         fc.property(
           resumeDataArbitrary,
           jobDataArbitrary,
-          (resumeData: any, jobData: any) => {
+          (resumeData: any, jobData: unknown) => {
             const matchScore: MatchScore = service.calculateMatchScore(
               resumeData as ParsedResumeData,
               jobData as ParsedJobData
@@ -465,11 +465,7 @@ describe('OptimizationService', () => {
         ],
       });
 
-      const result = await service.applySuggestion(
-        optimizationId,
-        userId,
-        suggestionId
-      );
+      await service.applySuggestion(optimizationId, userId, suggestionId);
 
       expect(mockPrismaService.resume.update).toHaveBeenCalledWith({
         where: { id: resumeId },
@@ -477,7 +473,6 @@ describe('OptimizationService', () => {
           version: 2,
         }),
       });
-      expect(result).toHaveBeenCalled();
       expect(mockPrismaService.optimization.update).toHaveBeenCalled();
     });
 
