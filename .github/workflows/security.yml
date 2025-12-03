@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC
 
+permissions:  # 新增权限
+  contents: read
+  actions: read
+  security-events: write
 jobs:
   dependency-check:
     name: Check Dependencies
@@ -134,13 +138,13 @@ jobs:
           output: 'trivy-frontend.sarif'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-backend.sarif'
           category: 'trivy-backend'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-frontend.sarif'
           category: 'trivy-frontend'
