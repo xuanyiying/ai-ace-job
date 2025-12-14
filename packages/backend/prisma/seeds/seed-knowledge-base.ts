@@ -546,7 +546,7 @@ function hashContent(content: string): string {
 async function main() {
   try {
     const result = await seedKnowledgeBase();
-    console.log('✨ Knowledge base seeding completed successfully!');
+    console.log('✨ Knowledge base seeding completed successfully!', result);
     console.log(
       `Total documents in database: ${await (prisma as any).vectorDocument.count()}`
     );
