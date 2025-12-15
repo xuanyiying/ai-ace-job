@@ -1,5 +1,13 @@
 /* Mobile responsiveness for PricingPage */
 
+/* Large screens */
+@media (min-width: 1920px) {
+    .pricing-container {
+        max-width: 1400px !important;
+        margin: 0 auto;
+    }
+}
+
 /* Mobile devices */
 @media (max-width: 768px) {
     .pricing-container {
@@ -32,5 +40,16 @@
     .pricing-switch-container {
         flex-direction: column !important;
         gap: 8px !important;
+    }
+}
+
+/* Very small devices (320px) */
+@media (max-width: 320px) {
+    .pricing-container {
+        padding: 16px 8px !important;
+    }
+
+    .pricing-title {
+        font-size: 20px !important;
     }
 }

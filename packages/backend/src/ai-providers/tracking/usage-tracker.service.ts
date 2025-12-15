@@ -37,7 +37,7 @@ export class UsageTrackerService {
   private readonly logger = new Logger(UsageTrackerService.name);
   private costThresholds: Map<string, CostThreshold> = new Map();
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Record AI usage
@@ -349,10 +349,10 @@ export class UsageTrackerService {
         averageLatency:
           data.latencies.length > 0
             ? Math.round(
-              (data.latencies.reduce((a, b) => a + b, 0) /
-                data.latencies.length) *
-              100
-            ) / 100
+                (data.latencies.reduce((a, b) => a + b, 0) /
+                  data.latencies.length) *
+                  100
+              ) / 100
             : 0,
       }));
 
@@ -444,10 +444,10 @@ export class UsageTrackerService {
         averageLatency:
           data.latencies.length > 0
             ? Math.round(
-              (data.latencies.reduce((a, b) => a + b, 0) /
-                data.latencies.length) *
-              100
-            ) / 100
+                (data.latencies.reduce((a, b) => a + b, 0) /
+                  data.latencies.length) *
+                  100
+              ) / 100
             : 0,
       }));
 

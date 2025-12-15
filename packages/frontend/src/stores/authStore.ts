@@ -1,16 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from '../config/axios';
-
-interface User {
-  id: string;
-  email: string;
-  username?: string;
-  avatar?: string;
-  subscriptionTier: 'FREE' | 'PRO' | 'ENTERPRISE';
-  role?: 'USER' | 'ADMIN';
-  createdAt?: string;
-}
+import { User } from '../types';
 
 interface AuthState {
   user: User | null;

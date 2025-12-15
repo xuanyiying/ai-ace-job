@@ -36,11 +36,14 @@ export class VectorDbService implements OnModuleInit {
   constructor(
     private configService: ConfigService,
     private embeddingService: EmbeddingService
-  ) { }
+  ) {}
 
   async onModuleInit() {
     try {
-      const chromaUrl = this.configService.get<string>('CHROMA_DB_URL', 'http://chromadb:8000');
+      const chromaUrl = this.configService.get<string>(
+        'CHROMA_DB_URL',
+        'http://chromadb:8000'
+      );
       this.client = new ChromaClient({ path: chromaUrl });
 
       // Initialize collection
@@ -48,9 +51,13 @@ export class VectorDbService implements OnModuleInit {
         name: this.collectionName,
       });
 
-      this.logger.log(`Connected to ChromaDB at ${chromaUrl}, collection: ${this.collectionName}`);
+      this.logger.log(
+        `Connected to ChromaDB at ${chromaUrl}, collection: ${this.collectionName}`
+      );
     } catch (error) {
-      this.logger.error(`Failed to connect to ChromaDB: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to connect to ChromaDB: ${error instanceof Error ? error.message : String(error)}`
+      );
       // We don't throw here to allow app to start even if vector DB is temporarily modifying
     }
   }
@@ -112,9 +119,7 @@ export class VectorDbService implements OnModuleInit {
           documents: contents,
         });
 
-        this.logger.debug(
-          `Added ${ids.length} documents to vector database`
-        );
+        this.logger.debug(`Added ${ids.length} documents to vector database`);
       }
 
       return results;
@@ -157,7 +162,7 @@ export class VectorDbService implements OnModuleInit {
 
         for (let i = 0; i < resultIds.length; i++) {
           // Chroma returns distance (default L2), convert to similarity likely
-          // But usually we just return what we get or normalize. 
+          // But usually we just return what we get or normalize.
           // The previous implementation used: similarity = 1 / (1 + distance) for L2
           const distance = resultDistances[i] ?? 0;
           const similarity = 1 / (1 + distance);
@@ -191,7 +196,7 @@ export class VectorDbService implements OnModuleInit {
     try {
       const result = await this.collection.get({
         ids: [id],
-        include: ['embeddings', 'metadatas', 'documents'] as any
+        include: ['embeddings', 'metadatas', 'documents'] as any,
       });
 
       if (!result.ids || result.ids.length === 0) {
@@ -245,7 +250,7 @@ export class VectorDbService implements OnModuleInit {
   ): Promise<VectorDocument> {
     try {
       // Need to fetch existing data to preserve content and embedding if we only update metadata
-      // Chroma update requires id. 
+      // Chroma update requires id.
 
       const existing = await this.getDocument(id);
       if (!existing) {
@@ -288,7 +293,7 @@ export class VectorDbService implements OnModuleInit {
       const peek = await this.collection.peek({ limit: 10000 }); // limit?
       if (peek.ids && peek.ids.length > 0) {
         await this.collection.delete({
-          ids: peek.ids
+          ids: peek.ids,
         });
       }
       this.logger.debug('Cleared all documents from vector database');
@@ -296,7 +301,9 @@ export class VectorDbService implements OnModuleInit {
       // If getting all IDs is too heavy, we can delete collection and recreate
       try {
         await this.client.deleteCollection({ name: this.collectionName });
-        this.collection = await this.client.createCollection({ name: this.collectionName });
+        this.collection = await this.client.createCollection({
+          name: this.collectionName,
+        });
         this.logger.debug('Recreated collection to clear documents');
       } catch (innerError) {
         this.logger.error(
@@ -321,4 +328,3 @@ export class VectorDbService implements OnModuleInit {
     }
   }
 }
-

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Avatar,
@@ -8,6 +8,7 @@ import {
   Modal,
   Tooltip,
   Drawer,
+  message,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate, Outlet } from 'react-router-dom';
@@ -24,19 +25,32 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../stores/authStore';
+import { useConversationStore } from '../stores/conversationStore';
 import CookieConsent from '../components/CookieConsent';
 import './AppLayout.css';
 
 const { Header, Sider, Content } = Layout;
 
 const AppLayout: React.FC = () => {
-  const [selectedChat, setSelectedChat] = useState('1');
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, clearAuth } = useAuthStore();
+  const { 
+    conversations, 
+    currentConversation, 
+    deleteConversation, 
+    loadConversations, 
+    createConversation,
+    setCurrentConversation,
+    switchConversation
+  } = useConversationStore();
   const navigate = useNavigate();
   const {
     token: { colorBgContainer, colorBorderSecondary },
   } = theme.useToken();
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
 
   const handleLogout = () => {
     Modal.confirm({
@@ -51,9 +65,15 @@ const AppLayout: React.FC = () => {
     });
   };
 
-  const handleNewChat = () => {
-    const newId = Date.now().toString();
-    setSelectedChat(newId);
+  const handleNewChat = async () => {
+    try {
+      const conversation = await createConversation();
+      navigate('/chat');
+      // If we are already on chat page, we might need to handle state update there
+      // but store should handle it
+    } catch (error) {
+      message.error('创建新对话失败');
+    }
   };
 
   const handleDeleteChat = (chatId: string, e: React.MouseEvent) => {
@@ -64,11 +84,34 @@ const AppLayout: React.FC = () => {
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
-      onOk: () => {
-        console.log('Delete chat:', chatId);
+      onOk: async () => {
+        const hide = message.loading('正在删除...', 0);
+        try {
+          await deleteConversation(chatId);
+          hide();
+          message.success('删除成功');
+          if (currentConversation?.id === chatId) {
+            navigate('/chat'); // Or stay on chat but empty
+          }
+        } catch (error) {
+          hide();
+          message.error('删除失败');
+        }
       },
     });
   };
+
+  const handleSelectChat = async (chatId: string) => {
+    if (currentConversation?.id === chatId) return;
+    try {
+      await switchConversation(chatId);
+      setMobileDrawerOpen(false);
+      navigate('/chat');
+    } catch (error) {
+      message.error('切换对话失败');
+    }
+  };
+
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'profile') {
@@ -108,13 +151,6 @@ const AppLayout: React.FC = () => {
     },
   ];
 
-  // Mock history data
-  const historyItems = [
-    { key: '1', label: '简历优化建议', time: '2小时前' },
-    { key: '2', label: '模拟面试 - Java后端', time: '昨天' },
-    { key: '3', label: '自我介绍润色', time: '3天前' },
-  ];
-
   // Sidebar content component (shared between desktop and mobile)
   const SidebarContent = () => (
     <>
@@ -150,19 +186,16 @@ const AppLayout: React.FC = () => {
           历史会话
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {historyItems.map((item) => (
+          {conversations.map((item) => (
             <div
-              key={item.key}
-              onClick={() => {
-                setSelectedChat(item.key);
-                setMobileDrawerOpen(false);
-              }}
+              key={item.id}
+              onClick={() => handleSelectChat(item.id)}
               style={{
                 padding: '12px',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 background:
-                  selectedChat === item.key ? '#f0f0f0' : 'transparent',
+                  currentConversation?.id === item.id ? '#f0f0f0' : 'transparent',
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
@@ -171,12 +204,12 @@ const AppLayout: React.FC = () => {
                 overflow: 'hidden',
               }}
               onMouseEnter={(e) => {
-                if (selectedChat !== item.key) {
+                if (currentConversation?.id !== item.id) {
                   e.currentTarget.style.background = '#fafafa';
                 }
               }}
               onMouseLeave={(e) => {
-                if (selectedChat !== item.key) {
+                if (currentConversation?.id !== item.id) {
                   e.currentTarget.style.background = 'transparent';
                 }
               }}
@@ -202,7 +235,7 @@ const AppLayout: React.FC = () => {
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {item.label}
+                    {item.title || '新对话'}
                   </span>
                 </div>
                 <div
@@ -212,7 +245,7 @@ const AppLayout: React.FC = () => {
                     paddingLeft: '22px',
                   }}
                 >
-                  {item.time}
+                  {new Date(item.updatedAt).toLocaleDateString()}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '4px', opacity: 0.6 }}>
@@ -223,7 +256,8 @@ const AppLayout: React.FC = () => {
                     icon={<EditOutlined />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Edit:', item.key);
+                      // TODO: Implement rename
+                      console.log('Edit:', item.id);
                     }}
                   />
                 </Tooltip>
@@ -233,7 +267,7 @@ const AppLayout: React.FC = () => {
                     size="small"
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={(e) => handleDeleteChat(item.key, e)}
+                    onClick={(e) => handleDeleteChat(item.id, e)}
                   />
                 </Tooltip>
               </div>

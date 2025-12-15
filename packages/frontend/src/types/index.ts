@@ -3,9 +3,13 @@ export interface User {
   id: string;
   email: string;
   username?: string;
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  avatar?: string;
+  bio?: string;
+  phone?: string;
+  role?: 'USER' | 'ADMIN';
+  subscriptionTier: 'FREE' | 'PRO' | 'ENTERPRISE' | 'free' | 'pro' | 'enterprise';
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 // Resume types

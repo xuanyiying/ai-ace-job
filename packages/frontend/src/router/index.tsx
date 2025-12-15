@@ -9,6 +9,7 @@ import ProfilePage from '../pages/ProfilePage';
 import SettingsPage from '../pages/SettingsPage';
 import PromptManagementPage from '../pages/PromptManagementPage';
 import ModelManagementPage from '../pages/ModelManagementPage';
+import InviteCodeManagementPage from '../pages/InviteCodeManagementPage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
@@ -127,6 +128,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute requiredRole="ADMIN">
             <ModelManagementPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'admin/invite-codes',
+        element: (
+          <ProtectedRoute requiredRole="ADMIN">
+            <InviteCodeManagementPage />
           </ProtectedRoute>
         ),
       },

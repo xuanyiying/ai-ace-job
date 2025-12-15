@@ -22,7 +22,7 @@ export class MonitoringInterceptor implements NestInterceptor {
   constructor(
     private readonly metrics: MetricsService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
-  ) { }
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();

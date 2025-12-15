@@ -33,6 +33,7 @@ import {
   CreateModelConfigDto,
 } from '../services/modelAdminService';
 import './common.css';
+import './admin.css';
 
 const { Title, Text } = Typography;
 
@@ -279,17 +280,10 @@ const ModelManagementPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', height: '100%', overflow: 'auto' }}>
+    <div className="admin-container">
       <Card>
         <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16,
-            }}
-          >
+          <div className="admin-header">
             <Title level={3} style={{ margin: 0 }}>
               模型配置管理
             </Title>

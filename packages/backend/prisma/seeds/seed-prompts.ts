@@ -1,12 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
 /**
  * Seed script to populate database with default prompt templates
  * in both English and Chinese
  */
-async function seedPromptsTemplates() {
+export async function seedPromptsTemplates(prisma: PrismaClient) {
   console.log('🌱 Seeding prompt templates...');
 
   const templates = [
@@ -327,20 +325,3 @@ Return as JSON with detailed breakdown.`,
   console.log(`   ⏭️  Skipped: ${skipped}`);
   console.log(`   📝 Total: ${templates.length}\n`);
 }
-
-async function main() {
-  try {
-    await seedPromptsTemplates();
-    console.log('✨ Seeding completed successfully!');
-  } catch (error) {
-    console.error('❌ Seeding failed:', error);
-    throw error;
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});

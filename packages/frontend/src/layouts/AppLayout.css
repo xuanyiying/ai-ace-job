@@ -63,6 +63,17 @@
   }
 }
 
+/* Responsive Layout (320px - 1920px) */
+
+/* Large screens (1920px+) */
+@media (min-width: 1921px) {
+  .ant-layout {
+    max-width: 1920px;
+    margin: 0 auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 991px) {
 
@@ -87,5 +98,21 @@
   /* Ensure desktop sidebar is visible */
   .desktop-sider {
     display: flex !important;
+  }
+}
+
+/* Small mobile devices (320px) */
+@media (max-width: 375px) {
+  .mobile-header {
+    padding: 0 8px !important;
+  }
+  
+  .mobile-header .ant-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .mobile-header div {
+    font-size: 14px !important;
   }
 }

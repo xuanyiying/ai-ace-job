@@ -24,7 +24,7 @@ import { EndSessionDto } from './dto/end-session.dto';
 @Controller('interview')
 @UseGuards(JwtAuthGuard)
 export class InterviewController {
-  constructor(private interviewService: InterviewService) { }
+  constructor(private interviewService: InterviewService) {}
 
   /**
    * Generate interview questions for an optimization

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Result, Button, Typography, Card, Spin } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { paymentService } from '../services/payment.service';
 import { useAuthStore } from '../stores/authStore';
 
 const { Paragraph, Text } = Typography;
@@ -27,7 +26,7 @@ const PaymentSuccessPage: React.FC = () => {
       }
     };
 
-    if (sessionId || searchParams.get('mock')) {
+    if (sessionId) {
       verifySubscription();
     } else {
       setLoading(false);
@@ -75,7 +74,7 @@ const PaymentSuccessPage: React.FC = () => {
         >
           <div style={{ textAlign: 'center' }}>
             <Paragraph>
-              <Text strong>Order ID:</Text> {sessionId || 'MOCK-SESSION-ID'}
+              <Text strong>Order ID:</Text> {sessionId || 'N/A'}
             </Paragraph>
             <Paragraph>
               You now have access to all Pro features including unlimited

@@ -17,6 +17,14 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+/* Large screens */
+@media (min-width: 1920px) {
+    .auth-card {
+        max-width: 480px;
+        padding: 60px 50px;
+    }
+}
+
 /* Mobile devices */
 @media (max-width: 768px) {
     .auth-card {
@@ -38,5 +46,16 @@
 
     .auth-container {
         padding: 12px;
+    }
+}
+
+/* Very small devices (320px) */
+@media (max-width: 320px) {
+    .auth-card {
+        padding: 20px 16px;
+    }
+    
+    .auth-container {
+        padding: 8px;
     }
 }

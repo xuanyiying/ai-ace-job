@@ -305,12 +305,21 @@ Copy and configure environment files:
 ```bash
 # Backend
 cp packages/backend/.env.example packages/backend/.env
-# Edit with your database, Redis, and AI provider settings
 
 # Frontend
 cp packages/frontend/.env.example packages/frontend/.env
-# Edit with your API endpoint and other settings
 ```
+
+#### Payment & Subscription (Production)
+
+For production deployments, configure real payment providers instead of any mock or fallback modes:
+
+- Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and the `STRIPE_PRICE_*` IDs in `packages/backend/.env` to match your live Stripe account.
+- Set `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, and the `PADDLE_PRICE_*` IDs in `packages/backend/.env` to match your live Paddle account.
+- Set `FRONTEND_URL` in `packages/backend/.env` to the HTTPS URL of the deployed frontend so that checkout redirect URLs and webhooks are correct.
+- Ensure the frontend `.env` points `VITE_API_BASE_URL` (or equivalent) at the production backend behind TLS and that authenticated requests include the JWT access token.
+
+In production there is no mock checkout flow; if payment providers are not configured correctly, checkout and webhook endpoints will return errors instead of simulating successful payments.
 
 ### Database Setup
 

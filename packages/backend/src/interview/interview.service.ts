@@ -27,7 +27,7 @@ export class InterviewService {
   constructor(
     private prisma: PrismaService,
     private aiEngine: AIEngine
-  ) { }
+  ) {}
 
   /**
    * Generate interview questions based on resume and job
@@ -740,8 +740,9 @@ Remember to be specific with examples and quantify results when possible.`;
       <strong>Suggested Answer:</strong>
       <p>${this.escapeHtml(q.suggestedAnswer).replace(/\n/g, '<br>')}</p>
     </div>
-    ${q.tips && q.tips.length > 0
-            ? `
+    ${
+      q.tips && q.tips.length > 0
+        ? `
     <div class="tips">
       <div class="tips-title">Tips:</div>
       <ul>
@@ -749,8 +750,8 @@ Remember to be specific with examples and quantify results when possible.`;
       </ul>
     </div>
     `
-            : ''
-          }
+        : ''
+    }
   </div>
 `;
       });

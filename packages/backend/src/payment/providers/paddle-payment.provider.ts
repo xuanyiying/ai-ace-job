@@ -21,23 +21,17 @@ export class PaddlePaymentProvider implements PaymentProvider {
     const paddleApiKey = this.configService.get('PADDLE_API_KEY');
     if (paddleApiKey) {
       this.paddle = new Paddle(paddleApiKey, {
-        environment: Environment.sandbox, // Default to sandbox, can be configured
+        environment: Environment.sandbox,
       });
     } else {
-      this.logger.warn(
-        'PADDLE_API_KEY not found. Paddle payment features will be disabled.'
-      );
+      this.logger.error('PADDLE_API_KEY not found');
     }
   }
 
   async createCheckoutSession(userId: string, priceId: string) {
     if (!this.paddle) {
-      this.logger.log(
-        `Mocking Paddle checkout session for user ${userId} with price ${priceId}`
-      );
-      return {
-        transactionId: 'txn_mock_1234567890',
-      };
+      this.logger.error('Paddle is not configured');
+      throw new BadRequestException('Paddle is not configured');
     }
 
     try {
@@ -190,8 +184,8 @@ export class PaddlePaymentProvider implements PaymentProvider {
 
   async handleWebhook(signature: string, payload: any) {
     if (!this.paddle) {
-      this.logger.log('Paddle Webhook received (Mock mode)');
-      return;
+      this.logger.error('Paddle is not configured');
+      throw new BadRequestException('Paddle is not configured');
     }
 
     const webhookSecret = this.configService.get('PADDLE_WEBHOOK_SECRET');

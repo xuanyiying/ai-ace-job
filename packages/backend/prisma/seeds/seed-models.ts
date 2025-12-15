@@ -1,11 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
 /**
  * Seed script to populate database with common AI model configurations
  */
-async function seedModelConfigs() {
+export async function seedModelConfigs(prisma: PrismaClient) {
   console.log('🌱 Seeding model configurations...');
 
   const models = [
@@ -38,7 +36,7 @@ async function seedModelConfigs() {
     {
       name: 'qwen-turbo',
       provider: 'qwen',
-      apiKey: 'placeholder-please-update',
+      apiKey: 'sk-97b2966462e54facaa1857cf8dae422c',
       defaultTemperature: 0.7,
       defaultMaxTokens: 2000,
       costPerInputToken: 0.000002,
@@ -49,7 +47,7 @@ async function seedModelConfigs() {
     {
       name: 'qwen-max',
       provider: 'qwen',
-      apiKey: 'placeholder-please-update',
+      apiKey: 'sk-97b2966462e54facaa1857cf8dae422c',
       defaultTemperature: 0.7,
       defaultMaxTokens: 6000,
       costPerInputToken: 0.00004,
@@ -144,20 +142,3 @@ async function seedModelConfigs() {
     );
   }
 }
-
-async function main() {
-  try {
-    await seedModelConfigs();
-    console.log('✨ Seeding completed successfully!');
-  } catch (error) {
-    console.error('❌ Seeding failed:', error);
-    throw error;
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});

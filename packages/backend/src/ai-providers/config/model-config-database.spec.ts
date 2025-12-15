@@ -195,7 +195,7 @@ describe('ModelConfigService (Database)', () => {
 
       expect(result).toBeDefined();
       expect(mockPrismaService.modelConfig.upsert).toHaveBeenCalled();
-      
+
       const upsertCall = mockPrismaService.modelConfig.upsert.mock.calls[0][0];
       expect(upsertCall.where.name).toBe('new-model');
       // API key should be encrypted (not plain text)

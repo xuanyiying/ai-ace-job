@@ -28,6 +28,7 @@ import {
   PromptTemplate,
   CreatePromptDto,
 } from '../services/promptAdminService';
+import './admin.css';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -221,17 +222,10 @@ const PromptManagementPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', height: '100%', overflow: 'auto' }}>
+    <div className="admin-container">
       <Card>
         <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16,
-            }}
-          >
+          <div className="admin-header">
             <Title level={3} style={{ margin: 0 }}>
               提示词管理
             </Title>

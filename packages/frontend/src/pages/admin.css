@@ -1,0 +1,75 @@
+/* Responsive Admin Pages */
+.admin-container {
+    padding: 24px;
+    height: 100%;
+    overflow: auto;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* Large screens */
+@media (min-width: 1920px) {
+    .admin-container {
+        max-width: 1800px;
+        padding: 40px;
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 16px;
+    }
+
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .admin-header .ant-space {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .admin-header .ant-select {
+        width: 100% !important;
+    }
+
+    .admin-header .ant-btn {
+        flex: 1;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .admin-container {
+        padding: 12px;
+    }
+
+    .admin-header .ant-typography {
+        font-size: 20px !important;
+    }
+}
+
+/* Very small devices (320px) */
+@media (max-width: 320px) {
+    .admin-container {
+        padding: 8px;
+    }
+
+    .admin-header .ant-typography {
+        font-size: 18px !important;
+    }
+
+    .ant-modal-content {
+        padding: 16px !important;
+    }
+}

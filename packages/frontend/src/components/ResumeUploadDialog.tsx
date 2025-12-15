@@ -46,6 +46,8 @@ interface ParsedResumeData {
   skills?: string[];
 }
 
+const { TextArea } = Input;
+
 const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
   visible,
   onClose,
@@ -120,17 +122,31 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
   };
 
   const handleConfirm = () => {
-    if (!uploadedResume || !parsedData) {
-      message.error('请先完成上传和解析');
+    const resumeText: string = form.getFieldValue('resumeText');
+    const hasText = !!resumeText && resumeText.trim().length > 0;
+
+    if (!uploadedResume && !parsedData && !hasText) {
+      message.error('请上传简历文件或粘贴简历内容');
       return;
     }
 
-    onUploadSuccess({
-      resume: uploadedResume,
-      parsedData: parsedData,
-    });
+    if (uploadedResume && parsedData) {
+      onUploadSuccess({
+        resume: uploadedResume,
+        parsedData: parsedData,
+      });
+    } else if (hasText) {
+      onUploadSuccess({
+        resume: {
+          id: 'manual-text',
+          originalFilename: '粘贴的简历内容',
+          source: 'manual',
+        },
+        parsedData: null,
+        rawText: resumeText.trim(),
+      });
+    }
 
-    // Reset form
     setFileList([]);
     form.resetFields();
     setUploadedResume(null);
@@ -152,7 +168,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
 
   const uploadProps: UploadProps = {
     name: 'file',
-    accept: '.pdf,.doc,.docx,.txt',
+    accept: '.pdf,.doc,.docx',
     maxCount: 1,
     beforeUpload: (file) => {
       const isPDF = file.type === 'application/pdf';
@@ -160,10 +176,9 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         file.type === 'application/msword' ||
         file.type ===
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      const isTxt = file.type === 'text/plain';
 
-      if (!isPDF && !isDoc && !isTxt) {
-        message.error('只能上传 PDF、Word 或 TXT 文档！');
+      if (!isPDF && !isDoc) {
+        message.error('只能上传 PDF 或 Word 文档！');
         return false;
       }
 
@@ -194,7 +209,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
           key="confirm"
           type="primary"
           onClick={handleConfirm}
-          disabled={!uploadedResume || !parsedData || uploading || parsing}
+          disabled={uploading || parsing}
           loading={uploading || parsing}
         >
           确认并继续
@@ -202,14 +217,14 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
       ]}
     >
       <Form form={form} layout="vertical">
-        <Form.Item label="选择简历文件">
+        <Form.Item label="选择简历文件（支持 PDF / DOCX）">
           <Upload.Dragger {...uploadProps} disabled={uploading || parsing}>
             <p style={{ marginBottom: '8px' }}>
               <CloudUploadOutlined style={{ fontSize: '32px' }} />
             </p>
             <p>点击或拖拽文件到此区域上传</p>
             <p style={{ color: token.colorTextTertiary, fontSize: '12px' }}>
-              支持 PDF、Word、TXT 格式，文件大小不超过 10MB
+              支持 PDF、Word 格式，文件大小不超过 10MB
             </p>
           </Upload.Dragger>
         </Form.Item>
@@ -240,6 +255,28 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
             </Button>
           </Form.Item>
         )}
+
+        <Divider plain>或</Divider>
+
+        <Form.Item
+          label="直接粘贴简历内容"
+          name="resumeText"
+        >
+          <TextArea
+            rows={6}
+            placeholder="在此粘贴完整的简历内容，建议包含个人信息、教育背景和工作经历。"
+            disabled={uploading || parsing}
+          />
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 12,
+              color: token.colorTextTertiary,
+            }}
+          >
+            至少提供上传文件或粘贴文本中的一种方式。
+          </div>
+        </Form.Item>
 
         {uploading && (
           <Form.Item label="上传进度">

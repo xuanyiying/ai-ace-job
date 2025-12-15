@@ -176,7 +176,9 @@ const ChatPage: React.FC = () => {
 
   const onPromptsItemClick = (info: { data: PromptsItemType }) => {
     const key = info.data.key as string;
-    if (key === 'job') {
+    if (key === 'resume') {
+      setUploadDialogVisible(true);
+    } else if (key === 'job') {
       setJobInputDialogVisible(true);
     } else if (key === 'pdf') {
       // Show PDF generation card in chat
@@ -449,7 +451,7 @@ const ChatPage: React.FC = () => {
             <Button
               size="small"
               style={{ borderRadius: '16px' }}
-              onClick={() => handleSubmit('帮我优化简历')}
+              onClick={() => setUploadDialogVisible(true)}
             >
               📄 简历优化
             </Button>

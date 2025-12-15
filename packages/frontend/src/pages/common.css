@@ -7,6 +7,15 @@
     margin: 0 auto;
 }
 
+/* Large screens */
+@media (min-width: 1920px) {
+    .settings-container,
+    .profile-container {
+        max-width: 1600px;
+        padding: 40px;
+    }
+}
+
 /* Mobile devices */
 @media (max-width: 768px) {
 
@@ -22,5 +31,13 @@
     .settings-container,
     .profile-container {
         padding: 12px;
+    }
+}
+
+/* Very small devices (320px) */
+@media (max-width: 320px) {
+    .settings-container,
+    .profile-container {
+        padding: 8px;
     }
 }

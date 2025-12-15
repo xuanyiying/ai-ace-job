@@ -15,7 +15,6 @@ import { CleanupTask } from './cleanup.task';
 import GenerateService from '../generate/generate.service';
 import { StorageService } from '../storage/storage.service';
 import { RedisService } from '../redis/redis.service';
-import { BackupService } from '../backup/backup.service';
 
 describe('CleanupTask', () => {
   let cleanupTask: CleanupTask;

@@ -507,7 +507,10 @@ export class PerformanceMonitorService {
             alertType: 'EXCESSIVE_TOKEN_USAGE',
             threshold: threshold.dailyTokenLimit,
             currentValue: dailyTokens,
-            severity: dailyTokens > threshold.dailyTokenLimit * 1.5 ? 'CRITICAL' : 'WARNING',
+            severity:
+              dailyTokens > threshold.dailyTokenLimit * 1.5
+                ? 'CRITICAL'
+                : 'WARNING',
             period: 'daily',
           });
 
@@ -529,7 +532,10 @@ export class PerformanceMonitorService {
             alertType: 'EXCESSIVE_TOKEN_USAGE',
             threshold: threshold.monthlyTokenLimit,
             currentValue: monthlyTokens,
-            severity: monthlyTokens > threshold.monthlyTokenLimit * 1.5 ? 'CRITICAL' : 'WARNING',
+            severity:
+              monthlyTokens > threshold.monthlyTokenLimit * 1.5
+                ? 'CRITICAL'
+                : 'WARNING',
             period: 'monthly',
           });
 
@@ -548,7 +554,10 @@ export class PerformanceMonitorService {
             alertType: 'EXCESSIVE_COST',
             threshold: threshold.dailyCostLimit,
             currentValue: dailyCost,
-            severity: dailyCost > threshold.dailyCostLimit * 1.5 ? 'CRITICAL' : 'WARNING',
+            severity:
+              dailyCost > threshold.dailyCostLimit * 1.5
+                ? 'CRITICAL'
+                : 'WARNING',
             period: 'daily',
           });
 
@@ -567,7 +576,10 @@ export class PerformanceMonitorService {
             alertType: 'EXCESSIVE_COST',
             threshold: threshold.monthlyCostLimit,
             currentValue: monthlyCost,
-            severity: monthlyCost > threshold.monthlyCostLimit * 1.5 ? 'CRITICAL' : 'WARNING',
+            severity:
+              monthlyCost > threshold.monthlyCostLimit * 1.5
+                ? 'CRITICAL'
+                : 'WARNING',
             period: 'monthly',
           });
 

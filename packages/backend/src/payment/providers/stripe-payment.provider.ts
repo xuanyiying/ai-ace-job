@@ -24,20 +24,14 @@ export class StripePaymentProvider implements PaymentProvider {
         apiVersion: '2025-02-24.acacia',
       });
     } else {
-      this.logger.warn(
-        'STRIPE_SECRET_KEY not found. Stripe payment features will be disabled.'
-      );
+      this.logger.error('STRIPE_SECRET_KEY not found');
     }
   }
 
   async createCheckoutSession(userId: string, priceId: string) {
     if (!this.stripe) {
-      this.logger.log(
-        `Mocking checkout session for user ${userId} with price ${priceId}`
-      );
-      return {
-        url: `${this.configService.get('FRONTEND_URL')}/payment/success?mock=true`,
-      };
+      this.logger.error('Stripe is not configured');
+      throw new BadRequestException('Stripe is not configured');
     }
 
     try {
@@ -175,8 +169,8 @@ export class StripePaymentProvider implements PaymentProvider {
 
   async handleWebhook(signature: string, payload: Buffer) {
     if (!this.stripe) {
-      this.logger.log('Webhook received (Mock mode)');
-      return;
+      this.logger.error('Stripe is not configured');
+      throw new BadRequestException('Stripe is not configured');
     }
 
     const webhookSecret = this.configService.get('STRIPE_WEBHOOK_SECRET');

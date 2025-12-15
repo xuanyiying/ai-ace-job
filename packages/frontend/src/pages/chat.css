@@ -1,5 +1,22 @@
 /* Mobile responsiveness for ChatPage */
 
+/* Large screens (1920px+) */
+@media (min-width: 1920px) {
+    .chat-bubble-list {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* Desktop wide screens */
+@media (min-width: 1200px) {
+    .chat-input-area {
+        max-width: 1000px;
+        margin: 0 auto;
+        border-radius: 12px 12px 0 0;
+    }
+}
+
 /* Mobile devices */
 @media (max-width: 768px) {
     .chat-bubble-list {
@@ -33,5 +50,20 @@
     .chat-quick-actions button {
         font-size: 12px !important;
         padding: 4px 8px !important;
+    }
+}
+
+/* Very small devices (320px) */
+@media (max-width: 320px) {
+    .chat-bubble-list {
+        padding: 8px !important;
+    }
+
+    .chat-input-area {
+        padding: 6px 8px 10px !important;
+    }
+    
+    .chat-quick-actions {
+        display: none !important; /* Hide quick actions on very small screens to save space */
     }
 }
