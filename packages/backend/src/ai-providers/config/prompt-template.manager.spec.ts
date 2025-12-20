@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PromptTemplateManager } from './prompt-template.manager';
-import { PrismaService } from '../../prisma/prisma.service';
-import { PromptScenario } from '../interfaces/prompt-template.interface';
+import { PromptTemplateManager } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
+import { PromptScenario } from '@/ai-providers';
 import * as fc from 'fast-check';
 
 describe('PromptTemplateManager', () => {

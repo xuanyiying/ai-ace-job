@@ -9,9 +9,9 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ModelConfigService } from './model-config.service';
-import { AIProviderFactory } from '../factory/ai-provider.factory';
+import { PrismaService } from '@/prisma/prisma.service';
+import { ModelConfigService } from '@/ai-providers';
+import { AIProviderFactory } from '@/ai-providers';
 
 @Injectable()
 export class ConfigWatcherService implements OnModuleInit, OnModuleDestroy {

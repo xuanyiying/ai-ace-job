@@ -4,10 +4,9 @@
  * **Feature: multi-llm-provider-integration, Property 1: 多提供商支持**
  * **Validates: Requirements 1.5, 9.1, 9.2, 9.3, 9.4, 9.6**
  */
-
-import { OllamaProvider } from './ollama.provider';
-import { OllamaConfig } from '../interfaces/model-config.interface';
-import { AIRequest } from '../interfaces';
+import { OllamaProvider } from '@/ai-providers';
+import { OllamaConfig } from '@/ai-providers/interfaces/model-config.interface';
+import { AIRequest } from '@/ai-providers/interfaces';
 import axios from 'axios';
 
 jest.mock('axios');

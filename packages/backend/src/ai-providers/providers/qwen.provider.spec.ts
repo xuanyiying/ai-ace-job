@@ -222,6 +222,7 @@ describe('QwenProvider', () => {
 
       const streamGenerator = provider.stream(request);
       await expect(async () => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const _ of streamGenerator) {
           // Iterate through stream
         }

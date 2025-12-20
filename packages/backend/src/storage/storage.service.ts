@@ -28,7 +28,11 @@ export class StorageService {
    * Upload a single file
    */
   async uploadFile(data: UploadFileData): Promise<StorageFile> {
-    this.logger.log(`Starting file upload: ${data.originalName}`);
+    // Properly encode Chinese filename
+    const originalName = Buffer.from(data.originalName, 'latin1').toString(
+      'utf-8'
+    );
+    this.logger.log(`Starting file upload: ${originalName}`);
 
     // Validate file type
     this.validateFileType(data.fileType, data.mimetype);
@@ -62,10 +66,10 @@ export class StorageService {
     const folder = this.getFolderByType(data.fileType);
 
     // Upload to OSS
-    this.logger.log(`Uploading to OSS: ${data.originalName}`);
+    this.logger.log(`Uploading to OSS: ${originalName}`);
     const uploadResult = await this.ossService.uploadFile(
       fileData,
-      data.originalName,
+      originalName,
       data.mimetype,
       folder
     );
@@ -74,7 +78,7 @@ export class StorageService {
     const file = await this.prisma.storage.create({
       data: {
         filename: path.basename(uploadResult.key),
-        originalName: data.originalName,
+        originalName: originalName,
         mimeType: data.mimetype,
         fileSize: data.size,
         fileUrl: uploadResult.url,

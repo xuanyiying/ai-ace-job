@@ -1,4 +1,4 @@
-import { PromptScenario } from '../interfaces/prompt-template.interface';
+import { PromptScenario } from '@/ai-providers';
 
 /**
  * Predefined template definitions with multi-language support

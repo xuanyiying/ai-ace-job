@@ -4,12 +4,11 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { PerformanceMonitorService } from './performance-monitor.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PerformanceMonitorService } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PerformanceMonitorService', () => {
   let service: PerformanceMonitorService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     performanceMetrics: {
@@ -35,7 +34,6 @@ describe('PerformanceMonitorService', () => {
     }).compile();
 
     service = module.get<PerformanceMonitorService>(PerformanceMonitorService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });

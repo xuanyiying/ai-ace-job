@@ -5,12 +5,11 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { PerformanceMonitorService } from './performance-monitor.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PerformanceMonitorService } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PerformanceMonitorService - Agent Thresholds', () => {
   let service: PerformanceMonitorService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     performanceMetrics: {
@@ -36,7 +35,6 @@ describe('PerformanceMonitorService - Agent Thresholds', () => {
     }).compile();
 
     service = module.get<PerformanceMonitorService>(PerformanceMonitorService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   afterEach(() => {
@@ -174,8 +172,8 @@ describe('PerformanceMonitorService - Agent Thresholds', () => {
       service.setAgentThreshold('pitch-perfect', threshold);
 
       const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      new Date(today.getFullYear(), today.getMonth(), 1);
+      new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
       const mockRecords = [
         {
@@ -265,9 +263,8 @@ describe('PerformanceMonitorService - Agent Thresholds', () => {
       service.setAgentThreshold('pitch-perfect', threshold);
 
       const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
+      new Date(today.getFullYear(), today.getMonth(), 1);
+      new Date(today.getFullYear(), today.getMonth() + 1, 0);
       const mockRecords = [
         {
           id: '1',

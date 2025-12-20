@@ -169,11 +169,30 @@ export class ResumeService {
   async deleteResume(resumeId: string, userId: string): Promise<void> {
     const resume = await this.getResume(resumeId, userId);
 
-    // Delete file from disk if it exists
+    // Delete file from storage
     if (resume.fileUrl) {
-      const filepath = path.join(process.cwd(), resume.fileUrl);
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
+      // Check if fileUrl is a URL (OSS) or local path
+      if (
+        resume.fileUrl.startsWith('http://') ||
+        resume.fileUrl.startsWith('https://')
+      ) {
+        // Delete from OSS using storage service
+        const storageRecord = await this.prisma.storage.findFirst({
+          where: {
+            userId,
+            fileUrl: resume.fileUrl,
+          },
+        });
+
+        if (storageRecord) {
+          await this.storageService.deleteFile(storageRecord.id, userId);
+        }
+      } else {
+        // Legacy: Delete from local filesystem
+        const filepath = path.join(process.cwd(), resume.fileUrl);
+        if (fs.existsSync(filepath)) {
+          fs.unlinkSync(filepath);
+        }
       }
     }
 
@@ -208,11 +227,6 @@ export class ResumeService {
   /**
    * Parse resume file content
    * Extracts text from file and uses AI engine to parse structured data
-   * Caches results for performance optimization (Requirement 10.1, 10.3)
-   */
-  /**
-   * Parse resume file content
-   * Extracts text from file and uses AI engine to parse structured data
    * Uses Queue for rate limiting and resilience
    */
   async parseResume(resumeId: string, userId: string): Promise<any> {
@@ -220,7 +234,11 @@ export class ResumeService {
 
     // Return cached parsed data if already completed
     if (resume.parseStatus === ParseStatus.COMPLETED && resume.parsedData) {
-      return resume.parsedData;
+      const parsedData = resume.parsedData as Record<string, any>;
+      return {
+        ...parsedData,
+        extractedText: parsedData.extractedText || null,
+      };
     }
 
     try {
@@ -230,16 +248,47 @@ export class ResumeService {
         data: { parseStatus: ParseStatus.PROCESSING },
       });
 
-      // Read file from disk
-      const filepath = path.join(process.cwd(), resume.fileUrl || '');
-      if (!fs.existsSync(filepath)) {
-        throw new Error(`Resume file not found at ${filepath}`);
+      // Get file buffer from storage service
+      if (!resume.fileUrl) {
+        throw new Error('Resume file URL is missing');
       }
 
-      const fileBuffer = fs.readFileSync(filepath);
+      let fileBuffer: Buffer;
+
+      // Check if fileUrl is a URL (OSS) or local path
+      if (
+        resume.fileUrl.startsWith('http://') ||
+        resume.fileUrl.startsWith('https://')
+      ) {
+        // Download from OSS using storage service
+        const storageRecord = await this.prisma.storage.findFirst({
+          where: {
+            userId,
+            fileUrl: resume.fileUrl,
+          },
+        });
+
+        if (!storageRecord) {
+          throw new Error('Storage record not found for resume file');
+        }
+
+        const downloadResult = await this.storageService.downloadFile(
+          storageRecord.id,
+          userId
+        );
+        fileBuffer = downloadResult.buffer;
+      } else {
+        // Legacy: Read from local filesystem
+        const filepath = path.join(process.cwd(), resume.fileUrl);
+        if (!fs.existsSync(filepath)) {
+          throw new Error(`Resume file not found at ${filepath}`);
+        }
+        fileBuffer = fs.readFileSync(filepath);
+      }
+
       const fileType = resume.fileType || 'txt';
 
-      // Extract text from file
+      // Extract text from file - pass original filename for better encoding handling
       const textContent = await this.aiEngine.extractTextFromFile(
         fileBuffer,
         fileType
@@ -256,14 +305,22 @@ export class ResumeService {
       // This preserves the synchronous API feel for fast operations
       try {
         const result = await job.finished();
-        return result;
+        // Include extracted text in the response
+        return {
+          ...(result as Record<string, any>),
+          extractedText: textContent,
+        };
       } catch (error) {
         // If waiting times out or job fails, we still return the current status
         // The frontend can poll for updates if needed
         this.logger.log(
           `Job ${job.id} queued but not finished immediately: ${error}`
         );
-        return { message: 'Processing started', jobId: job.id };
+        return {
+          message: 'Processing started',
+          jobId: job.id,
+          extractedText: textContent,
+        };
       }
     } catch (error) {
       this.logger.error(`Error parsing resume ${resumeId}:`, error);

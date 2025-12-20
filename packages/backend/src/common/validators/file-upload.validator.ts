@@ -83,8 +83,9 @@ export class FileUploadValidator {
       }
     }
 
-    // Check for null bytes (common in malicious files)
-    if (buffer.includes(0x00)) {
+    // Check for null bytes only in text files, not binary files like PDF or DOCX
+    // Binary files naturally contain null bytes and this check is inappropriate for them
+    if (file.mimetype === 'text/plain' && buffer.includes(0x00)) {
       throw new BadRequestException('File contains invalid null bytes');
     }
   }

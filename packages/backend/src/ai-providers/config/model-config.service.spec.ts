@@ -6,9 +6,9 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { ModelConfigService, ModelConfig } from './model-config.service';
-import { YamlConfigLoader } from './yaml-config.loader';
-import { PrismaService } from '../../prisma/prisma.service';
+import { ModelConfigService, ModelConfig } from '@/ai-providers';
+import { YamlConfigLoader } from '@/ai-providers/config';
+import { PrismaService } from '@/prisma/prisma.service';
 import * as fc from 'fast-check';
 
 describe('ModelConfigService', () => {

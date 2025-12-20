@@ -5,13 +5,12 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { ModelConfigService } from './model-config.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { YamlConfigLoader } from './yaml-config.loader';
+import { ModelConfigService } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
+import { YamlConfigLoader } from '@/ai-providers/config';
 
 describe('ModelConfigService (Database)', () => {
   let service: ModelConfigService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     modelConfig: {
@@ -50,7 +49,6 @@ describe('ModelConfigService (Database)', () => {
     }).compile();
 
     service = module.get<ModelConfigService>(ModelConfigService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   afterEach(() => {

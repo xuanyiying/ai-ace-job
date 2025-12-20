@@ -12,10 +12,10 @@ import {
   AIStreamChunk,
   ModelInfo,
 } from '../interfaces';
-import { OpenAIConfig } from '../interfaces/model-config.interface';
-import { AIHttpClient } from '../utils/http-client';
-import { toAIError } from '../utils/ai-error';
-import { RetryHandler } from '../utils/retry-handler';
+import { OpenAIConfig } from '@/ai-providers/interfaces/model-config.interface';
+import { AIHttpClient } from '@/ai-providers/utils/http-client';
+import { toAIError } from '@/ai-providers/utils/ai-error';
+import { RetryHandler } from '@/ai-providers/utils/retry-handler';
 
 /**
  * OpenAI API Response structure

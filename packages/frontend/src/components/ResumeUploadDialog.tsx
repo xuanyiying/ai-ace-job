@@ -102,6 +102,12 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         const parsed = await resumeService.parseResume(resume.id);
         setParsedData(parsed);
         setParseError(null);
+
+        // Fill extracted text into the textarea
+        if (parsed.extractedText) {
+          form.setFieldsValue({ resumeText: parsed.extractedText });
+        }
+
         message.success('简历解析完成');
       } catch (error) {
         const errorMsg =
@@ -258,10 +264,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
 
         <Divider plain>或</Divider>
 
-        <Form.Item
-          label="直接粘贴简历内容"
-          name="resumeText"
-        >
+        <Form.Item label="直接粘贴简历内容" name="resumeText">
           <TextArea
             rows={6}
             placeholder="在此粘贴完整的简历内容，建议包含个人信息、教育背景和工作经历。"

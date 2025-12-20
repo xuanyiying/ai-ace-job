@@ -7,7 +7,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { YamlConfigLoader } from './yaml-config.loader';
 import { ModelConfig as PrismaModelConfig } from '@prisma/client';
 import * as crypto from 'crypto';
 
@@ -38,8 +37,7 @@ export class ModelConfigService implements OnModuleInit {
 
   constructor(
     private configService: ConfigService,
-    private prisma: PrismaService,
-    private yamlLoader: YamlConfigLoader
+    private prisma: PrismaService
   ) {
     this.encryptionKey =
       this.configService.get<string>('ENCRYPTION_KEY') ||

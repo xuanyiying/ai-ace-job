@@ -5,7 +5,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { PerformanceMetrics as PrismaPerformanceMetrics } from '@prisma/client';
 
 export interface PerformanceMetrics {

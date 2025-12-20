@@ -12,11 +12,11 @@ import {
   AIResponse,
   AIStreamChunk,
   ModelInfo,
-} from '../interfaces';
-import { DeepSeekConfig } from '../interfaces/model-config.interface';
-import { AIHttpClient } from '../utils/http-client';
-import { toAIError } from '../utils/ai-error';
-import { RetryHandler } from '../utils/retry-handler';
+} from '@/ai-providers/interfaces';
+import { DeepSeekConfig } from '@/ai-providers/interfaces/model-config.interface';
+import { AIHttpClient } from '@/ai-providers/utils/http-client';
+import { toAIError } from '@/ai-providers/utils/ai-error';
+import { RetryHandler } from '@/ai-providers/utils/retry-handler';
 
 /**
  * DeepSeek API Response structure (Compatible with OpenAI)

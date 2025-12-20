@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import {
   PromptTemplate,
   PromptTemplateVersion,
   TemplateRenderContext,
-} from '../interfaces/prompt-template.interface';
+} from '@/ai-providers';
 import { PREDEFINED_TEMPLATES } from './predefined-templates';
 
 /**

@@ -5,8 +5,8 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { PerformanceMonitorService } from './performance-monitor.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PerformanceMonitorService } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
 import * as fc from 'fast-check';
 
 describe('PerformanceMonitorService - Property Tests', () => {

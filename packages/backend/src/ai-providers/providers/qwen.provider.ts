@@ -13,10 +13,10 @@ import {
   AIStreamChunk,
   ModelInfo,
 } from '../interfaces';
-import { QwenConfig } from '../interfaces/model-config.interface';
-import { AIError, AIErrorCode, toAIError } from '../utils/ai-error';
-import { RetryHandler } from '../utils/retry-handler';
-import { AIHttpClient } from '../utils/http-client';
+import { QwenConfig } from '@/ai-providers/interfaces/model-config.interface';
+import { AIError, AIErrorCode, toAIError } from '@/ai-providers/utils/ai-error';
+import { RetryHandler } from '@/ai-providers/utils/retry-handler';
+import { AIHttpClient } from '@/ai-providers/utils/http-client';
 
 /**
  * Qwen API Response structure

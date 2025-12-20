@@ -37,6 +37,14 @@ export class MinIOService implements OssService {
       },
       forcePathStyle: process.env.OSS_PATH_STYLE === 'true',
     });
+
+    // Initialize bucket asynchronously
+    this.initializeBucket().catch((error) => {
+      this.logger.error(
+        'Failed to initialize bucket during construction:',
+        error
+      );
+    });
   }
 
   /**

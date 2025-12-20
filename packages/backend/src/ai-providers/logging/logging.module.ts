@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AILogger } from './ai-logger';
-import { PrismaModule } from '../../prisma/prisma.module';
+import { PrismaModule } from '@/prisma/prisma.module';
 
 /**
  * AI Logging Module
