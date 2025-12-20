@@ -7,11 +7,10 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
-import { AIProviderFactory } from './ai-provider.factory';
-import { ModelConfigService } from '../config/model-config.service';
-import { YamlConfigLoader } from '../config/yaml-config.loader';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AIError } from '../utils/ai-error';
+import { AIProviderFactory } from '@/ai-providers';
+import { ModelConfigService } from '@/ai-providers';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AIError } from '@/ai-providers/utils/ai-error';
 
 describe('AIProviderFactory', () => {
   let factory: AIProviderFactory;
@@ -21,12 +20,7 @@ describe('AIProviderFactory', () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       imports: [await ConfigModule.forRoot()],
-      providers: [
-        PrismaService,
-        YamlConfigLoader,
-        ModelConfigService,
-        AIProviderFactory,
-      ],
+      providers: [PrismaService, ModelConfigService, AIProviderFactory],
     }).compile();
 
     factory = module.get<AIProviderFactory>(AIProviderFactory);

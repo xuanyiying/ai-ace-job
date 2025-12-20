@@ -1,23 +1,23 @@
 import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  Param,
-  UseGuards,
-  Request,
-  Logger,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
   InternalServerErrorException,
+  Logger,
+  Param,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../user/guards/jwt-auth.guard';
-import { AIEngineService } from './ai-engine.service';
-import { PromptTemplateManager } from './config/prompt-template.manager';
-import { UsageTrackerService } from './tracking/usage-tracker.service';
-import { PerformanceMonitorService } from './monitoring/performance-monitor.service';
-import { AILogger } from './logging/ai-logger';
-import { AIRequest, AIResponse } from './interfaces';
+import { JwtAuthGuard } from '@/user/guards/jwt-auth.guard';
+import { AIEngineService } from '@/ai-providers/ai-engine.service';
+import { PromptTemplateManager } from '@/ai-providers/config/prompt-template.manager';
+import { UsageTrackerService } from '@/ai-providers/tracking/usage-tracker.service';
+import { PerformanceMonitorService } from '@/ai-providers/monitoring/performance-monitor.service';
+import { AILogger } from '@/ai-providers/logging/ai-logger';
+import { AIRequest, AIResponse } from '@/ai-providers/interfaces';
 
 interface AuthRequest {
   user?: { id: string };
@@ -47,12 +47,8 @@ export class AIController {
       this.logger.debug(
         `AI call request from user ${userId}: model=${request.model}, scenario=${scenario}`
       );
-      const response = await this.aiEngineService.call(
-        request,
-        userId,
-        scenario
-      );
-      return response;
+
+      return await this.aiEngineService.call(request, userId, scenario);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(`AI call failed: ${errorMsg}`);
@@ -91,7 +87,7 @@ export class AIController {
         ? `Getting available models for provider ${provider}`
         : 'Getting available models';
       this.logger.debug(msg);
-      let models;
+      let models: string | any[];
       if (provider) {
         models = this.aiEngineService.getModelsByProvider(provider);
       } else {
@@ -138,12 +134,8 @@ export class AIController {
       this.logger.debug(
         `Getting cost statistics for user ${userId}: ${start.toISOString()} to ${end.toISOString()}, groupBy=${groupBy}`
       );
-      const report = await this.aiEngineService.getCostReport(
-        start,
-        end,
-        groupBy
-      );
-      return report;
+
+      return await this.aiEngineService.getCostReport(start, end, groupBy);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to get cost statistics: ${errorMsg}`);
@@ -208,12 +200,11 @@ export class AIController {
       const start = startDate ? new Date(startDate) : undefined;
       const end = endDate ? new Date(endDate) : undefined;
       if (model) {
-        const metrics = await this.aiEngineService.getPerformanceMetrics(
+        return await this.aiEngineService.getPerformanceMetrics(
           model,
           start,
           end
         );
-        return metrics;
       } else {
         const allMetrics = await this.performanceMonitorService.getAllMetrics();
         return {
@@ -292,14 +283,14 @@ export class AIController {
       this.logger.debug(
         `Getting log statistics for user ${userId}: model=${model}, provider=${provider}, scenario=${scenario}`
       );
-      const stats = await this.aiLogger.getLogStatistics({
+
+      return await this.aiLogger.getLogStatistics({
         model,
         provider,
         scenario,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
       });
-      return stats;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to get log statistics: ${errorMsg}`);

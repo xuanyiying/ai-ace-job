@@ -7,7 +7,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { ModelConfigService } from '@/ai-providers';
 import { PrismaService } from '@/prisma/prisma.service';
-import { YamlConfigLoader } from '@/ai-providers/config';
 
 describe('ModelConfigService (Database)', () => {
   let service: ModelConfigService;
@@ -44,7 +43,6 @@ describe('ModelConfigService (Database)', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
-        YamlConfigLoader,
       ],
     }).compile();
 

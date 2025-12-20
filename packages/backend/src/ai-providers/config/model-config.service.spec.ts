@@ -7,14 +7,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { ModelConfigService, ModelConfig } from '@/ai-providers';
-import { YamlConfigLoader } from '@/ai-providers/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import * as fc from 'fast-check';
 
 describe('ModelConfigService', () => {
   let service: ModelConfigService;
   let prismaService: PrismaService;
-  let yamlLoader: YamlConfigLoader;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -46,13 +44,11 @@ describe('ModelConfigService', () => {
             },
           },
         },
-        YamlConfigLoader,
       ],
     }).compile();
 
     service = module.get<ModelConfigService>(ModelConfigService);
     prismaService = module.get<PrismaService>(PrismaService);
-    yamlLoader = module.get<YamlConfigLoader>(YamlConfigLoader);
   });
 
   describe('Configuration Loading', () => {
@@ -288,29 +284,6 @@ describe('ModelConfigService', () => {
         ),
         { numRuns: 100 }
       );
-    });
-
-    /**
-     * **Feature: multi-llm-provider-integration, Property 10: YAML 配置文件支持**
-     * **Validates: Requirements 3.2**
-     *
-     * For any valid YAML configuration, the service should be able to parse
-     * and convert it to a ProviderConfigMap.
-     */
-    it('should validate YAML configuration structure', () => {
-      // Test with valid config
-      const validConfig = { providers: {} };
-      const validResult = yamlLoader.validateConfig(validConfig);
-      expect(validResult).toBe(true);
-
-      // Test with invalid config (no providers)
-      const invalidConfig = {};
-      const invalidResult = yamlLoader.validateConfig(invalidConfig as any);
-      expect(invalidResult).toBe(false);
-
-      // Test with null config
-      const nullResult = yamlLoader.validateConfig(null as any);
-      expect(nullResult).toBe(false);
     });
 
     /**

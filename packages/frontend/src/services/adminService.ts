@@ -40,7 +40,9 @@ export const adminService = {
   /**
    * Generate invitation codes
    */
-  generateInviteCodes: async (data: CreateInviteCodeDto): Promise<InviteCode[]> => {
+  generateInviteCodes: async (
+    data: CreateInviteCodeDto
+  ): Promise<InviteCode[]> => {
     const response = await axios.post('/admin/invite-codes/generate', data);
     return response.data;
   },

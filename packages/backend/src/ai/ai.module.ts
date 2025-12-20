@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AIEngine } from './ai.engine';
 import { DegradationService } from './degradation.service';
 import { RedisModule } from '@/redis/redis.module';
-import { AIProvidersModule } from '@/ai-providers';
+import { AIProvidersModule } from '@/ai-providers/ai-providers.module';
 
 /**
  * AI Module
@@ -36,7 +36,6 @@ import { AIProvidersModule } from '@/ai-providers';
   exports: [
     AIEngine, // Export unified AI service
     DegradationService, // Export degradation service
-    AIProvidersModule, // Export module to make AIEngineService available
   ],
 })
 export class AIModule {}

@@ -4,23 +4,29 @@
  * Requirements: 1.6, 1.7, 3.3, 3.4
  */
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { AIProvider } from '../interfaces';
-import { ModelConfigService } from '../config/model-config.service';
-import { QwenProvider } from '../providers/qwen.provider';
-import { OllamaProvider } from '../providers/ollama.provider';
-import { OpenAIProvider } from '../providers/openai.provider';
-import { DeepSeekProvider } from '../providers/deepseek.provider';
-import { GeminiProvider } from '../providers/gemini.provider';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
+import { AIProvider } from '@/ai-providers/interfaces';
+import { ModelConfigService } from '@/ai-providers/config/model-config.service';
+import { QwenProvider } from '@/ai-providers/providers/qwen.provider';
+import { OllamaProvider } from '@/ai-providers/providers/ollama.provider';
+import { OpenAIProvider } from '@/ai-providers/providers/openai.provider';
+import { DeepSeekProvider } from '@/ai-providers/providers/deepseek.provider';
+import { GeminiProvider } from '@/ai-providers/providers/gemini.provider';
 import {
   QwenConfig,
   OllamaConfig,
   OpenAIConfig,
   DeepSeekConfig,
   GeminiConfig,
-  ModelConfig,
-} from '../interfaces/model-config.interface';
-import { AIError, AIErrorCode } from '../utils/ai-error';
+} from '@/ai-providers/interfaces/model-config.interface';
+import { ModelConfig } from '@/ai-providers/config/model-config.service';
+import { AIError, AIErrorCode } from '@/ai-providers/utils/ai-error';
 
 /**
  * Provider availability status
@@ -45,7 +51,10 @@ export class AIProviderFactory implements OnModuleInit {
   private healthCheckInterval: ReturnType<typeof setInterval> | null = null;
   private readonly healthCheckIntervalMs: number = 60000; // 1 minute
 
-  constructor(private modelConfigService: ModelConfigService) {}
+  constructor(
+    @Inject(forwardRef(() => ModelConfigService))
+    private modelConfigService: ModelConfigService
+  ) {}
 
   /**
    * Initialize factory on module startup

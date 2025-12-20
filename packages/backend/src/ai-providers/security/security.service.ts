@@ -206,7 +206,7 @@ export class SecurityService {
       }
 
       // Store in memory cache
-      const key = `${userId}:${modelId}`;
+      //const key = `${userId}:${modelId}`;
       if (!this.userModelAccessMap.has(userId)) {
         this.userModelAccessMap.set(userId, new Set());
       }

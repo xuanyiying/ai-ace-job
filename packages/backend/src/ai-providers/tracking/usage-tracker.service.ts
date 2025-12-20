@@ -7,6 +7,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UsageRecord } from '@prisma/client';
+
 export type { UsageRecord };
 
 export interface CostReport {
@@ -491,7 +492,7 @@ export class UsageTrackerService {
         item.averageLatency.toString(),
       ]);
 
-      const csvContent = [
+      return [
         `Report Period: ${report.period.startDate.toISOString()} to ${report.period.endDate.toISOString()}`,
         `Grouped By: ${report.groupBy}`,
         `Total Cost: ${report.totalCost}`,
@@ -499,8 +500,6 @@ export class UsageTrackerService {
         headers.join(','),
         ...rows.map((row) => row.join(',')),
       ].join('\n');
-
-      return csvContent;
     } catch (error) {
       this.logger.error(
         `Failed to export cost report to CSV: ${error instanceof Error ? error.message : String(error)}`

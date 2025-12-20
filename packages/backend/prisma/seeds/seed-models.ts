@@ -42,7 +42,7 @@ export async function seedModelConfigs(prisma: PrismaClient) {
       costPerInputToken: 0.000002,
       costPerOutputToken: 0.000006,
       rateLimitPerMinute: 60,
-      isActive: false,
+      isActive: true,
     },
     {
       name: 'qwen-max',
@@ -53,7 +53,7 @@ export async function seedModelConfigs(prisma: PrismaClient) {
       costPerInputToken: 0.00004,
       costPerOutputToken: 0.00012,
       rateLimitPerMinute: 60,
-      isActive: false,
+      isActive: true,
     },
     // DeepSeek
     {

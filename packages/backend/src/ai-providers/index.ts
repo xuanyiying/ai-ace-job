@@ -11,4 +11,5 @@ export * from './providers';
 export * from './tracking';
 export * from './monitoring';
 export * from './security';
-export * from './ai-providers.module';
+// Note: AIProvidersModule is exported separately to avoid circular dependencies
+// Import it directly from './ai-providers.module' when needed

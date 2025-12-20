@@ -7,11 +7,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AIRequest, AIResponse, AIStreamChunk, ModelInfo } from './interfaces';
 import { AIProviderFactory } from './factory';
-import { ModelSelector, ScenarioType } from './selector/model.selector';
-import { PromptTemplateManager } from './config/prompt-template.manager';
-import { UsageTrackerService } from './tracking/usage-tracker.service';
-import { PerformanceMonitorService } from './monitoring/performance-monitor.service';
-import { RetryHandler } from './utils/retry-handler';
+import { ModelSelector, ScenarioType } from '@/ai-providers/selector';
+import { PromptTemplateManager } from '@/ai-providers/config';
+import { UsageTrackerService } from '@/ai-providers/tracking';
+import { PerformanceMonitorService } from '@/ai-providers/monitoring';
+import { RetryHandler } from '@/ai-providers/utils';
 import { AIError, AIErrorCode } from './utils/ai-error';
 import { AILogger } from './logging/ai-logger';
 

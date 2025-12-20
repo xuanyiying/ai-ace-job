@@ -4,7 +4,7 @@ import {
   PromptTemplate,
   PromptTemplateVersion,
   TemplateRenderContext,
-} from '@/ai-providers';
+} from '@/ai-providers/interfaces/prompt-template.interface';
 import { PREDEFINED_TEMPLATES } from './predefined-templates';
 
 /**

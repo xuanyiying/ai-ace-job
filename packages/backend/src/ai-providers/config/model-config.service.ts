@@ -6,7 +6,7 @@
 
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { ModelConfig as PrismaModelConfig } from '@prisma/client';
 import * as crypto from 'crypto';
 
