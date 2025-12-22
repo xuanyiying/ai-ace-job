@@ -32,7 +32,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",
     "@aws-sdk/s3-request-presigner": "^3.940.0",
-    "@langchain/community": "^0.0.10",
+    "@langchain/community": "^0.3.3",
     "@langchain/core": "^0.1.63",
     "@langchain/google-genai": "^2.0.4",
     "@langchain/openai": "^1.1.3",
