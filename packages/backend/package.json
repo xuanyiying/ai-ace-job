@@ -71,7 +71,7 @@
     "mammoth": "^1.6.0",
     "multer": "2.0.2",
     "nest-winston": "^1.9.4",
-    "nodemailer": "7.0.11",
+    "nodemailer": "7.0.12",
     "openai": "^6.15.0",
     "passport": "^0.6.0",
     "passport-github2": "^0.1.12",
