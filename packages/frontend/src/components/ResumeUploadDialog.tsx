@@ -70,7 +70,15 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
     }
 
     const file = fileList[0].originFileObj as File;
-    const title = form.getFieldValue('title') || file.name;
+
+    // Generate a unique filename with timestamp to prevent conflicts
+    const timestamp = Date.now();
+    const originalName = file.name;
+    const fileExtension = originalName.substring(originalName.lastIndexOf('.'));
+    const baseFileName = originalName.substring(0, originalName.lastIndexOf('.'));
+    const uniqueFileName = `${baseFileName}_${timestamp}${fileExtension}`;
+
+    const title = form.getFieldValue('title') || originalName;
 
     setUploading(true);
     setUploadProgress(0);
@@ -88,8 +96,11 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         });
       }, 200);
 
+      // Create a new File object with the unique name
+      const renamedFile = new File([file], uniqueFileName, { type: file.type });
+
       // Upload file
-      const resume = await resumeService.uploadResume(file, title);
+      const resume = await resumeService.uploadResume(renamedFile, title);
       clearInterval(progressInterval);
       setUploadProgress(100);
       setUploadedResume(resume);
@@ -114,6 +125,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
           error instanceof Error ? error.message : '解析失败，请重试';
         setParseError(errorMsg);
         message.error(`解析失败: ${errorMsg}`);
+        console.error('Parse error:', error);
       } finally {
         setParsing(false);
       }
@@ -122,6 +134,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         error instanceof Error ? error.message : '上传失败，请重试';
       message.error(`上传失败: ${errorMsg}`);
       setParseError(errorMsg);
+      console.error('Upload error:', error);
     } finally {
       setUploading(false);
     }
@@ -181,7 +194,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
       const isDoc =
         file.type === 'application/msword' ||
         file.type ===
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
       if (!isPDF && !isDoc) {
         message.error('只能上传 PDF 或 Word 文档！');

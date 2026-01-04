@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Logger } from '@nestjs/common';
 import { AIEngine } from './ai.engine';
 import { AIEngineService } from '../ai-providers/ai-engine.service';
 import * as fc from 'fast-check';
@@ -17,6 +18,12 @@ describe('AIEngine', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Mock Logger to prevent console noise during tests
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -38,6 +45,15 @@ describe('AIEngine', () => {
       const buffer = Buffer.from(content, 'utf-8');
 
       const result = await engine.extractTextFromFile(buffer, 'txt');
+
+      expect(result).toBe(content);
+    });
+
+    it('should extract text from MD file', async () => {
+      const content = '# John Doe\n\n- Email: john@example.com';
+      const buffer = Buffer.from(content, 'utf-8');
+
+      const result = await engine.extractTextFromFile(buffer, 'md');
 
       expect(result).toBe(content);
     });
@@ -99,6 +115,47 @@ describe('AIEngine', () => {
         'system',
         'resume-parsing'
       );
+    });
+
+    it('should parse resume from markdown code block', async () => {
+      const content = 'John Doe';
+      const markdownResponse =
+        'Here is the parsed data:\n```json\n' +
+        JSON.stringify(mockResumeData) +
+        '\n```';
+
+      mockAIEngineService.call.mockResolvedValue({
+        content: markdownResponse,
+        model: 'test-model',
+        provider: 'test-provider',
+        usage: { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
+        finishReason: 'stop',
+      });
+
+      const result = await engine.parseResumeContent(content);
+
+      expect(result.personalInfo.email).toBe('john.doe@example.com');
+    });
+
+    it('should recover from malformed JSON response', async () => {
+      const content = 'John Doe';
+      const malformedResponse =
+        'Some text before JSON {' +
+        '"personalInfo": {"name": "John Doe", "email": "john.doe@example.com"},' +
+        '"education": [], "experience": [], "skills": [], "projects": []' +
+        '} some text after';
+
+      mockAIEngineService.call.mockResolvedValue({
+        content: malformedResponse,
+        model: 'test-model',
+        provider: 'test-provider',
+        usage: { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
+        finishReason: 'stop',
+      });
+
+      const result = await engine.parseResumeContent(content);
+
+      expect(result.personalInfo.email).toBe('john.doe@example.com');
     });
 
     it('should handle AI service error gracefully', async () => {

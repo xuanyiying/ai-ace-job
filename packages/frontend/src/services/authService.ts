@@ -16,8 +16,10 @@ export interface AuthResponse {
     id: string;
     email: string;
     username?: string;
+    role?: 'USER' | 'ADMIN' | string;
     subscriptionTier: 'FREE' | 'PRO' | 'ENTERPRISE';
     createdAt: string;
+    updatedAt?: string;
   };
 
   token?: string;

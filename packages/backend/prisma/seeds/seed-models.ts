@@ -90,6 +90,29 @@ export async function seedModelConfigs(prisma: PrismaClient) {
       rateLimitPerMinute: 60,
       isActive: false,
     },
+    // SiliconCloud
+    {
+      name: 'DeepSeek-V3',
+      provider: 'siliconcloud',
+      apiKey: 'sk-placeholder-please-update',
+      defaultTemperature: 0.7,
+      defaultMaxTokens: 4096,
+      costPerInputToken: 0.000001,
+      costPerOutputToken: 0.000002,
+      rateLimitPerMinute: 60,
+      isActive: false,
+    },
+    {
+      name: 'Qwen2.5-72B-Instruct',
+      provider: 'siliconcloud',
+      apiKey: 'sk-placeholder-please-update',
+      defaultTemperature: 0.7,
+      defaultMaxTokens: 4096,
+      costPerInputToken: 0.000001,
+      costPerOutputToken: 0.000002,
+      rateLimitPerMinute: 60,
+      isActive: false,
+    },
     // Ollama  (Local)
     {
       name: 'ollama-llama2',

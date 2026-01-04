@@ -25,9 +25,9 @@ export class StructuredOutputService {
   ): Promise<T> {
     const parser = StructuredOutputParser.fromZodSchema(schema as any);
     const instructions = parser.getFormatInstructions();
-    
+
     const constrainedPrompt = `${prompt}\n\n${instructions}`;
-    
+
     const response = await this.aiEngineService.call(
       {
         model: '',
@@ -54,14 +54,18 @@ export class StructuredOutputService {
 
     try {
       const cleanedContent = this.cleanMarkdown(content);
-      return await parser.parse(cleanedContent) as T;
+      return (await parser.parse(cleanedContent)) as T;
     } catch (error) {
-      this.logger.warn(`Initial parsing failed, attempting auto-fix: ${error instanceof Error ? error.message : String(error)}`);
-      
-      const fixModel = retryModel || new ChatOpenAI({
-        modelName: 'gpt-4o-mini',
-        temperature: 0,
-      });
+      this.logger.warn(
+        `Initial parsing failed, attempting auto-fix: ${error instanceof Error ? error.message : String(error)}`
+      );
+
+      const fixModel =
+        retryModel ||
+        new ChatOpenAI({
+          modelName: 'gpt-4o-mini',
+          temperature: 0,
+        });
 
       try {
         const instructions = parser.getFormatInstructions();
@@ -78,25 +82,29 @@ export class StructuredOutputService {
 
         const fixedResponse = await fixModel.invoke(fixPrompt);
         const fixedContent = this.cleanMarkdown(
-          typeof fixedResponse.content === 'string' 
-            ? fixedResponse.content 
+          typeof fixedResponse.content === 'string'
+            ? fixedResponse.content
             : JSON.stringify(fixedResponse.content)
         );
-          
-        return await parser.parse(fixedContent) as T;
+
+        return (await parser.parse(fixedContent)) as T;
       } catch (fixError) {
-        this.logger.error(`Auto-fix failed: ${fixError instanceof Error ? fixError.message : String(fixError)}`);
-        
+        this.logger.error(
+          `Auto-fix failed: ${fixError instanceof Error ? fixError.message : String(fixError)}`
+        );
+
         // Final attempt: try to extract JSON with regex if parsing still fails
         try {
           const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
           if (jsonMatch) {
-            return await parser.parse(jsonMatch[0]) as T;
+            return (await parser.parse(jsonMatch[0])) as T;
           }
         } catch (regexError) {
-          this.logger.error(`Regex extraction failed: ${regexError instanceof Error ? regexError.message : String(regexError)}`);
+          this.logger.error(
+            `Regex extraction failed: ${regexError instanceof Error ? regexError.message : String(regexError)}`
+          );
         }
-        
+
         throw error;
       }
     }

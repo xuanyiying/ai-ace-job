@@ -33,7 +33,9 @@ export class AgentOrchestrator {
     userId: string,
     sessionId: string
   ): Promise<string> {
-    this.logger.log(`Executing dynamic task for user ${userId} in session ${sessionId}: ${task}`);
+    this.logger.log(
+      `Executing dynamic task for user ${userId} in session ${sessionId}: ${task}`
+    );
 
     // 1. Initialize memory
     const memory = new CustomMemory(this.redisService, sessionId);
@@ -57,7 +59,8 @@ export class AgentOrchestrator {
     const agent = createAgent({
       model: llm,
       tools,
-      systemPrompt: 'You are a professional career coach and resume optimizer. Use the available tools to help the user. Keep track of previous conversation context.',
+      systemPrompt:
+        'You are a professional career coach and resume optimizer. Use the available tools to help the user. Keep track of previous conversation context.',
     });
 
     // 5. Run task with conversation history
@@ -67,9 +70,10 @@ export class AgentOrchestrator {
 
     // 6. Extract output from the last message
     const lastMessage = result.messages[result.messages.length - 1];
-    const output = typeof lastMessage.content === 'string' 
-      ? lastMessage.content 
-      : JSON.stringify(lastMessage.content);
+    const output =
+      typeof lastMessage.content === 'string'
+        ? lastMessage.content
+        : JSON.stringify(lastMessage.content);
 
     // 7. Save to memory
     await memory.saveContext({ input: task }, { output });
@@ -77,4 +81,3 @@ export class AgentOrchestrator {
     return output;
   }
 }
-

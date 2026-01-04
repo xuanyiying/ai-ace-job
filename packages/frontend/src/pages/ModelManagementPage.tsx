@@ -174,6 +174,7 @@ const ModelManagementPage: React.FC = () => {
           qwen: 'blue',
           deepseek: 'purple',
           gemini: 'orange',
+          siliconcloud: 'magenta',
           ollama: 'cyan',
         };
         return (
@@ -306,6 +307,7 @@ const ModelManagementPage: React.FC = () => {
                 <Select.Option value="qwen">Qwen</Select.Option>
                 <Select.Option value="deepseek">DeepSeek</Select.Option>
                 <Select.Option value="gemini">Gemini</Select.Option>
+                <Select.Option value="siliconcloud">SiliconCloud</Select.Option>
                 <Select.Option value="ollama">Ollama</Select.Option>
               </Select>
               <Button icon={<ReloadOutlined />} onClick={handleRefreshCache}>
@@ -374,6 +376,7 @@ const ModelManagementPage: React.FC = () => {
               <Select.Option value="qwen">Qwen (通义千问)</Select.Option>
               <Select.Option value="deepseek">DeepSeek</Select.Option>
               <Select.Option value="gemini">Google Gemini</Select.Option>
+              <Select.Option value="siliconcloud">SiliconCloud (硅基流动)</Select.Option>
               <Select.Option value="ollama">Ollama (本地)</Select.Option>
             </Select>
           </Form.Item>

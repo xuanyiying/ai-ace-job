@@ -75,3 +75,5 @@ redis_data/
 # Turborepo
 .turbo/
 /packages/backend/prisma/migrations
+packages/frontend/html
+packages/frontend/dev-dist

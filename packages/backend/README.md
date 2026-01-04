@@ -59,6 +59,10 @@ Once the application is running, visit:
 
 - Swagger UI: http://localhost:3000/api/docs
 
+## Feature Documentation
+
+- [Resume Parsing Guide](./docs/RESUME_PARSING_GUIDE.md) - Details on supported formats and parsing logic.
+
 ## Health Check
 
 Check service health:

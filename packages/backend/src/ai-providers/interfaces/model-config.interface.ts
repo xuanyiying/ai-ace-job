@@ -45,6 +45,13 @@ export interface GeminiConfig extends BaseProviderConfig {
 }
 
 /**
+ * SiliconCloud Provider Configuration
+ */
+export interface SiliconCloudConfig extends BaseProviderConfig {
+  // SiliconCloud-specific configuration (compatible with OpenAI interface)
+}
+
+/**
  * Ollama Provider Configuration
  */
 export interface OllamaConfig extends BaseProviderConfig {

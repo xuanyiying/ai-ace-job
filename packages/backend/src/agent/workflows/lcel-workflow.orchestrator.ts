@@ -1,10 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RunnableSequence, RunnableParallel, RunnableConfig, RunnableLambda } from '@langchain/core/runnables';
+import {
+  RunnableSequence,
+  RunnableParallel,
+  RunnableConfig,
+  RunnableLambda,
+} from '@langchain/core/runnables';
 import { AIEngineService } from '../../ai-providers/ai-engine.service';
 import { RedisService } from '../../redis/redis.service';
 import { UsageTrackerService } from '../../ai-providers/tracking/usage-tracker.service';
 import { PerformanceMonitorService } from '../../ai-providers/monitoring/performance-monitor.service';
-import { WorkflowStep, WorkflowContext, WorkflowResult } from './workflow.interfaces';
+import {
+  WorkflowStep,
+  WorkflowContext,
+  WorkflowResult,
+} from './workflow.interfaces';
 
 /**
  * LCEL Workflow Orchestrator
@@ -30,20 +39,20 @@ export class LCELWorkflowOrchestrator {
     context: WorkflowContext
   ): Promise<WorkflowResult> {
     const startTime = Date.now();
-    
+
     try {
       if (steps.length === 0) {
         throw new Error('No steps provided for workflow');
       }
 
       // 1. Create runnables from steps with retry logic
-      const runnables = steps.map((step) => 
-                new RunnableLambda({
-                  func: async (input: any) => this.executeStep(step, context, input),
-                })
-                .withConfig({ runName: step.id })
-                .withRetry({ stopAfterAttempt: 3 })
-              );
+      const runnables = steps.map((step) =>
+        new RunnableLambda({
+          func: async (input: any) => this.executeStep(step, context, input),
+        })
+          .withConfig({ runName: step.id })
+          .withRetry({ stopAfterAttempt: 3 })
+      );
 
       // 2. Compose the sequence
       const chain = RunnableSequence.from(runnables as any);
@@ -70,7 +79,9 @@ export class LCELWorkflowOrchestrator {
         duration,
       };
     } catch (error: any) {
-      this.logger.error(`Workflow chain failed: ${error?.message || String(error)}`);
+      this.logger.error(
+        `Workflow chain failed: ${error?.message || String(error)}`
+      );
       return {
         success: false,
         results: [],
@@ -88,21 +99,27 @@ export class LCELWorkflowOrchestrator {
     context: WorkflowContext
   ): Promise<WorkflowResult> {
     const startTime = Date.now();
-    
+
     try {
       const runnables: Record<string, any> = {};
       steps.forEach((step) => {
         runnables[step.id] = new RunnableLambda({
           func: async (input: any) => this.executeStep(step, context, {}),
         })
-        .withConfig({ runName: step.id })
-        .withRetry({ stopAfterAttempt: 3 });
+          .withConfig({ runName: step.id })
+          .withRetry({ stopAfterAttempt: 3 });
       });
 
       const parallelChain = RunnableParallel.from(runnables);
-      const results = await parallelChain.invoke({}, {
-        configurable: { sessionId: context.sessionId, userId: context.userId }
-      });
+      const results = await parallelChain.invoke(
+        {},
+        {
+          configurable: {
+            sessionId: context.sessionId,
+            userId: context.userId,
+          },
+        }
+      );
 
       const duration = Date.now() - startTime;
       return {
@@ -129,16 +146,19 @@ export class LCELWorkflowOrchestrator {
     steps: WorkflowStep[],
     context: WorkflowContext
   ): AsyncGenerator<any> {
-    const runnables = steps.map((step) => 
+    const runnables = steps.map((step) =>
       new RunnableLambda({
         func: async (input: any) => this.executeStep(step, context, input),
       }).withConfig({ runName: step.id })
     );
 
     const chain = RunnableSequence.from(runnables as any);
-    const stream = await chain.stream({}, {
-      configurable: { sessionId: context.sessionId, userId: context.userId }
-    });
+    const stream = await chain.stream(
+      {},
+      {
+        configurable: { sessionId: context.sessionId, userId: context.userId },
+      }
+    );
 
     for await (const chunk of stream) {
       yield chunk;
@@ -149,9 +169,12 @@ export class LCELWorkflowOrchestrator {
    * Get the workflow graph for visualization
    */
   getWorkflowGraph(steps: WorkflowStep[]) {
-    const runnables = steps.map((step) => 
+    const runnables = steps.map((step) =>
       new RunnableLambda({
-        func: async (input: any) => ({ ...input, [step.id]: `simulated_${step.id}` }),
+        func: async (input: any) => ({
+          ...input,
+          [step.id]: `simulated_${step.id}`,
+        }),
       }).withConfig({ runName: step.id })
     );
     const chain = RunnableSequence.from(runnables as any);
@@ -161,9 +184,13 @@ export class LCELWorkflowOrchestrator {
   /**
    * Execute a single step with caching and monitoring
    */
-  private async executeStep(step: WorkflowStep, context: WorkflowContext, prevOutput: any) {
+  private async executeStep(
+    step: WorkflowStep,
+    context: WorkflowContext,
+    prevOutput: any
+  ) {
     const stepStartTime = Date.now();
-    
+
     // Check cache
     const cacheKey = `workflow:${context.sessionId}:step:${step.id}`;
     const cached = await this.redisService.get(cacheKey);
@@ -176,7 +203,7 @@ export class LCELWorkflowOrchestrator {
 
     try {
       let result: Record<string, any>;
-      
+
       switch (step.type) {
         case 'llm-call':
           result = await this.executeLLMCall(step, context);
@@ -193,9 +220,9 @@ export class LCELWorkflowOrchestrator {
         default:
           throw new Error(`Unknown step type: ${step.type}`);
       }
-      
+
       const duration = Date.now() - stepStartTime;
-      
+
       // Track performance
       await this.performanceMonitor.recordMetrics(
         step.type || 'workflow-step',
@@ -205,8 +232,12 @@ export class LCELWorkflowOrchestrator {
       );
 
       // Cache result
-      await this.redisService.set(cacheKey, JSON.stringify(result), this.CACHE_TTL);
-      
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.CACHE_TTL
+      );
+
       return { ...prevOutput, ...result };
     } catch (error: any) {
       this.logger.error(`LCEL step ${step.id} failed: ${error.message}`);
@@ -229,7 +260,10 @@ export class LCELWorkflowOrchestrator {
       context.userId,
       step.modelTier || 'balanced'
     );
-    return { content: response.content, tokenUsage: response.usage.totalTokens || 0 };
+    return {
+      content: response.content,
+      tokenUsage: response.usage.totalTokens || 0,
+    };
   }
 
   private async executeToolUse(step: WorkflowStep, context: WorkflowContext) {
@@ -237,12 +271,18 @@ export class LCELWorkflowOrchestrator {
     return { result: `Tool ${step.input.toolName} executed`, tokenUsage: 0 };
   }
 
-  private async executeRAGRetrieval(step: WorkflowStep, context: WorkflowContext) {
+  private async executeRAGRetrieval(
+    step: WorkflowStep,
+    context: WorkflowContext
+  ) {
     // RAG retrieval logic...
     return { documents: [], tokenUsage: 0 };
   }
 
-  private async executeCompression(step: WorkflowStep, context: WorkflowContext) {
+  private async executeCompression(
+    step: WorkflowStep,
+    context: WorkflowContext
+  ) {
     // Compression logic...
     return { compressed: step.input.content, tokenUsage: 0 };
   }

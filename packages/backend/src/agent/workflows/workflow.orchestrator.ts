@@ -16,9 +16,7 @@ import {
 export class WorkflowOrchestrator {
   private readonly logger = new Logger(WorkflowOrchestrator.name);
 
-  constructor(
-    private lcelOrchestrator: LCELWorkflowOrchestrator
-  ) {}
+  constructor(private lcelOrchestrator: LCELWorkflowOrchestrator) {}
 
   /**
    * Execute workflow steps sequentially using LCEL

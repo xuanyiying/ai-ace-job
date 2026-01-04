@@ -112,7 +112,18 @@ const ResumeUpload: React.FC = () => {
     }
 
     const file = fileList[0].originFileObj as RcFile;
-    const title = form.getFieldValue('title') || file.name;
+
+    // Generate a unique filename with timestamp to prevent conflicts
+    const timestamp = Date.now();
+    const originalName = file.name;
+    const fileExtension = originalName.substring(originalName.lastIndexOf('.'));
+    const baseFileName = originalName.substring(
+      0,
+      originalName.lastIndexOf('.')
+    );
+    const uniqueFileName = `${baseFileName}_${timestamp}${fileExtension}`;
+
+    const title = form.getFieldValue('title') || originalName;
 
     setUploading(true);
     setUploadProgress(0);
@@ -129,7 +140,11 @@ const ResumeUpload: React.FC = () => {
         });
       }, 200);
 
-      const response = await resumeService.uploadResume(file, title);
+      // Create a new File object with the unique name
+      const renamedFile = new File([file], uniqueFileName, {
+        type: file.type,
+      });
+      const response = await resumeService.uploadResume(renamedFile, title);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -160,8 +175,13 @@ const ResumeUpload: React.FC = () => {
 
       // Start parsing
       await handleParse(response.id);
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '上传失败，请重试');
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as any).response?.data?.message ||
+        (error as Error).message ||
+        '上传失败，请重试';
+      message.error(errorMessage);
+      console.error('Upload error:', error);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -203,8 +223,13 @@ const ResumeUpload: React.FC = () => {
       );
 
       message.success('简历解析完成');
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '解析失败，请重试');
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as any).response?.data?.message ||
+        (error as Error).message ||
+        '解析失败，请重试';
+      message.error(errorMessage);
+      console.error('Parse error:', error);
       setUploadedResumes((prev) =>
         prev.map((resume) =>
           resume.id === resumeId ? { ...resume, parseStatus: 'failed' } : resume

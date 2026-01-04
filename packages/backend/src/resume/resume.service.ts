@@ -242,6 +242,8 @@ export class ResumeService {
     }
 
     try {
+      this.logger.log(`Starting parsing for resume ${resumeId} (type: ${resume.fileType})`);
+      
       // Update status to processing
       await this.prisma.resume.update({
         where: { id: resumeId },
@@ -260,6 +262,7 @@ export class ResumeService {
         resume.fileUrl.startsWith('http://') ||
         resume.fileUrl.startsWith('https://')
       ) {
+        this.logger.debug(`Downloading resume from OSS: ${resume.fileUrl}`);
         // Download from OSS using storage service
         const storageRecord = await this.prisma.storage.findFirst({
           where: {
@@ -280,6 +283,7 @@ export class ResumeService {
       } else {
         // Legacy: Read from local filesystem
         const filepath = path.join(process.cwd(), resume.fileUrl);
+        this.logger.debug(`Reading resume from local path: ${filepath}`);
         if (!fs.existsSync(filepath)) {
           throw new Error(`Resume file not found at ${filepath}`);
         }
@@ -289,12 +293,14 @@ export class ResumeService {
       const fileType = resume.fileType || 'txt';
 
       // Extract text from file - pass original filename for better encoding handling
+      this.logger.debug(`Extracting text from ${fileType} buffer`);
       const textContent = await this.aiEngine.extractTextFromFile(
         fileBuffer,
         fileType
       );
 
       // Add to queue
+      this.logger.log(`Queueing resume parsing job for resume ${resumeId}`);
       const job = await this.aiQueueService.addResumeParsingJob(
         resumeId,
         userId,
@@ -304,7 +310,9 @@ export class ResumeService {
       // Wait for job completion (up to 30 seconds)
       // This preserves the synchronous API feel for fast operations
       try {
+        this.logger.debug(`Waiting for job ${job.id} to finish...`);
         const result = await job.finished();
+        this.logger.log(`Job ${job.id} completed successfully`);
         // Include extracted text in the response
         return {
           ...(result as Record<string, any>),
@@ -313,8 +321,8 @@ export class ResumeService {
       } catch (error) {
         // If waiting times out or job fails, we still return the current status
         // The frontend can poll for updates if needed
-        this.logger.log(
-          `Job ${job.id} queued but not finished immediately: ${error}`
+        this.logger.warn(
+          `Job ${job.id} queued but not finished immediately: ${error instanceof Error ? error.message : String(error)}`
         );
         return {
           message: 'Processing started',
@@ -323,7 +331,8 @@ export class ResumeService {
         };
       }
     } catch (error) {
-      this.logger.error(`Error parsing resume ${resumeId}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error parsing resume ${resumeId}: ${errorMessage}`, error);
 
       // Update status to failed
       await this.prisma.resume.update({

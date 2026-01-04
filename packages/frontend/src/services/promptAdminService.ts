@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+import axios from '../config/axios';
 
 export interface PromptTemplate {
   id: string;
@@ -46,7 +43,7 @@ export const promptAdminService = {
     page?: number;
     limit?: number;
   }): Promise<PromptListResponse> {
-    const response = await axios.get(`${API_BASE_URL}/admin/prompts`, {
+    const response = await axios.get('/admin/prompts', {
       params,
     });
     return response.data;
@@ -56,7 +53,7 @@ export const promptAdminService = {
    * Get a specific prompt by ID
    */
   async getPrompt(id: string): Promise<PromptTemplate> {
-    const response = await axios.get(`${API_BASE_URL}/admin/prompts/${id}`);
+    const response = await axios.get(`/admin/prompts/${id}`);
     return response.data;
   },
 
@@ -64,7 +61,7 @@ export const promptAdminService = {
    * Create a new prompt
    */
   async createPrompt(data: CreatePromptDto): Promise<PromptTemplate> {
-    const response = await axios.post(`${API_BASE_URL}/admin/prompts`, data);
+    const response = await axios.post('/admin/prompts', data);
     return response.data;
   },
 
@@ -75,10 +72,7 @@ export const promptAdminService = {
     id: string,
     data: Partial<CreatePromptDto>
   ): Promise<PromptTemplate> {
-    const response = await axios.put(
-      `${API_BASE_URL}/admin/prompts/${id}`,
-      data
-    );
+    const response = await axios.put(`/admin/prompts/${id}`, data);
     return response.data;
   },
 
@@ -86,16 +80,14 @@ export const promptAdminService = {
    * Delete a prompt
    */
   async deletePrompt(id: string): Promise<void> {
-    await axios.delete(`${API_BASE_URL}/admin/prompts/${id}`);
+    await axios.delete(`/admin/prompts/${id}`);
   },
 
   /**
    * Get version history for a prompt scenario
    */
   async getVersions(scenario: string): Promise<any[]> {
-    const response = await axios.get(
-      `${API_BASE_URL}/admin/prompts/${scenario}/versions`
-    );
+    const response = await axios.get(`/admin/prompts/${scenario}/versions`);
     return response.data.versions || [];
   },
 
@@ -103,10 +95,9 @@ export const promptAdminService = {
    * Rollback to a specific version
    */
   async rollback(scenario: string, version: number): Promise<PromptTemplate> {
-    const response = await axios.post(
-      `${API_BASE_URL}/admin/prompts/${scenario}/rollback`,
-      { version }
-    );
+    const response = await axios.post(`/admin/prompts/${scenario}/rollback`, {
+      version,
+    });
     return response.data.template;
   },
 
@@ -114,6 +105,6 @@ export const promptAdminService = {
    * Reload templates from database
    */
   async reloadTemplates(): Promise<void> {
-    await axios.post(`${API_BASE_URL}/admin/prompts/reload`);
+    await axios.post('/admin/prompts/reload');
   },
 };

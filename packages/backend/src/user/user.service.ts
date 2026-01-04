@@ -126,6 +126,15 @@ export class UserService {
       where: { email: sanitizedEmail },
     });
 
+    // 🔍 DEBUG LOG: 检查从数据库查询到的原始用户数据
+    console.log('🔍 [LOGIN] User from database:', {
+      userId: user?.id,
+      email: user?.email,
+      role: user?.role,
+      roleType: typeof user?.role,
+      rawUser: user,
+    });
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -147,7 +156,15 @@ export class UserService {
     // Generate JWT token
     const accessToken = this.generateToken(user);
 
-    return {
+    // 🔍 DEBUG LOG: 检查数据库中的用户角色
+    console.log('🔍 [LOGIN] Database user role:', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      roleType: typeof user.role,
+    });
+
+    const responseData = {
       accessToken,
       user: {
         id: user.id,
@@ -159,6 +176,16 @@ export class UserService {
         createdAt: user.createdAt,
       },
     };
+
+    // 🔍 DEBUG LOG: 检查返回给前端的数据
+    console.log('🔍 [LOGIN] Response data to frontend:', {
+      userId: responseData.user.id,
+      email: responseData.user.email,
+      role: responseData.user.role,
+      roleType: typeof responseData.user.role,
+    });
+
+    return responseData;
   }
 
   /**
@@ -467,5 +494,137 @@ export class UserService {
     }
 
     return user;
+  }
+
+  /**
+   * Get user activity history
+   */
+  async getUserHistory(userId: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+
+    // Fetch various user activities
+    const [
+      resumes,
+      jobs,
+      optimizations,
+      generatedPdfs,
+      conversations,
+      interviewSessions,
+      totalCount,
+    ] = await Promise.all([
+      this.prisma.resume.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.job.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          title: true,
+          company: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.optimization.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          completedAt: true,
+          resume: {
+            select: {
+              title: true,
+            },
+          },
+          job: {
+            select: {
+              title: true,
+              company: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.generatedPDF.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          templateId: true,
+          createdAt: true,
+          downloadCount: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.conversation.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          title: true,
+          messageCount: true,
+          createdAt: true,
+          lastMessageAt: true,
+        },
+        orderBy: { lastMessageAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.interviewSession.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          status: true,
+          score: true,
+          startTime: true,
+          endTime: true,
+        },
+        orderBy: { startTime: 'desc' },
+        take: 5,
+      }),
+      this.prisma.optimization.count({ where: { userId } }),
+    ]);
+
+    // Transform into activity feed format
+    const activities = optimizations.map((opt) => ({
+      id: opt.id,
+      type: 'optimization',
+      status: opt.status,
+      resumeTitle: opt.resume.title,
+      jobTitle: opt.job.title,
+      company: opt.job.company,
+      createdAt: opt.createdAt,
+      completedAt: opt.completedAt,
+    }));
+
+    return {
+      data: activities,
+      total: totalCount,
+      page,
+      limit,
+      summary: {
+        totalResumes: resumes.length,
+        totalJobs: jobs.length,
+        totalOptimizations: totalCount,
+        totalPdfs: generatedPdfs.length,
+        totalConversations: conversations.length,
+        totalInterviews: interviewSessions.length,
+      },
+      recentResumes: resumes,
+      recentJobs: jobs,
+      recentPdfs: generatedPdfs,
+      recentConversations: conversations,
+      recentInterviews: interviewSessions,
+    };
   }
 }

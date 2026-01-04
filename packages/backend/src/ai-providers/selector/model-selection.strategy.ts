@@ -80,6 +80,8 @@ export class QualityOptimizedStrategy implements ModelSelectionStrategy {
     'qwen-max',
     'claude-3-opus',
     'gpt-3.5-turbo',
+    'Qwen2.5-72B-Instruct',
+    'DeepSeek-V3',
     'gpt-4-turbo',
     'gpt-4o',
     'gpt-4',

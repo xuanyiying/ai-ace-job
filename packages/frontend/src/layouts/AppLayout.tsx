@@ -26,6 +26,8 @@ import {
   ApiOutlined,
   FileTextOutlined,
   BarcodeOutlined,
+  TeamOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '@/stores';
 import { useConversationStore } from '@/stores';
@@ -53,6 +55,7 @@ const AppLayout: React.FC = () => {
   const {
     token: { colorBgContainer, colorBorderSecondary },
   } = theme.useToken();
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     loadConversations();
@@ -128,6 +131,42 @@ const AppLayout: React.FC = () => {
     }
   };
 
+  const adminMenuItems: MenuProps['items'] = [
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'admin-users',
+      label: t('menu.user_management'),
+      icon: <TeamOutlined />,
+      onClick: () => navigate('/admin/users'),
+    },
+    {
+      key: 'admin-system-settings',
+      label: t('menu.system_settings'),
+      icon: <ToolOutlined />,
+      onClick: () => navigate('/admin/system-settings'),
+    },
+    {
+      key: 'admin-models',
+      label: t('menu.model_management'),
+      icon: <ApiOutlined />,
+      onClick: () => navigate('/admin/models'),
+    },
+    {
+      key: 'admin-prompts',
+      label: t('menu.prompt_management'),
+      icon: <FileTextOutlined />,
+      onClick: () => navigate('/admin/prompts'),
+    },
+    {
+      key: 'admin-invites',
+      label: t('menu.invite_code_management'),
+      icon: <BarcodeOutlined />,
+      onClick: () => navigate('/admin/invite-codes'),
+    },
+  ];
+
   const userMenu: MenuProps['items'] = [
     {
       key: 'profile',
@@ -166,31 +205,10 @@ const AppLayout: React.FC = () => {
         },
       ],
     },
-    ...(user?.role === 'ADMIN'
-      ? [
-          {
-            key: 'admin-models',
-            label: t('menu.model_management'),
-            icon: <ApiOutlined />,
-            onClick: () => navigate('/admin/models'),
-          },
-          {
-            key: 'admin-prompts',
-            label: t('menu.prompt_management'),
-            icon: <FileTextOutlined />,
-            onClick: () => navigate('/admin/prompts'),
-          },
-          {
-            key: 'admin-invites',
-            label: t('menu.invite_code_management'),
-            icon: <BarcodeOutlined />,
-            onClick: () => navigate('/admin/invite-codes'),
-          },
-          {
-            type: 'divider' as const,
-          },
-        ]
-      : []),
+    ...(isAdmin ? adminMenuItems : []),
+    {
+      type: 'divider' as const,
+    },
     {
       key: 'logout',
       label: t('menu.logout'),
@@ -326,7 +344,7 @@ const AppLayout: React.FC = () => {
       </div>
 
       {/* Admin Section */}
-      {user?.role === 'ADMIN' && (
+      {isAdmin && (
         <div style={{ padding: '0 12px', marginTop: '24px' }}>
           <div
             style={{
@@ -340,6 +358,42 @@ const AppLayout: React.FC = () => {
             {t('menu.admin_system')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div
+              className="admin-nav-item"
+              onClick={() => navigate('/admin/users')}
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <TeamOutlined style={{ fontSize: '14px', color: '#666' }} />
+              <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {t('menu.user_management')}
+              </span>
+            </div>
+            <div
+              className="admin-nav-item"
+              onClick={() => navigate('/admin/system-settings')}
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <ToolOutlined style={{ fontSize: '14px', color: '#666' }} />
+              <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {t('menu.system_settings')}
+              </span>
+            </div>
             <div
               className="admin-nav-item"
               onClick={() => navigate('/admin/models')}

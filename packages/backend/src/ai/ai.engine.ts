@@ -31,18 +31,32 @@ export class AIEngine {
     fileType: string
   ): Promise<string> {
     try {
+      this.logger.log(`Extracting text from ${fileType} file (${fileBuffer.length} bytes)`);
+      
+      let text = '';
       switch (fileType.toLowerCase()) {
         case 'pdf':
-          return await this.extractTextFromPDF(fileBuffer);
+          text = await this.extractTextFromPDF(fileBuffer);
+          break;
         case 'docx':
-          return await this.extractTextFromDOCX(fileBuffer);
+          text = await this.extractTextFromDOCX(fileBuffer);
+          break;
         case 'txt':
-          return fileBuffer.toString('utf-8');
+        case 'md':
+        case 'markdown':
+          text = fileBuffer.toString('utf-8');
+          break;
         default:
           throw new Error(`Unsupported file type: ${fileType}`);
       }
+
+      if (!text || text.trim().length === 0) {
+        this.logger.warn(`Extracted text is empty for ${fileType} file`);
+      }
+
+      return text;
     } catch (error) {
-      this.logger.error(`Error extracting text from ${fileType} file:`, error);
+      // Don't log here if it's an expected rethrow, let the caller handle logging
       throw error;
     }
   }
@@ -98,12 +112,47 @@ export class AIEngine {
         'resume-parsing'
       );
 
-      const parsedData: ParsedResumeData = JSON.parse(response.content);
-      this.logger.debug('Resume parsing completed successfully');
+      let jsonContent = response.content;
 
-      return parsedData;
-    } catch (error) {
-      this.logger.error('Failed to parse resume content:', error);
+      // Clean up markdown code blocks if present
+      if (jsonContent.includes('```')) {
+        const match = jsonContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (match && match[1]) {
+          jsonContent = match[1];
+        }
+      }
+
+      try {
+        const parsedData: ParsedResumeData = JSON.parse(jsonContent);
+        this.logger.debug('Resume parsing completed successfully');
+        return parsedData;
+      } catch (parseError: any) {
+        this.logger.warn(
+          `Failed to parse JSON directly: ${parseError.message}. Attempting recovery...`
+        );
+
+        // Try to find the first '{' and last '}'
+        const firstBrace = jsonContent.indexOf('{');
+        const lastBrace = jsonContent.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          try {
+            const recoveredContent = jsonContent.substring(
+              firstBrace,
+              lastBrace + 1
+            );
+            const parsedData: ParsedResumeData = JSON.parse(recoveredContent);
+            this.logger.log('Recovered JSON parsing successfully');
+            return parsedData;
+          } catch (recoveryError: any) {
+            this.logger.error(`Recovery failed: ${recoveryError.message}`);
+          }
+        }
+
+        throw parseError;
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to parse resume content: ${error.message}`);
       // Return a basic structure on error
       return this.createEmptyResumeData();
     }

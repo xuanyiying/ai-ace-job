@@ -18,12 +18,14 @@ import { OllamaProvider } from '@/ai-providers/providers/ollama.provider';
 import { OpenAIProvider } from '@/ai-providers/providers/openai.provider';
 import { DeepSeekProvider } from '@/ai-providers/providers/deepseek.provider';
 import { GeminiProvider } from '@/ai-providers/providers/gemini.provider';
+import { SiliconCloudProvider } from '@/ai-providers/providers/siliconcloud.provider';
 import {
   QwenConfig,
   OllamaConfig,
   OpenAIConfig,
   DeepSeekConfig,
   GeminiConfig,
+  SiliconCloudConfig,
 } from '@/ai-providers/interfaces/model-config.interface';
 import { ModelConfig } from '@/ai-providers/config/model-config.service';
 import { AIError, AIErrorCode } from '@/ai-providers/utils/ai-error';
@@ -190,6 +192,9 @@ export class AIProviderFactory implements OnModuleInit {
 
       case 'gemini':
         return new GeminiProvider(baseConfig as GeminiConfig);
+
+      case 'siliconcloud':
+        return new SiliconCloudProvider(baseConfig as SiliconCloudConfig);
 
       default:
         throw new Error(`Unknown provider: ${providerName}`);

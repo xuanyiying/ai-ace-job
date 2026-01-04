@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+import axios from '../config/axios';
 
 export interface ModelConfig {
   id: string;
@@ -52,7 +49,7 @@ export const modelAdminService = {
     page?: number;
     limit?: number;
   }): Promise<ModelListResponse> {
-    const response = await axios.get(`${API_BASE_URL}/admin/models`, {
+    const response = await axios.get('/admin/models', {
       params,
     });
     return response.data;
@@ -62,7 +59,7 @@ export const modelAdminService = {
    * Get a specific model config by name
    */
   async getModel(name: string): Promise<ModelConfig> {
-    const response = await axios.get(`${API_BASE_URL}/admin/models/${name}`);
+    const response = await axios.get(`/admin/models/${name}`);
     return response.data;
   },
 
@@ -70,7 +67,7 @@ export const modelAdminService = {
    * Create a new model configuration
    */
   async createModel(data: CreateModelConfigDto): Promise<ModelConfig> {
-    const response = await axios.post(`${API_BASE_URL}/admin/models`, data);
+    const response = await axios.post('/admin/models', data);
     return response.data;
   },
 
@@ -81,10 +78,7 @@ export const modelAdminService = {
     name: string,
     data: Partial<CreateModelConfigDto>
   ): Promise<ModelConfig> {
-    const response = await axios.put(
-      `${API_BASE_URL}/admin/models/${name}`,
-      data
-    );
+    const response = await axios.put(`/admin/models/${name}`, data);
     return response.data;
   },
 
@@ -92,21 +86,21 @@ export const modelAdminService = {
    * Delete a model configuration
    */
   async deleteModel(name: string): Promise<void> {
-    await axios.delete(`${API_BASE_URL}/admin/models/${name}`);
+    await axios.delete(`/admin/models/${name}`);
   },
 
   /**
    * Enable a model configuration
    */
   async enableModel(name: string): Promise<void> {
-    await axios.post(`${API_BASE_URL}/admin/models/${name}/enable`);
+    await axios.post(`/admin/models/${name}/enable`);
   },
 
   /**
    * Disable a model configuration
    */
   async disableModel(name: string): Promise<void> {
-    await axios.post(`${API_BASE_URL}/admin/models/${name}/disable`);
+    await axios.post(`/admin/models/${name}/disable`);
   },
 
   /**
@@ -118,9 +112,7 @@ export const modelAdminService = {
     status: string;
     message: string;
   }> {
-    const response = await axios.post(
-      `${API_BASE_URL}/admin/models/${name}/test`
-    );
+    const response = await axios.post(`/admin/models/${name}/test`);
     return response.data;
   },
 
@@ -128,16 +120,14 @@ export const modelAdminService = {
    * Refresh configuration cache
    */
   async refreshCache(): Promise<void> {
-    await axios.post(`${API_BASE_URL}/admin/models/refresh`);
+    await axios.post('/admin/models/refresh');
   },
 
   /**
    * Get usage statistics
    */
   async getUsageStats(): Promise<any> {
-    const response = await axios.get(
-      `${API_BASE_URL}/admin/models/stats/usage`
-    );
+    const response = await axios.get('/admin/models/stats/usage');
     return response.data;
   },
 };

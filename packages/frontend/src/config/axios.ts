@@ -27,6 +27,15 @@ axiosInstance.interceptors.request.use(
 // Response interceptor for error handling
 axiosInstance.interceptors.response.use(
   (response) => {
+    // 🔍 DEBUG LOG: 检查 axios 响应拦截器接收到的数据
+    if (response.config.url?.includes('/auth/login')) {
+      console.log('🔍 [AXIOS INTERCEPTOR] Login response:', {
+        url: response.config.url,
+        data: response.data,
+        userRole: response.data?.user?.role,
+        roleType: typeof response.data?.user?.role,
+      });
+    }
     return response;
   },
   (error) => {
@@ -43,10 +52,12 @@ axiosInstance.interceptors.response.use(
             isAuthenticated: false,
           });
           break;
-        case 403:
-          // Forbidden - quota exceeded or insufficient permissions
-          console.error('Access forbidden:', error.response.data);
-          break;
+        // TODO: TEMPORARY - 403 error handling disabled for testing
+        // This should be re-enabled in production
+        // case 403:
+        //   // Forbidden - quota exceeded or insufficient permissions
+        //   console.error('Access forbidden:', error.response.data);
+        //   break;
         case 429:
           // Rate limit exceeded
           console.error('Rate limit exceeded:', error.response.data);

@@ -11,6 +11,7 @@ import {
   HttpStatus,
   Req,
   Res,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -114,14 +115,34 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Current user information' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(@Request() req: any) {
-    return {
+    // 🔍 DEBUG LOG: 检查 JWT Guard 解析出的用户数据
+    console.log('🔍 [GET /auth/me] User from JWT:', {
+      userId: req.user.id,
+      email: req.user.email,
+      role: req.user.role,
+      roleType: typeof req.user.role,
+      fullUser: req.user,
+    });
+
+    const response = {
       id: req.user.id,
       email: req.user.email,
       username: req.user.username,
+      role: req.user.role, // ✅ 添加 role 字段
       subscriptionTier: req.user.subscriptionTier,
       emailVerified: req.user.emailVerified,
       createdAt: req.user.createdAt,
     };
+
+    // 🔍 DEBUG LOG: 检查返回的响应数据
+    console.log('🔍 [GET /auth/me] Response data:', {
+      userId: response.id,
+      email: response.email,
+      role: response.role,
+      roleType: typeof response.role,
+    });
+
+    return response;
   }
 
   @Delete('account')
@@ -227,5 +248,29 @@ export class UserController {
         `${frontendUrl}/oauth/callback?error=${encodeURIComponent(error.message)}`
       );
     }
+  }
+}
+
+@ApiTags('user')
+@Controller('user')
+export class UserHistoryController {
+  constructor(private readonly userService: UserService) {}
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user activity history' })
+  @ApiResponse({ status: 200, description: 'User activity history' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUserHistory(
+    @Request() req: any,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20'
+  ) {
+    return this.userService.getUserHistory(
+      req.user.id,
+      parseInt(page, 10),
+      parseInt(limit, 10)
+    );
   }
 }

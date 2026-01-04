@@ -5,7 +5,6 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { AIEngineService } from '../../ai-providers/ai-engine.service';
 import { StructuredOutputService } from './structured-output.service';
 
 export interface JSONSchema {
@@ -36,10 +35,7 @@ export interface StructuredOutputResponse<T = unknown> {
 export class JSONOutputHelper {
   private readonly logger = new Logger(JSONOutputHelper.name);
 
-  constructor(
-    private aiEngineService: AIEngineService,
-    private structuredOutputService: StructuredOutputService
-  ) {}
+  constructor(private structuredOutputService: StructuredOutputService) {}
 
   /**
    * Call LLM with JSON output constraint using the improved StructuredOutputService
@@ -48,9 +44,13 @@ export class JSONOutputHelper {
     request: StructuredOutputRequest
   ): Promise<StructuredOutputResponse<T>> {
     try {
-      this.logger.debug('Calling LLM with JSON output via StructuredOutputService');
-      
-      const zodSchema = this.structuredOutputService.translateToZod(request.schema);
+      this.logger.debug(
+        'Calling LLM with JSON output via StructuredOutputService'
+      );
+
+      const zodSchema = this.structuredOutputService.translateToZod(
+        request.schema
+      );
       const data = await this.structuredOutputService.callWithZod<T>(
         request.prompt,
         zodSchema as any,
@@ -71,7 +71,6 @@ export class JSONOutputHelper {
       throw error;
     }
   }
-}
 
   /**
    * Create a schema for common structures

@@ -51,6 +51,13 @@ const LoginPage: React.FC = () => {
         password: values.password,
       });
 
+      // 🔍 DEBUG LOG: 检查登录响应数据
+      console.log('🔍 [LOGIN PAGE] Login response:', {
+        user: response.user,
+        userRole: response.user?.role,
+        roleType: typeof response.user?.role,
+      });
+
       // Ensure we have a token
       const token = response.token || response.accessToken;
       if (!token) {
@@ -58,6 +65,7 @@ const LoginPage: React.FC = () => {
       }
 
       // Set auth state
+      console.log('🔍 [LOGIN PAGE] Calling setAuth with user:', response.user);
       setAuth(response.user, token);
 
       message.success(t('auth.login_success'));

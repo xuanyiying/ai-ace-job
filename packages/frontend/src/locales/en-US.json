@@ -61,6 +61,8 @@
     "pricing": "Pricing",
     "logout": "Logout",
     "admin_system": "System Management",
+    "user_management": "User Management",
+    "system_settings": "System Settings",
     "model_management": "Model Management",
     "prompt_management": "Prompt Management",
     "invite_code_management": "Invite Code Management"
