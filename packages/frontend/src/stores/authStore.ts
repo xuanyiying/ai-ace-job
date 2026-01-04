@@ -34,9 +34,10 @@ export const useAuthStore = create<AuthState>()(
       refreshProfile: async () => {
         try {
           const response = await axios.get('/auth/me');
-          set((state) => ({
-            user: state.user ? { ...state.user, ...response.data } : null,
-          }));
+          set({
+            user: response.data, // Directly set the user from response
+            isAuthenticated: true, // Ensure authenticated state
+          });
         } catch (error) {
           console.error('Failed to refresh profile:', error);
         }

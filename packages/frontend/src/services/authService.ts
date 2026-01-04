@@ -1,4 +1,5 @@
 import axios from '../config/axios';
+import { User } from '@/types';
 
 export interface RegisterData {
   email: string;
@@ -12,46 +13,37 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    username?: string;
-    role?: 'USER' | 'ADMIN' | string;
-    subscriptionTier: 'FREE' | 'PRO' | 'ENTERPRISE';
-    createdAt: string;
-    updatedAt?: string;
-  };
-
+  user: User;
   token?: string;
   accessToken?: string;
 }
 
 export const authService = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await axios.post('/auth/register', data);
+    const response = await axios.post<AuthResponse>('/auth/register', data);
+    const result = response.data;
     // Map accessToken to token if needed
-    if (response.data.accessToken && !response.data.token) {
-      response.data.token = response.data.accessToken;
+    if (result.accessToken && !result.token) {
+      result.token = result.accessToken;
     }
-    return response.data;
+    return result;
   },
 
   login: async (data: LoginData): Promise<AuthResponse> => {
-    const response = await axios.post('/auth/login', data);
-    
+    const response = await axios.post<AuthResponse>('/auth/login', data);
+    const result = response.data;
+
     // 🔍 DEBUG LOG: 检查从后端接收到的原始数据
     console.log('🔍 [FRONTEND] Raw response from backend:', {
-      user: response.data.user,
-      userRole: response.data.user?.role,
-      roleType: typeof response.data.user?.role,
+      user: result.user,
     });
-    
+
     // Map accessToken to token if needed
-    if (response.data.accessToken && !response.data.token) {
-      response.data.token = response.data.accessToken;
+    if (result.accessToken && !result.token) {
+      result.token = result.accessToken;
     }
-    console.info('Login successful', response.data);
-    return response.data;
+    console.info('Login successful', result);
+    return result;
   },
 
   logout: async (): Promise<void> => {

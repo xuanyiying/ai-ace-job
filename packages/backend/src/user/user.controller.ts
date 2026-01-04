@@ -112,8 +112,8 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async logout(@Request() req: any): Promise<{ message: string }> {
-    // Verify user exists in database before logging out
-    await this.userService.findById(req.user.id);
+    // clean redis cache for user
+    await this.userService.cleanUserCache(req.user.id);
 
     // JWT is stateless, so logout is primarily handled on the client side by removing the token
     // This endpoint can be used to perform server-side cleanup or token blacklisting if implemented
@@ -132,14 +132,21 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getCurrentUser(@Request() req: any): Promise<UserResponseDto> {
-    this.logger.warn('🚀 [DEBUG] HIT GET_CURRENT_USER ENDPOINT');
+    console.log('🚀 [DEBUG] HIT GET_CURRENT_USER ENDPOINT');
     const user = await this.userService.findById(req.user.id);
-    this.logger.debug(`🔍 [User Controller] User from database: ${JSON.stringify({
-        userId: user?.id,
-        email: user?.email,
-        role: user?.role,
-        roleType: typeof user?.role,
-    })}`);
+    console.log(
+      '🔍 [User Controller] User from database:',
+      JSON.stringify(
+        {
+          userId: user?.id,
+          email: user?.email,
+          role: user?.role,
+          roleType: typeof user?.role,
+        },
+        null,
+        2
+      )
+    );
     return {
       id: user.id,
       email: user.email,

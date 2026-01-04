@@ -22,6 +22,12 @@ import { ErrorCode } from '@/common/exceptions/error-codes';
 import * as crypto from 'crypto';
 @Injectable()
 export class UserService {
+  cleanUserCache(userId: string) {
+    const key = `user:profile:${userId}`;
+    this.redisService.del(key).catch((err) => {
+      this.logger.error(`Failed to clean user cache: ${err.message}`);
+    });
+  }
   private readonly logger = new Logger(UserService.name);
 
   constructor(
@@ -258,22 +264,28 @@ export class UserService {
   /**
    * Find user by ID
    */
-  // @Cacheable({
-  //   ttl: 300, // 5 minutes
-  //   keyPrefix: 'user:profile',
-  //   keyGenerator: (userId: string) => `user:profile:${userId}`,
-  // })
+  @Cacheable({
+    ttl: 300, // 5 minutes
+    keyPrefix: 'user:profile',
+    keyGenerator: (userId: string) => `user:profile:${userId}`,
+  })
   async findById(userId: string): Promise<User> {
-    
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
-   this.logger.debug(`🔍 [User Service] User from database: ${JSON.stringify({
-        userId: user?.id,
-        email: user?.email,
-        role: user?.role,
-        roleType: typeof user?.role,
-      })}`);
+    console.log(
+      '🔍 [User Service] User from database:',
+      JSON.stringify(
+        {
+          userId: user?.id,
+          email: user?.email,
+          role: user?.role,
+          roleType: typeof user?.role,
+        },
+        null,
+        2
+      )
+    );
     if (!user) {
       throw new ResourceNotFoundException(
         ErrorCode.USER_NOT_FOUND,

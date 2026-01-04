@@ -28,14 +28,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // 🔍 DEBUG LOG: 检查 axios 响应拦截器接收到的数据
-    if (response.config.url?.includes('/auth/login')) {
       console.log('🔍 [AXIOS INTERCEPTOR] Login response:', {
         url: response.config.url,
         data: response.data,
-        userRole: response.data?.user?.role,
-        roleType: typeof response.data?.user?.role,
+        status: response.status,
       });
-    }
+    
     return response;
   },
   (error) => {

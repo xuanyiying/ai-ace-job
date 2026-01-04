@@ -53,9 +53,7 @@ const LoginPage: React.FC = () => {
 
       // 🔍 DEBUG LOG: 检查登录响应数据
       console.log('🔍 [LOGIN PAGE] Login response:', {
-        user: response.user,
-        userRole: response.user?.role,
-        roleType: typeof response.user?.role,
+        user: response.user
       });
 
       // Ensure we have a token

@@ -104,11 +104,14 @@ export class RequestSizeLimitMiddleware implements NestMiddleware {
 @Injectable()
 export class CacheControlMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
+    // Use originalUrl which includes the full path with global prefix
+    const fullPath = req.originalUrl || req.path;
+    
     // Set cache control headers based on route
-    if (req.path.includes('/api/v1/templates')) {
+    if (fullPath.includes('/templates')) {
       // Templates can be cached for longer
       res.set('Cache-Control', 'public, max-age=3600'); // 1 hour
-    } else if (req.path.includes('/api/v1/')) {
+    } else if (fullPath.includes('/api/')) {
       // API responses should not be cached by default
       res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');

@@ -6,14 +6,11 @@ export interface User {
   avatar?: string;
   bio?: string;
   phone?: string;
-  role?: 'USER' | 'ADMIN';
+  role?: 'USER' | 'ADMIN' | string;
   subscriptionTier:
     | 'FREE'
     | 'PRO'
     | 'ENTERPRISE'
-    | 'free'
-    | 'pro'
-    | 'enterprise';
   createdAt: string;
   updatedAt?: string;
 }
