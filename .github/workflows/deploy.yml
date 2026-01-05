@@ -127,7 +127,7 @@ jobs:
 
       - name: Notify deployment
         if: always()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const status = context.payload.pull_request ? 'pending' : '${{ job.status }}';
