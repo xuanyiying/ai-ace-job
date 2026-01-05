@@ -111,8 +111,11 @@ export class Sanitizer {
     // Remove path traversal attempts
     let sanitized = filename.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
 
-    // Remove special characters except dots and hyphens
-    sanitized = sanitized.replace(/[^a-zA-Z0-9._-]/g, '_');
+    // Remove special characters except dots, hyphens and alphanumeric (including non-ASCII/CJK)
+    // We keep alphanumeric, dots, hyphens, and underscores.
+    // The \w in many environments only matches [a-zA-Z0-9_], so we use a more inclusive approach.
+    // Allow any character that is not a dangerous control character or path separator.
+    sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
 
     // Limit length
     if (sanitized.length > 255) {

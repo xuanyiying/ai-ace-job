@@ -2,6 +2,7 @@ import { Injectable, Inject, ForbiddenException } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptionService } from '../utils/encryption.service';
 import * as crypto from 'crypto';
 
 /**
@@ -37,30 +38,42 @@ export interface SecurityAuditEvent {
   timestamp?: Date;
 }
 
+export interface UserModelAccess {
+  userId: string;
+  modelId: string;
+  provider: string;
+  grantedAt: Date;
+  grantedBy: string;
+}
+
+export interface APIKeyRotation {
+  modelId: string;
+  oldKeyHash: string;
+  newKeyHash: string;
+  rotatedAt: Date;
+  rotatedBy: string;
+  reason: string;
+}
+
+export interface SecurityAuditEvent {
+  id?: string;
+  action: string;
+  resource: string;
+  userId?: string;
+  details?: Record<string, any>;
+  timestamp?: Date;
+}
+
 @Injectable()
 export class SecurityService {
-  private readonly ENCRYPTION_ALGORITHM = 'aes-256-cbc';
-  private readonly ENCRYPTION_KEY = this.getEncryptionKey();
   private readonly userModelAccessMap = new Map<string, Set<string>>();
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly encryptionService: EncryptionService
   ) {
     this.initializeAccessControl();
-  }
-
-  /**
-   * Get encryption key from environment
-   * Requirement 12.1: Use encryption to store API keys
-   */
-  private getEncryptionKey(): Buffer {
-    const key = process.env.ENCRYPTION_KEY;
-    if (!key) {
-      throw new Error('ENCRYPTION_KEY environment variable is not set');
-    }
-    // Ensure key is 32 bytes for AES-256
-    return crypto.createHash('sha256').update(key).digest();
   }
 
   /**
@@ -70,18 +83,7 @@ export class SecurityService {
    */
   encryptAPIKey(apiKey: string): string {
     try {
-      const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv(
-        this.ENCRYPTION_ALGORITHM,
-        this.ENCRYPTION_KEY,
-        iv
-      );
-
-      let encrypted = cipher.update(apiKey, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
-
-      // Combine IV and encrypted data
-      return `${iv.toString('hex')}:${encrypted}`;
+      return this.encryptionService.encrypt(apiKey);
     } catch (error) {
       this.logger.error('Failed to encrypt API key', {
         error: error instanceof Error ? error.message : String(error),
@@ -97,18 +99,7 @@ export class SecurityService {
    */
   decryptAPIKey(encryptedKey: string): string {
     try {
-      const [ivHex, encrypted] = encryptedKey.split(':');
-      const iv = Buffer.from(ivHex, 'hex');
-      const decipher = crypto.createDecipheriv(
-        this.ENCRYPTION_ALGORITHM,
-        this.ENCRYPTION_KEY,
-        iv
-      );
-
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-
-      return decrypted;
+      return this.encryptionService.decrypt(encryptedKey);
     } catch (error) {
       this.logger.error('Failed to decrypt API key', {
         error: error instanceof Error ? error.message : String(error),

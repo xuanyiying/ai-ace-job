@@ -12,20 +12,35 @@ ai-providers/
 │   └── index.ts
 ├── config/              # Configuration management
 │   ├── provider.config.ts          # Provider configuration service
+│   ├── predefined-templates.ts     # Predefined prompt templates
 │   └── index.ts
 ├── utils/               # Utility functions and classes
 │   ├── ai-error.ts                 # Error handling
 │   ├── retry-handler.ts            # Retry logic with exponential backoff
 │   └── index.ts
-├── providers/           # Provider implementations (to be added)
-│   ├── openai.provider.ts          # OpenAI implementation
-│   ├── qwen.provider.ts            # Alibaba Qwen implementation
-│   ├── deepseek.provider.ts        # DeepSeek implementation
-│   ├── gemini.provider.ts          # Google Gemini implementation
-│   └── ollama.provider.ts          # Ollama implementation
+├── providers/           # Provider implementations
+│   ├── base-openai.provider.ts     # Abstract base class for OpenAI-compatible providers
+│   ├── openai.provider.ts          # OpenAI implementation (using OpenAI SDK)
+│   ├── qwen.provider.ts            # Alibaba Qwen implementation (OpenAI-compatible)
+│   ├── deepseek.provider.ts        # DeepSeek implementation (OpenAI-compatible)
+│   ├── gemini.provider.ts          # Google Gemini implementation (OpenAI-compatible)
+│   └── ollama.provider.ts          # Ollama implementation (using OpenAI SDK)
+├── factory/             # Provider creation
+│   └── ai-provider.factory.ts      # Factory for creating provider instances
+├── ai-engine.service.ts # Unified service for AI calls
 ├── ai-providers.module.ts          # NestJS module
 └── index.ts                        # Main exports
 ```
+
+## Implementation Note: OpenAI SDK Integration
+
+As of January 2026, all AI provider implementations have been unified to use the **OpenAI SDK**. This provides a more robust and standardized way to interact with various LLM providers, as most modern providers (Qwen, DeepSeek, Gemini, Ollama) now offer OpenAI-compatible endpoints.
+
+Key benefits:
+- **Unified Logic**: Shared implementation via `BaseOpenAIProvider`.
+- **Better Error Handling**: Leverages OpenAI SDK's built-in error types and retry mechanisms (supplemented by our `RetryHandler`).
+- **Simplified Maintenance**: One library to update for most providers.
+- **Improved Performance**: Efficient HTTP connection management and streaming support.
 
 ## Core Interfaces
 

@@ -106,7 +106,7 @@ export class CacheControlMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     // Use originalUrl which includes the full path with global prefix
     const fullPath = req.originalUrl || req.path;
-    
+
     // Set cache control headers based on route
     if (fullPath.includes('/templates')) {
       // Templates can be cached for longer

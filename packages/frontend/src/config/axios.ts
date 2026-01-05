@@ -10,6 +10,11 @@ const axiosInstance = axios.create({
   },
 });
 
+// For cases where we need the absolute base URL for direct non-axios uploads (like AntD Upload)
+export const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_BASE_URL || '/api/v1';
+};
+
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
   (config) => {

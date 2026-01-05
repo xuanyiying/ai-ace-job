@@ -147,21 +147,73 @@ Return as JSON with detailed breakdown.`,
     name: 'resume_parsing_default',
     scenario: PromptScenario.RESUME_PARSING,
     language: 'zh-CN',
-    template: `请解析以下简历并以JSON格式提取关键信息：
+    template: `请深入分析以下简历内容，并提取结构化信息。你需要返回一个包含详细信息的 JSON 对象。
 
 简历内容：
 {resume_content}
 
-提取以下信息：
-1. 个人信息（姓名、邮箱、电话、地址）
-2. 职业概述
-3. 工作经历（公司、职位、时间、职责）
-4. 教育背景（学校、学位、专业、毕业时间）
-5. 技能（技术技能和软技能）
-6. 证书和奖项
-7. 语言能力
+你需要提取并按以下 JSON 结构返回（如果某项信息缺失，请保持为空数组或空字符串）：
+{{
+  "personalInfo": {{
+    "name": "姓名",
+    "email": "邮箱",
+    "phone": "电话",
+    "location": "城市/地址",
+    "linkedin": "LinkedIn 链接",
+    "github": "GitHub 链接"
+  }},
+  "summary": "专业总结或职业目标",
+  "education": [
+    {{
+      "institution": "学校名称",
+      "degree": "学位",
+      "field": "专业",
+      "startDate": "开始日期",
+      "endDate": "结束日期",
+      "achievements": ["在校成就或荣誉"]
+    }}
+  ],
+  "experience": [
+    {{
+      "company": "公司名称",
+      "position": "职位名称",
+      "startDate": "开始日期",
+      "endDate": "结束日期",
+      "location": "地点",
+      "description": ["主要职责描述"],
+      "achievements": ["核心成就或量化成果"]
+    }}
+  ],
+  "skills": ["技能1", "技能2"],
+  "projects": [
+    {{
+      "name": "项目名称",
+      "description": "项目描述",
+      "technologies": ["使用技术"],
+      "highlights": ["项目亮点或职责"]
+    }}
+  ],
+  "certifications": [
+    {{
+      "name": "证书名称",
+      "issuer": "颁发机构",
+      "date": "获得日期"
+    }}
+  ],
+  "languages": [
+    {{
+      "name": "语言名称",
+      "proficiency": "熟练程度"
+    }}
+  ],
+  "markdown": "请在此处提供整个简历的精美 Markdown 格式展示，包含所有提取的信息，使用合适的标题和列表，使其易于阅读。"
+}}
 
-返回有效的JSON格式结果。`,
+注意：
+1. 确保返回的是有效的 JSON 格式。
+2. 尽量完整地提取所有信息，特别是工作职责和成就。
+3. 如果内容中有中文，请确保 JSON 中的值也是中文。
+4. markdown 字段应包含一个排版精美的完整简历副本。`,
     variables: ['resume_content'],
     isEncrypted: false,
   },

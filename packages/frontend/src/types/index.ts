@@ -40,6 +40,7 @@ export interface ParsedResumeData {
   projects: Project[];
   certifications?: Certification[];
   languages?: Language[];
+  markdown?: string;
 }
 
 export interface PersonalInfo {

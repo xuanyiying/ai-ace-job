@@ -8,6 +8,8 @@ import {
 } from '@ant-design/icons';
 import { theme, Upload, Button, message as antMessage } from 'antd';
 import type { UploadProps } from 'antd';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { useConversationStore } from '../stores';
 import ResumeUploadDialog from '../components/ResumeUploadDialog';
@@ -207,31 +209,38 @@ const ChatPage: React.FC = () => {
 
       // Add parsed data summary message
       const parsedData = uploadData?.parsedData;
-      let summaryMessage = t('chat.parsed_resume_title') + '\n\n';
 
-      if (parsedData?.personalInfo?.name) {
-        summaryMessage += `${t('chat.parsed_name')}: ${parsedData.personalInfo.name}\n`;
-      }
-      if (parsedData?.personalInfo?.email) {
-        summaryMessage += `${t('chat.parsed_email')}: ${parsedData.personalInfo.email}\n`;
-      }
-      if (parsedData?.skills && parsedData.skills.length > 0) {
-        const count = parsedData.skills.length;
-        const skillsString = parsedData.skills.slice(0, 5).join(', ');
-        const extra =
-          count > 5 ? ` ${t('common.total_items', { count: count - 5 })}` : '';
-        summaryMessage += `${t('chat.parsed_skills')}: ${skillsString}${extra}\n`;
-      }
-      if (parsedData?.experience && parsedData.experience.length > 0) {
-        summaryMessage += `${t('chat.parsed_experience')}: ${t('common.total_items', { count: parsedData.experience.length })}\n`;
-      }
-      if (parsedData?.education && parsedData.education.length > 0) {
-        summaryMessage += `${t('chat.parsed_education')}: ${t('common.total_items', { count: parsedData.education.length })}\n`;
-      }
+      if (parsedData?.markdown) {
+        // If we have markdown, use it directly as the summary
+        await sendMessage(currentConversation.id, parsedData.markdown, 'assistant');
+      } else {
+        // Fallback to manual summary if markdown is missing
+        let summaryMessage = t('chat.parsed_resume_title') + '\n\n';
 
-      summaryMessage += t('chat.parsed_next_steps');
+        if (parsedData?.personalInfo?.name) {
+          summaryMessage += `${t('chat.parsed_name')}: ${parsedData.personalInfo.name}\n`;
+        }
+        if (parsedData?.personalInfo?.email) {
+          summaryMessage += `${t('chat.parsed_email')}: ${parsedData.personalInfo.email}\n`;
+        }
+        if (parsedData?.skills && parsedData.skills.length > 0) {
+          const count = parsedData.skills.length;
+          const skillsString = parsedData.skills.slice(0, 5).join(', ');
+          const extra =
+            count > 5 ? ` ${t('common.total_items', { count: count - 5 })}` : '';
+          summaryMessage += `${t('chat.parsed_skills')}: ${skillsString}${extra}\n`;
+        }
+        if (parsedData?.experience && parsedData.experience.length > 0) {
+          summaryMessage += `${t('chat.parsed_experience')}: ${t('common.total_items', { count: parsedData.experience.length })}\n`;
+        }
+        if (parsedData?.education && parsedData.education.length > 0) {
+          summaryMessage += `${t('chat.parsed_education')}: ${t('common.total_items', { count: parsedData.education.length })}\n`;
+        }
 
-      await sendMessage(currentConversation.id, summaryMessage, 'assistant');
+        summaryMessage += '\n' + t('chat.parsed_next_steps');
+
+        await sendMessage(currentConversation.id, summaryMessage, 'assistant');
+      }
 
       setUploadDialogVisible(false);
     } catch (error) {
@@ -410,7 +419,11 @@ const ChatPage: React.FC = () => {
                   }}
                 />
               ) : (
-                item.content
+                <div className="markdown-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {item.content}
+                  </ReactMarkdown>
+                </div>
               ),
             avatar: item.role === 'ai' ? <RobotOutlined /> : <UserOutlined />,
           }))}

@@ -5,10 +5,9 @@
  */
 
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ModelConfig as PrismaModelConfig } from '@prisma/client';
-import * as crypto from 'crypto';
+import { EncryptionService } from '../utils/encryption.service';
 
 export interface ModelConfig {
   id: string;
@@ -31,18 +30,13 @@ export interface ModelConfig {
 export class ModelConfigService implements OnModuleInit {
   private readonly logger = new Logger(ModelConfigService.name);
   private configCache: Map<string, ModelConfig> = new Map();
-  private encryptionKey: string;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   private cacheTimestamps: Map<string, number> = new Map();
 
   constructor(
-    private configService: ConfigService,
-    private prisma: PrismaService
-  ) {
-    this.encryptionKey =
-      this.configService.get<string>('ENCRYPTION_KEY') ||
-      'default-encryption-key-change-in-production';
-  }
+    private prisma: PrismaService,
+    private encryptionService: EncryptionService
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.loadConfigurations();
@@ -144,16 +138,32 @@ export class ModelConfigService implements OnModuleInit {
    * Get all model configurations
    */
   async getAllModelConfigs(): Promise<ModelConfig[]> {
-    return Array.from(this.configCache.values());
+    try {
+      const configs = await this.prisma.modelConfig.findMany();
+      return configs.map((config) => this.decryptConfig(config));
+    } catch (error) {
+      this.logger.error(
+        `Failed to get all model configs: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return [];
+    }
   }
 
   /**
    * Get configurations by provider
    */
   async getConfigsByProvider(provider: string): Promise<ModelConfig[]> {
-    return Array.from(this.configCache.values()).filter(
-      (config) => config.provider === provider
-    );
+    try {
+      const configs = await this.prisma.modelConfig.findMany({
+        where: { provider },
+      });
+      return configs.map((config) => this.decryptConfig(config));
+    } catch (error) {
+      this.logger.error(
+        `Failed to get configs by provider: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return [];
+    }
   }
 
   /**
@@ -425,7 +435,7 @@ export class ModelConfigService implements OnModuleInit {
    */
   private encryptConfig(config: ModelConfig): ModelConfig {
     const encrypted = { ...config };
-    encrypted.apiKey = this.encrypt(config.apiKey);
+    encrypted.apiKey = this.encryptionService.encrypt(config.apiKey);
     return encrypted;
   }
 
@@ -437,7 +447,7 @@ export class ModelConfigService implements OnModuleInit {
       id: config.id,
       name: config.name,
       provider: config.provider,
-      apiKey: this.decrypt(config.apiKey),
+      apiKey: this.encryptionService.decrypt(config.apiKey),
       endpoint: config.endpoint || undefined,
       defaultTemperature: config.defaultTemperature,
       defaultMaxTokens: config.defaultMaxTokens,
@@ -452,48 +462,17 @@ export class ModelConfigService implements OnModuleInit {
   }
 
   /**
-   * Encrypt string using AES-256-GCM
+   * Update data with encryption
    */
   private encrypt(text: string): string {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(
-      'aes-256-gcm',
-      Buffer.from(this.encryptionKey.padEnd(32, '0').slice(0, 32)),
-      iv
-    );
-
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-
-    const authTag = cipher.getAuthTag();
-    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+    return this.encryptionService.encrypt(text);
   }
 
   /**
-   * Decrypt string using AES-256-GCM
+   * Update data with decryption
    */
-  private decrypt(encryptedText: string): string {
-    const parts = encryptedText.split(':');
-    if (parts.length !== 3) {
-      throw new Error('Invalid encrypted format');
-    }
-
-    const iv = Buffer.from(parts[0], 'hex');
-    const authTag = Buffer.from(parts[1], 'hex');
-    const encrypted = parts[2];
-
-    const decipher = crypto.createDecipheriv(
-      'aes-256-gcm',
-      Buffer.from(this.encryptionKey.padEnd(32, '0').slice(0, 32)),
-      iv
-    );
-
-    decipher.setAuthTag(authTag);
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
+  private decrypt(text: string): string {
+    return this.encryptionService.decrypt(text);
   }
 
   /**

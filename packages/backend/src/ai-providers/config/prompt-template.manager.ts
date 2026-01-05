@@ -56,6 +56,21 @@ export class PromptTemplateManager {
           this.logger.log(
             `Created predefined template: ${template.name} (${template.language})`
           );
+        } else if (existing.template !== template.template) {
+          // Update if template content changed
+          await this.prisma.promptTemplate.update({
+            where: { id: existing.id },
+            data: {
+              template: template.template,
+              variables: template.variables,
+              scenario: template.scenario,
+            },
+          });
+          this.logger.log(
+            `Updated predefined template: ${template.name} (${template.language})`
+          );
+          // Clear cache for this template
+          this.templateCache.clear();
         }
       } catch (error) {
         this.logger.error(

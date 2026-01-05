@@ -19,6 +19,7 @@ import { AIEngineService } from '@/ai-providers/ai-engine.service';
 import { AIController } from '@/ai-providers/ai.controller';
 import { PromptAdminController } from '@/ai-providers/prompt-admin.controller';
 import { ModelAdminController } from '@/ai-providers/model-admin.controller';
+import { EncryptionService } from './utils/encryption.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { loggerConfig } from '@/logger/logger.config';
 
@@ -35,6 +36,7 @@ import { loggerConfig } from '@/logger/logger.config';
     SecurityService,
     AILogger,
     AIEngineService,
+    EncryptionService,
   ],
   exports: [
     ModelConfigService,
@@ -46,6 +48,7 @@ import { loggerConfig } from '@/logger/logger.config';
     SecurityService,
     AILogger,
     AIEngineService,
+    EncryptionService,
   ],
 })
 export class AIProvidersModule {}

@@ -57,6 +57,7 @@ export interface ParsedResumeData {
     name: string;
     proficiency: string;
   }>;
+  markdown?: string;
 }
 
 /**
