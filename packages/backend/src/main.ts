@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
-import { MonitoringExceptionFilter } from './monitoring/monitoring.filter';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 import { MonitoringGuard } from './monitoring/monitoring.guard';
 
@@ -45,9 +45,9 @@ async function bootstrap() {
   const monitoringGuard = app.get(MonitoringGuard);
   app.useGlobalGuards(monitoringGuard);
 
-  // Apply global monitoring exception filter
-  const monitoringFilter = app.get(MonitoringExceptionFilter);
-  app.useGlobalFilters(monitoringFilter);
+  // Apply global exception filter
+  const httpExceptionFilter = app.get(HttpExceptionFilter);
+  app.useGlobalFilters(httpExceptionFilter);
 
   // Performance: Compression middleware for response compression
   app.use(

@@ -6,30 +6,39 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppException } from '../exceptions/app.exception';
 import {
   ERROR_CODE_TO_MESSAGE,
-  ERROR_CODE_TO_STATUS,
 } from '../exceptions/error-codes';
+import { MonitoringService } from '../../monitoring/monitoring.service';
+import { AlertingService, AlertSeverity } from '../../monitoring/alerting.service';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger as WinstonLogger } from 'winston';
 
 /**
- * Global HTTP exception filter for standardized error responses
- * Handles all HTTP exceptions and converts them to standardized error format
+ * Global exception filter for standardized error responses
+ * Requirement 12.6: Captures exceptions and sends alerts
+ * Handles all exceptions and converts them to standardized error format
  */
-@Catch(HttpException)
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  constructor(
+    private readonly monitoring: MonitoringService,
+    private readonly alerting: AlertingService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: WinstonLogger
+  ) {}
 
-  catch(exception: HttpException, host: ArgumentsHost) {
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     // Generate request ID for tracking
     const requestId =
-      request.headers['x-request-id'] || this.generateRequestId();
+      (request.headers['x-request-id'] as string) || this.generateRequestId();
 
     // Extract error information
     let errorCode: string;
@@ -50,7 +59,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse() as any;
       userMessage = this.extractValidationMessage(exceptionResponse);
       details = this.extractValidationDetails(exceptionResponse);
-    } else {
+    } else if (exception instanceof HttpException) {
       // Handle generic HttpException
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
@@ -62,14 +71,60 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const responseObj = exceptionResponse as any;
         details = responseObj.message || responseObj.error || null;
       }
+    } else {
+      // Handle non-HTTP exceptions (like Prisma or native errors)
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      errorCode = 'INTERNAL_SERVER_ERROR';
+      userMessage = 'An unexpected error occurred. Please try again later.';
+      
+      if (exception instanceof Error) {
+        details = exception.message;
+        errorCode = (exception as any).code || exception.constructor.name;
+      }
     }
 
-    // Log error with appropriate level
-    const logMessage = `[${requestId}] ${request.method} ${request.url} - ${status} - ${errorCode}`;
+    // Capture exception with monitoring system
+    if (exception instanceof Error) {
+      this.monitoring.captureException(exception, {
+        method: request.method,
+        path: request.path,
+        statusCode: status,
+        requestId,
+      });
+    }
+
+    // Send alert for critical errors
     if (status >= 500) {
-      this.logger.error(logMessage, exception.stack);
+      await this.alerting.createAlert(
+        `Server Error: ${errorCode}`,
+        `${request.method} ${request.path} - ${userMessage}`,
+        AlertSeverity.CRITICAL,
+        {
+          method: request.method,
+          path: request.path,
+          statusCode: status,
+          errorCode,
+          requestId,
+        }
+      );
+    }
+
+    // Log the error
+    const logData = {
+      requestId,
+      method: request.method,
+      path: request.path,
+      statusCode: status,
+      errorCode,
+      message: userMessage,
+      details,
+      stack: exception instanceof Error ? exception.stack : undefined,
+    };
+
+    if (status >= 500) {
+      this.logger.error('Exception caught', logData);
     } else if (status >= 400) {
-      this.logger.warn(logMessage);
+      this.logger.warn('Exception caught', logData);
     }
 
     // Build standardized error response
@@ -79,6 +134,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message: userMessage,
         ...(process.env.NODE_ENV === 'development' && details && { details }),
         timestamp: new Date().toISOString(),
+        path: request.path,
         requestId,
       },
     };

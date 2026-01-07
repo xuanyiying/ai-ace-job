@@ -5,18 +5,10 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 @Module({
   providers: [
-    // Register all exception filters
-    // AllExceptionsFilter catches all unhandled exceptions
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-    // HttpExceptionFilter handles HTTP exceptions specifically
-    {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
-    },
+    HttpExceptionFilter,
   ],
-  exports: [],
+  exports: [
+    HttpExceptionFilter,
+  ],
 })
 export class CommonModule {}

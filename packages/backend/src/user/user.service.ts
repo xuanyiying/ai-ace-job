@@ -128,7 +128,7 @@ export class UserService {
    * Requirement 1.2: Verify credentials and return authentication token
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const { email, password } = loginDto;
+    const { email, password, remember } = loginDto;
 
     // Sanitize email
     const sanitizedEmail = Sanitizer.sanitizeEmail(email);
@@ -156,8 +156,8 @@ export class UserService {
       data: { lastLoginAt: new Date() },
     });
 
-    // Generate JWT token
-    const accessToken = this.generateToken(user);
+    // Generate JWT token with remember option
+    const accessToken = this.generateToken(user, remember);
 
     const responseData = {
       accessToken,
@@ -251,14 +251,17 @@ export class UserService {
   /**
    * Generate JWT token for user
    */
-  private generateToken(user: User): string {
+  private generateToken(user: User, remember: boolean = false): string {
     const payload = {
       sub: user.id,
       email: user.email,
       subscriptionTier: user.subscriptionTier,
     };
 
-    return this.jwtService.sign(payload);
+    // If remember is true, token is valid for 30 days, otherwise 7 days (default)
+    const expiresIn = remember ? '30d' : undefined;
+
+    return this.jwtService.sign(payload, expiresIn ? { expiresIn } : undefined);
   }
 
   /**
