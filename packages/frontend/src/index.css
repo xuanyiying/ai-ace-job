@@ -1,6 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
+  /* Common variables */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  --duration-fast: 0.2s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Transition */
+  --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  /* DEFAULT: Dark Theme Variables (applied when no data-theme or data-theme='dark') */
   /* Color Palette - Cyber-Tech/Deep Space Theme */
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
@@ -17,11 +43,8 @@
 
   /* Backgrounds - Deep & Rich */
   --bg-primary: #030712;
-  /* Very dark slate/gray, almost black */
   --bg-secondary: #0f172a;
-  /* Slate 900 */
   --bg-tertiary: #1e293b;
-  /* Slate 800 */
   --bg-card: rgba(15, 23, 42, 0.6);
 
   /* Glassmorphism */
@@ -31,6 +54,10 @@
   --glass-border-light: rgba(255, 255, 255, 0.15);
   --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   --glass-backdrop: blur(16px) saturate(180%);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --sidebar-item-hover: rgba(255, 255, 255, 0.05);
+  --sidebar-item-active: rgba(255, 255, 255, 0.1);
 
   /* Text Colors */
   --text-primary: #f8fafc;
@@ -38,41 +65,58 @@
   --text-tertiary: #64748b;
   --text-accent: #e2e8f0;
 
-  /* Spacing System */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-
-  /* Animation Durations */
-  --duration-fast: 0.2s;
-  --duration-normal: 0.3s;
-  --duration-slow: 0.5s;
-
-  /* Radius */
-  --radius-sm: 0.5rem;
-  /* 8px */
-  --radius-md: 0.75rem;
-  /* 12px */
-  --radius-lg: 1rem;
-  /* 16px */
-  --radius-xl: 1.5rem;
-  /* 24px */
-  --radius-full: 9999px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-neon: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 40px rgba(168, 85, 247, 0.1);
+}
+
+/* Note: Dark theme is default in :root, no separate [data-theme='dark'] selector needed */
+
+[data-theme='light'] {
+  /* Color Palette - Clean & Modern */
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --secondary-gradient: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+  --surface-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+
+  /* Core Colors */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --secondary-color: #7c3aed;
+  --accent-color: #0d9488;
+  --danger-color: #dc2626;
+  --success-color: #059669;
+  --warning-color: #d97706;
+
+  /* Backgrounds - Clean & Bright */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.8);
+
+  /* Glassmorphism - Light Mode */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-light: rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  --glass-backdrop: blur(12px) saturate(150%);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.1);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
+  --sidebar-item-hover: rgba(0, 0, 0, 0.04);
+  --sidebar-item-active: rgba(0, 0, 0, 0.08);
+
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-accent: #1e293b;
+
+  --shadow-neon: 0 4px 20px rgba(79, 70, 229, 0.08);
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: var(--theme-transition);
 }
 
 body {
@@ -84,6 +128,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   height: 100vh;
+  transition: var(--theme-transition);
 }
 
 /* Enhanced Dynamic Background */
@@ -220,13 +265,13 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: var(--radius-full);
   transition: background var(--duration-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Animations */
@@ -710,6 +755,10 @@ code {
 
 /* Media Queries for Flex/Grid */
 @media (min-width: 768px) {
+  .md\:p-6 {
+    padding: 1.5rem;
+  }
+
   .md\:p-8 {
     padding: 2rem;
   }
@@ -733,4 +782,172 @@ code {
   .md\:w-1\/2 {
     width: 50%;
   }
+
+  /* Display utilities */
+  .md\:hidden {
+    display: none;
+  }
+
+  .md\:block {
+    display: block;
+  }
+
+  .md\:flex {
+    display: flex;
+  }
+
+  /* Padding left for sidebar offset */
+  .md\:pl-\[80px\] {
+    padding-left: 80px;
+  }
+
+  .md\:pl-\[280px\] {
+    padding-left: 280px;
+  }
+
+  .md\:pt-0 {
+    padding-top: 0;
+  }
+}
+
+/* Height utilities */
+.h-16 {
+  height: 4rem;
+}
+
+.h-9 {
+  height: 2.25rem;
+}
+
+.h-12 {
+  height: 3rem;
+}
+
+/* Additional layout utilities */
+.pt-16 {
+  padding-top: 4rem;
+}
+
+.space-y-1>*+* {
+  margin-top: 0.25rem;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Z-index utilities */
+.z-50 {
+  z-index: 50;
+}
+
+/* Transition utilities */
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Truncate utility */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Min-width utility */
+.min-w-0 {
+  min-width: 0;
+}
+
+/* Top/Right/Bottom/Left utilities for positioning */
+.top-0 {
+  top: 0;
+}
+
+.left-0 {
+  left: 0;
+}
+
+.right-0 {
+  right: 0;
+}
+
+.bottom-0 {
+  bottom: 0;
+}
+
+/* Width utilities */
+.w-6 {
+  width: 1.5rem;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.h-6 {
+  height: 1.5rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+/* Gap utilities */
+.gap-3 {
+  gap: 0.75rem;
+}
+
+/* Ring utility for avatar */
+.ring-2 {
+  box-shadow: 0 0 0 2px var(--glass-border);
+}
+
+/* Inline-flex utility */
+.inline-flex {
+  display: inline-flex;
+}
+
+/* Border-t utility */
+.border-t {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-color: var(--glass-border);
+}
+
+/* Border-r utility */
+.border-r {
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-color: var(--glass-border);
+}
+
+/* Auto margins */
+.mt-auto {
+  margin-top: auto;
+}
+
+/* Background glass helper */
+.bg-glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+}
+
+/* Border glass helper */
+.border-glass-border {
+  border-color: var(--glass-border);
 }

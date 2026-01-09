@@ -86,7 +86,10 @@
     "system_settings": "System Settings",
     "model_management": "Model Management",
     "prompt_management": "Prompt Management",
-    "invite_code_management": "Invite Code Management"
+    "invite_code_management": "Invite Code Management",
+    "knowledge_base": "Knowledge Base",
+    "dark_mode": "Dark Mode",
+    "light_mode": "Light Mode"
   },
   "models": {
     "title": "Model Configuration",
@@ -320,5 +323,36 @@
       "save_failed": "Failed to save settings",
       "load_failed": "Failed to load settings"
     }
+  },
+  "knowledge_base": {
+    "title": "Knowledge Base Management",
+    "subtitle": "Manage RAG knowledge base documents for better AI responses",
+    "upload": "Upload Document",
+    "test_query": "Test RAG Query",
+    "total_docs": "Total Documents",
+    "total_chunks": "Total Chunks",
+    "categories": "Categories",
+    "last_updated": "Last Updated",
+    "doc_name": "Document Name",
+    "category": "Category",
+    "tags": "Tags",
+    "chunks": "Chunks",
+    "words": "Words",
+    "actions": "Actions",
+    "delete_confirm": "Are you sure to delete this document?",
+    "upload_modal_title": "Upload Document",
+    "upload_hint": "Supports PDF, DOCX, and TXT (max 10MB)",
+    "doc_title": "Document Title",
+    "doc_tags_hint": "Tags (comma-separated)",
+    "query_drawer_title": "Test RAG Query",
+    "query_placeholder": "Enter your query here...",
+    "filter_category": "Filter by Category",
+    "all_categories": "All Categories",
+    "generated_answer": "Generated Answer",
+    "retrieved_docs": "Retrieved Documents",
+    "similarity": "Similarity",
+    "chunk_info": "Chunk #{{index}}",
+    "clear_all": "Clear Knowledge Base",
+    "clear_confirm": "Are you sure to clear the entire knowledge base? This cannot be undone."
   }
 }

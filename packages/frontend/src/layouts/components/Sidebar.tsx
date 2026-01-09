@@ -17,10 +17,12 @@ import {
   SettingOutlined,
   DollarOutlined,
   GlobalOutlined,
+  SunOutlined,
+  MoonOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore, useConversationStore } from '@/stores';
+import { useAuthStore, useConversationStore, useUIStore } from '@/stores';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 
@@ -38,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, clearAuth } = useAuthStore();
+  const { theme, toggleTheme } = useUIStore();
   const {
     conversations,
     currentConversation,
@@ -137,6 +140,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       path: '/admin/invite-codes',
     },
     {
+      key: 'knowledge-base',
+      icon: <FileTextOutlined />,
+      label: t('menu.knowledge_base', '知识库'),
+      path: '/admin/knowledge-base',
+    },
+    {
       key: 'system-settings',
       icon: <ToolOutlined />,
       label: t('menu.system_settings'),
@@ -162,6 +171,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <DollarOutlined />,
       label: t('menu.pricing'),
       onClick: () => navigate('/pricing'),
+    },
+    {
+      key: 'theme',
+      icon: theme === 'light' ? <MoonOutlined /> : <SunOutlined />,
+      label:
+        theme === 'light'
+          ? t('menu.dark_mode', '深色模式')
+          : t('menu.light_mode', '浅色模式'),
+      onClick: toggleTheme,
     },
     { type: 'divider' },
     {
@@ -197,12 +215,25 @@ const Sidebar: React.FC<SidebarProps> = ({
       style={{ background: 'transparent' }}
     >
       {/* Brand */}
-      <div className="sidebar-brand h-16 flex items-center px-4">
+      <div
+        className={`sidebar-brand h-16 flex items-center px-4 ${isCollapsed ? 'justify-center' : 'justify-between'}`}
+      >
         {!isCollapsed && (
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-secondary-400">
             {t('common.app_name')}
           </span>
         )}
+        <Tooltip
+          title={t(theme === 'light' ? 'menu.dark_mode' : 'menu.light_mode')}
+          placement="right"
+        >
+          <Button
+            type="text"
+            icon={theme === 'light' ? <MoonOutlined /> : <SunOutlined />}
+            onClick={toggleTheme}
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          />
+        </Tooltip>
       </div>
 
       {/* New Chat */}
@@ -226,10 +257,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="px-4 mb-4">
           <Input
             placeholder={`${t('common.search')}... (⌘K)`}
-            prefix={<SearchOutlined className="text-gray-400" />}
+            prefix={<SearchOutlined className="text-[var(--text-tertiary)]" />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="glass-input border-none bg-white/5 text-white"
+            style={{ backgroundColor: 'var(--sidebar-item-hover)' }}
+            className="glass-input border-none text-current"
             allowClear
           />
         </div>
@@ -238,13 +270,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 scrollbar-hide">
         {!isCollapsed && (
-          <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider flex justify-between items-center">
+          <div className="px-3 py-2 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider flex justify-between items-center">
             {t('menu.history')}
             <Badge
               count={filteredConversations.length}
               style={{
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                color: '#999',
+                backgroundColor: 'var(--sidebar-item-active)',
+                color: 'var(--text-tertiary)',
                 boxShadow: 'none',
               }}
             />
@@ -260,13 +292,28 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div
               onClick={() => handleSelectChat(item.id)}
               className={`
-                group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200
-                ${
-                  currentConversation?.id === item.id
-                    ? 'bg-primary-500/10 text-primary-300 border border-primary-500/20'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                }
+                group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 relative
+                ${currentConversation?.id === item.id ? 'text-primary-500 shadow-sm' : 'text-[var(--text-secondary)]'}
               `}
+              style={{
+                backgroundColor:
+                  currentConversation?.id === item.id
+                    ? 'var(--sidebar-item-active)'
+                    : 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                if (currentConversation?.id !== item.id) {
+                  e.currentTarget.style.backgroundColor =
+                    'var(--sidebar-item-hover)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentConversation?.id !== item.id) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
             >
               <MessageOutlined />
               {!isCollapsed && (
@@ -307,8 +354,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Admin Links */}
       {isAdmin && !isCollapsed && (
-        <div className="mt-4 px-2 pb-2 border-t border-white/10">
-          <div className="px-3 py-3 text-xs font-medium text-gray-500 uppercase">
+        <div className="mt-4 px-2 pb-2 border-t border-[var(--sidebar-item-hover)]">
+          <div className="px-3 py-3 text-xs font-medium text-[var(--text-tertiary)] uppercase">
             {t('menu.admin')}
           </div>
           {adminNavItems.map((item) => (
@@ -320,7 +367,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               }}
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer text-sm mb-1 transition-colors
-                ${location.pathname.startsWith(item.path) ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                ${location.pathname.startsWith(item.path) ? 'bg-[var(--sidebar-item-active)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--sidebar-item-hover)]'}
               `}
             >
               {item.icon}
@@ -331,15 +378,25 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* User Profile */}
-      <div className="p-4 border-t border-white/10 mt-auto">
+      <div className="p-4 border-t border-[var(--sidebar-item-hover)] mt-auto">
         <Dropdown
           menu={{ items: userMenu }}
           placement="topLeft"
           trigger={['click']}
         >
-          <div className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
+          <div
+            className="flex items-center gap-3 cursor-pointer p-2 rounded-lg transition-colors"
+            style={{ backgroundColor: 'transparent' }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                'var(--sidebar-item-hover)')
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = 'transparent')
+            }
+          >
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/10">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-[var(--sidebar-item-hover)]">
                 {user?.avatar ? (
                   <img
                     src={user.avatar}
@@ -350,16 +407,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
               </div>
               {isAdmin && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-gray-900" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-[var(--bg-primary)]" />
               )}
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">
+                <div className="text-sm font-medium text-current truncate">
                   {user?.username || 'User'}
                 </div>
                 {isAdmin && (
-                  <div className="text-xs text-primary-400">Administrator</div>
+                  <div className="text-xs text-[var(--primary-color)]">
+                    Administrator
+                  </div>
                 )}
               </div>
             )}

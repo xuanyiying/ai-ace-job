@@ -10,11 +10,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppException } from '../exceptions/app.exception';
-import {
-  ERROR_CODE_TO_MESSAGE,
-} from '../exceptions/error-codes';
+import { ERROR_CODE_TO_MESSAGE } from '../exceptions/error-codes';
 import { MonitoringService } from '../../monitoring/monitoring.service';
-import { AlertingService, AlertSeverity } from '../../monitoring/alerting.service';
+import {
+  AlertingService,
+  AlertSeverity,
+} from '../../monitoring/alerting.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger as WinstonLogger } from 'winston';
 
@@ -76,7 +77,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = 'INTERNAL_SERVER_ERROR';
       userMessage = 'An unexpected error occurred. Please try again later.';
-      
+
       if (exception instanceof Error) {
         details = exception.message;
         errorCode = (exception as any).code || exception.constructor.name;

@@ -27,6 +27,7 @@ import PitchPerfectPage from '../pages/PitchPerfectPage';
 import StrategistPage from '../pages/StrategistPage';
 import RolePlayPage from '../pages/RolePlayPage';
 import AgentMetricsPage from '../pages/AgentMetricsPage';
+import KnowledgeBasePage from '../pages/KnowledgeBasePage';
 
 const routes: RouteObject[] = [
   {
@@ -167,6 +168,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute requiredRole="ADMIN">
             <InviteCodeManagementPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'admin/knowledge-base',
+        element: (
+          <ProtectedRoute requiredRole="ADMIN">
+            <KnowledgeBasePage />
           </ProtectedRoute>
         ),
       },

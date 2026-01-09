@@ -14,6 +14,8 @@ import {
   OptimizationMetricsCalculator,
   StructuredOutputService,
   AgentOrchestrator,
+  DocumentProcessorService,
+  AgenticService,
 } from './services';
 import {
   ResumeParserTool,
@@ -34,6 +36,7 @@ import {
   AgentManagementController,
   AgentMetricsController,
   AgentSessionController,
+  KnowledgeBaseController,
 } from './controllers';
 
 @Module({
@@ -54,6 +57,8 @@ import {
     OptimizationMetricsCalculator,
     StructuredOutputService,
     AgentOrchestrator,
+    DocumentProcessorService,
+    AgenticService,
     ResumeParserTool,
     JDAnalyzerTool,
     KeywordMatcherTool,
@@ -72,6 +77,7 @@ import {
     AgentManagementController,
     AgentMetricsController,
     AgentSessionController,
+    KnowledgeBaseController,
   ],
   exports: [
     EmbeddingService,
@@ -82,6 +88,7 @@ import {
     JSONOutputHelper,
     BatchProcessorService,
     OptimizationMetricsCalculator,
+    DocumentProcessorService,
     PitchPerfectAgent,
     StrategistAgent,
     RolePlayAgent,

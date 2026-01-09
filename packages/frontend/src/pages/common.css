@@ -62,7 +62,7 @@
 
 /* Typography Customization */
 h2.ant-typography {
-  color: white !important;
+  color: var(--text-primary) !important;
   font-weight: 800 !important;
   letter-spacing: -0.01em !important;
 }
@@ -85,7 +85,7 @@ h2.ant-typography {
 }
 
 .ant-card-head-title {
-  color: white !important;
+  color: var(--text-primary) !important;
   font-weight: 600 !important;
 }
 

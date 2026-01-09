@@ -14,6 +14,9 @@ import {
   WorkflowContext,
   WorkflowResult,
 } from './workflow.interfaces';
+import { ProjectCallbackHandler } from '../services/langchain-callbacks.service';
+import { ChatProjectAI } from '../../ai-providers/langchain-adapter.service';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 /**
  * LCEL Workflow Orchestrator
@@ -57,12 +60,23 @@ export class LCELWorkflowOrchestrator {
       // 2. Compose the sequence
       const chain = RunnableSequence.from(runnables as any);
 
-      // 3. Execute with configuration
+      // 3. Execute with configuration and custom middleware
+      const callbacks = [
+        new ProjectCallbackHandler(
+          context.userId,
+          context.scenario || 'workflow',
+          this.usageTracker,
+          this.performanceMonitor,
+          { sessionId: context.sessionId }
+        ),
+      ];
+
       const config: RunnableConfig = {
         configurable: {
           sessionId: context.sessionId,
           userId: context.userId,
         },
+        callbacks,
       };
 
       const finalOutput = await chain.invoke({}, config);
@@ -111,6 +125,16 @@ export class LCELWorkflowOrchestrator {
       });
 
       const parallelChain = RunnableParallel.from(runnables);
+      const callbacks = [
+        new ProjectCallbackHandler(
+          context.userId,
+          context.scenario || 'workflow-parallel',
+          this.usageTracker,
+          this.performanceMonitor,
+          { sessionId: context.sessionId }
+        ),
+      ];
+
       const results = await parallelChain.invoke(
         {},
         {
@@ -118,6 +142,7 @@ export class LCELWorkflowOrchestrator {
             sessionId: context.sessionId,
             userId: context.userId,
           },
+          callbacks,
         }
       );
 
@@ -249,20 +274,28 @@ export class LCELWorkflowOrchestrator {
   }
 
   private async executeLLMCall(step: WorkflowStep, context: WorkflowContext) {
-    const { prompt, temperature, maxTokens } = step.input as any;
-    const response = await this.aiEngineService.call(
-      {
-        model: '',
-        prompt: prompt as string,
-        temperature: temperature || 0.7,
-        maxTokens: maxTokens || 1000,
-      },
-      context.userId,
-      step.modelTier || 'balanced'
-    );
+    const { prompt, systemPrompt, temperature, maxTokens } = step.input as any;
+
+    const model = new ChatProjectAI(this.aiEngineService, {
+      userId: context.userId,
+      scenario: context.scenario || step.modelTier || 'balanced',
+      temperature: temperature || 0.7,
+      maxTokens: maxTokens || 1000,
+    });
+
+    const messages: (SystemMessage | HumanMessage)[] = [];
+    if (systemPrompt) {
+      messages.push(new SystemMessage(systemPrompt));
+    }
+    messages.push(new HumanMessage(prompt as string));
+
+    const response = await model.invoke(messages);
+
+    const usage = (response.additional_kwargs as any)?.tokenUsage || {};
+
     return {
       content: response.content,
-      tokenUsage: response.usage.totalTokens || 0,
+      tokenUsage: usage.totalTokens || 0,
     };
   }
 

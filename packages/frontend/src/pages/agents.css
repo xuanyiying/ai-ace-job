@@ -11,7 +11,7 @@
 }
 
 .page-header h1 {
-  color: white;
+  color: var(--text-primary);
   font-size: 32px;
   font-weight: 800;
   margin-bottom: 12px;
@@ -24,7 +24,7 @@
 }
 
 .form-container {
-  background: var(--glass-bg);
+  background: var(--bg-card);
   backdrop-filter: var(--glass-backdrop);
   -webkit-backdrop-filter: var(--glass-backdrop);
   border: 1px solid var(--glass-border);
@@ -49,10 +49,10 @@
 
 .form-group textarea {
   width: 100%;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-secondary);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  color: white;
+  color: var(--text-primary);
   padding: 16px;
   font-family: inherit;
   font-size: 15px;
@@ -62,7 +62,7 @@
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-tertiary);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 

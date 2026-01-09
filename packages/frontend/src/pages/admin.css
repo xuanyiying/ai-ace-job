@@ -15,14 +15,14 @@
 }
 
 .admin-header h2 {
-    color: white !important;
+    color: var(--text-primary) !important;
     font-weight: 800 !important;
     margin-bottom: 4px !important;
 }
 
 /* Modern Table Container */
 .modern-table-container {
-    background: var(--glass-bg);
+    background: var(--bg-card);
     backdrop-filter: var(--glass-backdrop);
     -webkit-backdrop-filter: var(--glass-backdrop);
     border: 1px solid var(--glass-border);
@@ -36,7 +36,7 @@
 }
 
 .ant-table-thead>tr>th {
-    background: rgba(255, 255, 255, 0.03) !important;
+    background: var(--bg-secondary) !important;
     color: var(--text-secondary) !important;
     font-weight: 600 !important;
     border-bottom: 1px solid var(--glass-border) !important;
@@ -49,7 +49,7 @@
 }
 
 .ant-table-tbody>tr:hover>td {
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: var(--sidebar-item-hover) !important;
 }
 
 /* Pagination Overrides */

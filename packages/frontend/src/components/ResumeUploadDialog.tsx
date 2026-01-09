@@ -21,7 +21,6 @@ import { resumeService } from '../services/resumeService';
 import { theme } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getApiBaseUrl } from '../config/axios';
 
 interface ResumeUploadDialogProps {
   visible: boolean;
@@ -68,119 +67,95 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
   const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
-  const handleUpload = async () => {
-    if (fileList.length === 0) {
-      message.error('请选择要上传的文件');
-      return;
-    }
-
-    const file = fileList[0].originFileObj as File;
-
-    // Generate a unique filename with timestamp to prevent conflicts
-    const timestamp = Date.now();
-    const originalName = file.name;
-    const fileExtension = originalName.substring(originalName.lastIndexOf('.'));
-    const baseFileName = originalName.substring(
-      0,
-      originalName.lastIndexOf('.')
-    );
-    const uniqueFileName = `${baseFileName}_${timestamp}${fileExtension}`;
-
-    const title = form.getFieldValue('title') || originalName;
-
-    setUploading(true);
-    setUploadProgress(0);
-    setParseError(null);
-
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + Math.random() * 30;
-        });
-      }, 200);
-
-      // Create a new File object with the unique name
-      const renamedFile = new File([file], uniqueFileName, { type: file.type });
-
-      // Upload file
-      const resume = await resumeService.uploadResume(renamedFile, title);
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      setUploadedResume(resume);
-
-      message.success('文件上传成功，正在解析...');
-
-      // Start parsing
-      setParsing(true);
-      try {
-        const parsed = await resumeService.parseResume(resume.id);
-        setParsedData(parsed);
-        setParseError(null);
-
-        // Fill extracted text into the textarea
-        if (parsed.extractedText) {
-          form.setFieldsValue({ resumeText: parsed.extractedText });
-        }
-
-        message.success('简历解析完成');
-      } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : '解析失败，请重试';
-        setParseError(errorMsg);
-        message.error(`解析失败: ${errorMsg}`);
-        console.error('Parse error:', error);
-      } finally {
-        setParsing(false);
-      }
-    } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : '上传失败，请重试';
-      message.error(`上传失败: ${errorMsg}`);
-      setParseError(errorMsg);
-      console.error('Upload error:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const resumeText: string = form.getFieldValue('resumeText');
     const hasText = !!resumeText && resumeText.trim().length > 0;
+    const title = form.getFieldValue('title');
 
-    if (!uploadedResume && !parsedData && !hasText) {
-      message.error('请上传简历文件或粘贴简历内容');
-      return;
+    let finalResume = uploadedResume;
+    let finalParsedData = parsedData;
+
+    try {
+      if (fileList.length > 0 && !uploadedResume) {
+        const file = fileList[0] as unknown as File;
+
+        // Generate a unique filename
+        const timestamp = Date.now();
+        const originalName = file.name;
+        const fileExtension = originalName.substring(
+          originalName.lastIndexOf('.')
+        );
+        const baseFileName = originalName.substring(
+          0,
+          originalName.lastIndexOf('.')
+        );
+        const uniqueFileName = `${baseFileName}_${timestamp}${fileExtension}`;
+        const renamedFile = new File([file], uniqueFileName, {
+          type: file.type,
+        });
+
+        setUploading(true);
+        setUploadProgress(0);
+
+        const progressInterval = setInterval(() => {
+          setUploadProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+        }, 200);
+
+        finalResume = await resumeService.uploadResume(
+          renamedFile,
+          title || originalName
+        );
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        setUploadedResume(finalResume);
+
+        message.success('文件上传成功，正在解析...');
+
+        setParsing(true);
+        finalParsedData = await resumeService.parseResume(finalResume.id);
+        setParsedData(finalParsedData);
+        message.success('简历解析完成');
+      }
+
+      if (!finalResume && !finalParsedData && !hasText) {
+        message.error('请上传简历文件或粘贴简历内容');
+        return;
+      }
+
+      if (finalResume && finalParsedData) {
+        onUploadSuccess({
+          resume: finalResume,
+          parsedData: finalParsedData,
+        });
+      } else if (hasText) {
+        onUploadSuccess({
+          resume: {
+            id: 'manual-text',
+            originalFilename: '粘贴的简历内容',
+            source: 'manual',
+          },
+          parsedData: null,
+          rawText: resumeText.trim(),
+        });
+      }
+
+      // Reset and close
+      setFileList([]);
+      form.resetFields();
+      setUploadedResume(null);
+      setParsedData(null);
+      setUploadProgress(0);
+      setParseError(null);
+      onClose();
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : '操作失败，请重试';
+      message.error(errorMsg);
+      console.error('Confirm error:', error);
+    } finally {
+      setUploading(false);
+      setParsing(false);
     }
-
-    if (uploadedResume && parsedData) {
-      onUploadSuccess({
-        resume: uploadedResume,
-        parsedData: parsedData,
-      });
-    } else if (hasText) {
-      onUploadSuccess({
-        resume: {
-          id: 'manual-text',
-          originalFilename: '粘贴的简历内容',
-          source: 'manual',
-        },
-        parsedData: null,
-        rawText: resumeText.trim(),
-      });
-    }
-
-    setFileList([]);
-    form.resetFields();
-    setUploadedResume(null);
-    setParsedData(null);
-    setUploadProgress(0);
-    setParseError(null);
-    onClose();
   };
 
   const handleCancel = () => {
@@ -195,10 +170,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
 
   const uploadProps: UploadProps = {
     name: 'file',
-    action: `${getApiBaseUrl()}/resumes/upload`,
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
+    fileList,
     accept: '.pdf,.doc,.docx',
     maxCount: 1,
     beforeUpload: (file) => {
@@ -219,50 +191,13 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         return false;
       }
 
-      return true;
+      setFileList([file]);
+      return false; // Prevent automatic upload
     },
-    onChange: (info) => {
-      setFileList(info.fileList);
-      if (info.file.status === 'done') {
-        const resume = info.file.response;
-        setUploadedResume(resume);
-        setUploading(false);
-        setUploadProgress(100);
-        message.success('文件上传成功，正在解析...');
-        handleParse(resume.id);
-      } else if (info.file.status === 'uploading') {
-        setUploading(true);
-        setUploadProgress(info.file.percent || 0);
-      } else if (info.file.status === 'error') {
-        setUploading(false);
-        message.error('文件上传失败');
-      }
+    onRemove: () => {
+      setFileList([]);
     },
   };
-
-  const handleParse = async (resumeId: string) => {
-    setParsing(true);
-    try {
-      const parsed = await resumeService.parseResume(resumeId);
-      setParsedData(parsed);
-      setParseError(null);
-
-      if (parsed.extractedText) {
-        form.setFieldsValue({ resumeText: parsed.extractedText });
-      }
-
-      message.success('简历解析完成');
-    } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : '解析失败，请重试';
-      setParseError(errorMsg);
-      message.error(`解析失败: ${errorMsg}`);
-      console.error('Parse error:', error);
-    } finally {
-      setParsing(false);
-    }
-  };
-
   return (
     <Modal
       title="上传简历"

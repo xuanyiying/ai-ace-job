@@ -86,7 +86,10 @@
     "system_settings": "系统设置",
     "model_management": "模型管理",
     "prompt_management": "提示词管理",
-    "invite_code_management": "邀请码管理"
+    "invite_code_management": "邀请码管理",
+    "knowledge_base": "知识库管理",
+    "dark_mode": "深色模式",
+    "light_mode": "浅色模式"
   },
   "models": {
     "title": "模型配置管理",
@@ -320,5 +323,36 @@
       "save_failed": "设置保存失败",
       "load_failed": "加载设置失败"
     }
+  },
+  "knowledge_base": {
+    "title": "知识库管理",
+    "subtitle": "管理 RAG 知识库文档，为 AI 提供更准确的回复",
+    "upload": "上传文档",
+    "test_query": "测试查询",
+    "total_docs": "文档总数",
+    "total_chunks": "分块总数",
+    "categories": "分类统计",
+    "last_updated": "最后更新",
+    "doc_name": "文档名称",
+    "category": "分类",
+    "tags": "标签",
+    "chunks": "分块数",
+    "words": "词数",
+    "actions": "操作",
+    "delete_confirm": "确定删除此文档？",
+    "upload_modal_title": "上传文档",
+    "upload_hint": "支持 PDF, DOCX, TXT (最大 10MB)",
+    "doc_title": "文档标题",
+    "doc_tags_hint": "标签 (逗号分隔)",
+    "query_drawer_title": "测试 RAG 查询",
+    "query_placeholder": "输入查询问题...",
+    "filter_category": "筛选分类",
+    "all_categories": "全部分类",
+    "generated_answer": "生成回答",
+    "retrieved_docs": "检索到的文档",
+    "similarity": "相似度",
+    "chunk_info": "分块 #{{index}}",
+    "clear_all": "清空知识库",
+    "clear_confirm": "确定清空整个知识库？此操作不可恢复。"
   }
 }

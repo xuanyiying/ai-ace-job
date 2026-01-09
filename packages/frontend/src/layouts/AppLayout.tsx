@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Button, Drawer, theme, Avatar, Dropdown, Badge } from 'antd';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Layout, Button, Drawer, Avatar } from 'antd';
+import { Outlet } from 'react-router-dom';
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   UserOutlined,
-  BellOutlined,
-  LogoutOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '@/stores';
 import CookieConsent from '../components/CookieConsent';
@@ -21,15 +18,7 @@ const AppLayout: React.FC = () => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuthStore();
-  const location = useLocation();
   const { t } = useTranslation();
-  const navigate = useNavigate();
-
-  // Dynamic background style based on route?
-  // For now rely on global body styling, but we might want glass panels here.
-
-  // 检查当前路径是否为管理页面
-  const isAdminPage = location.pathname.startsWith('/admin');
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -46,7 +35,7 @@ const AppLayout: React.FC = () => {
   return (
     <Layout className="app-layout min-h-screen bg-transparent">
       {/* Mobile Header */}
-      <Header className="mobile-header flex md:hidden items-center justify-between px-4 h-16 bg-glass border-b border-glass-border fixed w-full z-50 backdrop-blur-md">
+      <Header className="mobile-header flex md:hidden items-center justify-between px-4 h-16 bg-glass border-b border-glass-border fixed w-full z-50">
         <div className="flex items-center gap-4">
           <Button
             type="text"
@@ -54,9 +43,9 @@ const AppLayout: React.FC = () => {
               mobileDrawerOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />
             }
             onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className="text-gray-300 hover:text-white hover:bg-white/10"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           />
-          <span className="font-bold text-lg text-white">
+          <span className="font-bold text-lg text-[var(--text-primary)]">
             {t('common.app_name')}
           </span>
         </div>
@@ -81,8 +70,8 @@ const AppLayout: React.FC = () => {
         trigger={null}
         className="hidden md:block border-r border-glass-border h-screen fixed left-0 top-0 z-20"
         style={{
-          background: 'rgba(3, 7, 18, 0.6)',
-          backdropFilter: 'blur(12px)',
+          background: 'var(--bg-card)',
+          backdropFilter: 'var(--glass-backdrop)',
         }}
       >
         <Sidebar isCollapsed={collapsed} />
@@ -90,7 +79,20 @@ const AppLayout: React.FC = () => {
         {/* Collapse Toggle at bottom, customized */}
         <div className="absolute bottom-4 right-[-12px] z-50">
           <div
-            className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer hover:bg-primary-600 transition-colors shadow-lg text-xs text-gray-400 hover:text-white"
+            className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-colors shadow-lg text-xs"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--glass-border)',
+              color: 'var(--text-secondary)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--primary-color)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -103,7 +105,7 @@ const AppLayout: React.FC = () => {
         placement="left"
         onClose={() => setMobileDrawerOpen(false)}
         open={mobileDrawerOpen}
-        styles={{ body: { padding: 0, background: '#0f172a' } }}
+        styles={{ body: { padding: 0, background: 'transparent' } }}
         width={280}
         closable={false}
       >

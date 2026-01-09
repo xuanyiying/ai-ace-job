@@ -1,13 +1,13 @@
 /* App Layout Base Styles */
 /* Glassmorphism Global Helpers */
 .bg-glass {
-  background: rgba(15, 23, 42, 0.6) !important;
-  backdrop-filter: blur(12px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-backdrop) !important;
+  -webkit-backdrop-filter: var(--glass-backdrop) !important;
 }
 
 .border-glass-border {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--glass-border) !important;
 }
 
 /* Sidebar Customizations */
@@ -86,15 +86,16 @@
 
 .sidebar-search .ant-input-affix-wrapper {
   border-radius: 8px;
-  background: #f5f5f5;
-  border: none;
+  background: var(--sidebar-item-hover);
+  border: 1px solid var(--glass-border);
   transition: all 0.2s ease;
 }
 
 .sidebar-search .ant-input-affix-wrapper:hover,
 .sidebar-search .ant-input-affix-wrapper:focus-within {
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 .sidebar-content {

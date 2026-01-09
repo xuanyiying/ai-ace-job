@@ -4,11 +4,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 @Module({
-  providers: [
-    HttpExceptionFilter,
-  ],
-  exports: [
-    HttpExceptionFilter,
-  ],
+  providers: [HttpExceptionFilter],
+  exports: [HttpExceptionFilter],
 })
 export class CommonModule {}

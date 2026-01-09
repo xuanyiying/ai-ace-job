@@ -132,21 +132,78 @@ export class VectorDbService implements OnModuleInit {
   }
 
   /**
-   * Perform similarity search using ChromaDB
-   * Property 34: Top-K Retrieval Accuracy
-   * Property 35: Similarity Score Inclusion
-   * Validates: Requirements 9.3, 9.5
+   * Add documents with pre-computed vectors
    */
-  async similaritySearch(
-    query: string,
+  async addVectors(
+    vectors: number[][],
+    documents: Array<{ content: string; metadata?: Record<string, unknown> }>
+  ): Promise<VectorDocument[]> {
+    try {
+      if (vectors.length !== documents.length) {
+        throw new Error(
+          'Vectors and documents arrays must have the same length'
+        );
+      }
+
+      const results: VectorDocument[] = [];
+      const ids: string[] = [];
+      const metadatas: Record<string, any>[] = [];
+      const contents: string[] = [];
+      const now = new Date();
+
+      for (let i = 0; i < documents.length; i++) {
+        const doc = documents[i];
+        const embedding = vectors[i];
+        const id = uuidv4();
+
+        ids.push(id);
+
+        const metadata = {
+          ...(doc.metadata || {}),
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+        metadatas.push(metadata);
+        contents.push(doc.content);
+
+        results.push({
+          id,
+          content: doc.content,
+          embedding,
+          metadata: doc.metadata || {},
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      if (ids.length > 0) {
+        await this.collection.add({
+          ids,
+          embeddings: vectors,
+          metadatas,
+          documents: contents,
+        });
+
+        this.logger.debug(`Added ${ids.length} vectors to vector database`);
+      }
+
+      return results;
+    } catch (error) {
+      this.logger.error(
+        `Failed to add vectors: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Perform similarity search using a pre-computed vector
+   */
+  async similaritySearchByVector(
+    queryEmbedding: number[],
     k: number = 5
   ): Promise<SimilaritySearchResult[]> {
     try {
-      // Generate embedding for query
-      const queryEmbedding =
-        await this.embeddingService.generateEmbedding(query);
-
-      // Perform search
       const results = await this.collection.query({
         queryEmbeddings: [queryEmbedding],
         nResults: k,
@@ -161,9 +218,6 @@ export class VectorDbService implements OnModuleInit {
         const resultMetadatas = results.metadatas?.[0] || [];
 
         for (let i = 0; i < resultIds.length; i++) {
-          // Chroma returns distance (default L2), convert to similarity likely
-          // But usually we just return what we get or normalize.
-          // The previous implementation used: similarity = 1 / (1 + distance) for L2
           const distance = resultDistances[i] ?? 0;
           const similarity = 1 / (1 + distance);
 
@@ -176,11 +230,30 @@ export class VectorDbService implements OnModuleInit {
         }
       }
 
-      this.logger.debug(
-        `Similarity search completed: found ${searchResults.length} results for query`
-      );
-
       return searchResults;
+    } catch (error) {
+      this.logger.error(
+        `Failed similarity search by vector: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Perform similarity search using ChromaDB
+   * Property 34: Top-K Retrieval Accuracy
+   * Property 35: Similarity Score Inclusion
+   * Validates: Requirements 9.3, 9.5
+   */
+  async similaritySearch(
+    query: string,
+    k: number = 5
+  ): Promise<SimilaritySearchResult[]> {
+    try {
+      const queryEmbedding =
+        await this.embeddingService.generateEmbedding(query);
+
+      return this.similaritySearchByVector(queryEmbedding, k);
     } catch (error) {
       this.logger.error(
         `Failed to perform similarity search: ${error instanceof Error ? error.message : String(error)}`

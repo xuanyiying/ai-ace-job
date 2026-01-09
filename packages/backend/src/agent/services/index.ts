@@ -8,3 +8,8 @@ export { BatchProcessorService } from './batch-processor.service';
 export { OptimizationMetricsCalculator } from './optimization-metrics.calculator';
 export { StructuredOutputService } from './structured-output.service';
 export { AgentOrchestrator } from './agent-orchestrator.service';
+export { DocumentProcessorService } from './document-processor.service';
+export { AgenticService } from './agentic.service';
+export { ProjectVectorStore } from './langchain-vector-store';
+export { ProjectEmbeddings } from './langchain-embeddings';
+export { ProjectCallbackHandler } from './langchain-callbacks.service';

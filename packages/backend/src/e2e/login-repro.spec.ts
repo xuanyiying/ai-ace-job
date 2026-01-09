@@ -37,11 +37,13 @@ describe('Login Remember Property Repro (e2e)', () => {
       });
 
     if (registerResponse.status === 201) {
-        userId = registerResponse.body.user.id;
+      userId = registerResponse.body.user.id;
     } else {
-        // User might already exist from previous runs
-        const user = await prismaService.user.findUnique({ where: { email: 'repro-test@example.com' } });
-        if (user) userId = user.id;
+      // User might already exist from previous runs
+      const user = await prismaService.user.findUnique({
+        where: { email: 'repro-test@example.com' },
+      });
+      if (user) userId = user.id;
     }
   });
 
@@ -68,7 +70,9 @@ describe('Login Remember Property Repro (e2e)', () => {
     // Even if it's 400, it should be because of other reasons (like invalid credentials)
     // or 500 because of DB schema mismatch in this environment
     if (response.status === 400) {
-      expect(response.body.error.message).not.toContain('property remember should not exist');
+      expect(response.body.error.message).not.toContain(
+        'property remember should not exist'
+      );
     }
   });
 
@@ -82,7 +86,9 @@ describe('Login Remember Property Repro (e2e)', () => {
       });
 
     if (response.status === 400) {
-      expect(response.body.error.message).not.toContain('property remember should not exist');
+      expect(response.body.error.message).not.toContain(
+        'property remember should not exist'
+      );
     }
   });
 

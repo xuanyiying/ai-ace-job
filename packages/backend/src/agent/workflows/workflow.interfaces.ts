@@ -18,6 +18,7 @@ export interface WorkflowStep {
 export interface WorkflowContext {
   userId: string;
   sessionId: string;
+  scenario?: string;
   metadata?: Record<string, any>;
 }
 

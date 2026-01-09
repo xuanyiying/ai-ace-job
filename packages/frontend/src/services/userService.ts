@@ -75,11 +75,18 @@ export const userService = {
   uploadAvatar: async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await axios.post('/upload/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    formData.append('fileType', 'IMAGE');
+    formData.append('category', 'avatar');
+
+    const response = await axios.post<{ url: string }>(
+      '/storage/upload',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
     return response.data.url;
   },
 };

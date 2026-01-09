@@ -4,17 +4,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bg-primary);
     padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-container::before {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle at center, var(--primary-500) 0%, transparent 70%);
+    opacity: 0.05;
+    pointer-events: none;
 }
 
 .auth-card {
     width: 100%;
     max-width: 400px;
-    background: #fff;
-    border-radius: 16px;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
     padding: 48px 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--glass-shadow);
+    z-index: 1;
 }
 
 /* Large screens */

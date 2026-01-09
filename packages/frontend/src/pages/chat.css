@@ -67,7 +67,9 @@
 
 .markdown-content code {
     color: var(--accent-color);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--sidebar-item-active);
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 
 /* Chat Input Area */

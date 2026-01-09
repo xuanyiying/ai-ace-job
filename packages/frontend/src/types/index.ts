@@ -177,3 +177,43 @@ export interface ApiError {
     requestId: string;
   };
 }
+
+// Knowledge Base types
+export type DocumentCategory =
+  | 'interview_questions'
+  | 'career_advice'
+  | 'industry_knowledge'
+  | 'resume_tips'
+  | 'general';
+
+export interface KBDocument {
+  id: string;
+  title: string;
+  fileName: string;
+  documentType: 'pdf' | 'docx' | 'txt';
+  category: DocumentCategory;
+  tags?: string[];
+  chunkCount: number;
+  wordCount: number;
+  createdAt: string;
+}
+
+export interface KBStats {
+  totalDocuments: number;
+  totalChunks: number;
+  documentsByCategory: Record<string, number>;
+  lastUpdated?: string;
+}
+
+export interface KBQueryResult {
+  id: string;
+  content: string;
+  similarity: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface KBQueryResponse {
+  results: KBQueryResult[];
+  answer?: string;
+  totalResults: number;
+}
