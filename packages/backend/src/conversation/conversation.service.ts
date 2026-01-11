@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Sanitizer } from '../common/utils/sanitizer';
+import { MessageRole } from '@prisma/client';
 
 export interface CreateConversationInput {
   title?: string;
@@ -16,7 +17,7 @@ export interface UpdateConversationInput {
 }
 
 export interface AddMessageInput {
-  role: string;
+  role: MessageRole;
   content: string;
   attachments?: any[];
   metadata?: Record<string, any>;

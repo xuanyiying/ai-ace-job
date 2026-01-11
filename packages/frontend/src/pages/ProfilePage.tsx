@@ -31,7 +31,7 @@ import {
   UserActivity,
   UserNotification,
   ChangePasswordDto,
-} from '../services/userService';
+} from '../services/user-service';
 import './common.css';
 
 const { Title, Text } = Typography;

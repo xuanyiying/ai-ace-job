@@ -21,7 +21,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
-import { paymentService } from '../services/payment.service';
+import { paymentService } from '../services/payment-service';
 import { loadPaddle } from '../utils/paddle-loader';
 import './pricing.css';
 

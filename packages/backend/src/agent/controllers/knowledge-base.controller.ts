@@ -46,7 +46,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @ApiTags('Knowledge Base')
 @ApiBearerAuth()
-@Controller('api/admin/knowledge-base')
+@Controller('admin/knowledge-base')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class KnowledgeBaseController {
   private readonly logger = new Logger(KnowledgeBaseController.name);
@@ -55,7 +55,7 @@ export class KnowledgeBaseController {
 
   /**
    * Upload a document to the knowledge base
-   * POST /api/admin/knowledge-base/upload
+   * POST /admin/knowledge-base/upload
    */
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
@@ -141,7 +141,7 @@ export class KnowledgeBaseController {
 
   /**
    * List all documents in the knowledge base
-   * GET /api/admin/knowledge-base/documents
+   * GET /admin/knowledge-base/documents
    */
   @Get('documents')
   @ApiOperation({ summary: 'List all documents in the knowledge base' })
@@ -180,7 +180,7 @@ export class KnowledgeBaseController {
 
   /**
    * Delete a document from the knowledge base
-   * DELETE /api/admin/knowledge-base/documents/:id
+   * DELETE /admin/knowledge-base/documents/:id
    */
   @Delete('documents/:id')
   @ApiOperation({ summary: 'Delete a document from the knowledge base' })
@@ -224,7 +224,7 @@ export class KnowledgeBaseController {
 
   /**
    * Get knowledge base statistics
-   * GET /api/admin/knowledge-base/stats
+   * GET /admin/knowledge-base/stats
    */
   @Get('stats')
   @ApiOperation({ summary: 'Get knowledge base statistics' })
@@ -255,7 +255,7 @@ export class KnowledgeBaseController {
 
   /**
    * Query the knowledge base
-   * POST /api/admin/knowledge-base/query
+   * POST /admin/knowledge-base/query
    */
   @Post('query')
   @ApiOperation({ summary: 'Query the knowledge base with RAG' })
@@ -314,7 +314,7 @@ export class KnowledgeBaseController {
 
   /**
    * Clear the entire knowledge base
-   * DELETE /api/admin/knowledge-base/clear
+   * DELETE /admin/knowledge-base/clear
    */
   @Delete('clear')
   @ApiOperation({ summary: 'Clear the entire knowledge base (dangerous!)' })

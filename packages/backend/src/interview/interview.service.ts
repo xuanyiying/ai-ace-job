@@ -591,27 +591,24 @@ Remember to be specific with examples and quantify results when possible.`;
    * Map question type string to enum
    */
   private mapQuestionType(type: string): QuestionType {
-    const typeMap: Record<string, QuestionType> = {
-      behavioral: QuestionType.BEHAVIORAL,
-      technical: QuestionType.TECHNICAL,
-      situational: QuestionType.SITUATIONAL,
-      resume_based: QuestionType.RESUME_BASED,
-    };
-
-    return typeMap[type?.toLowerCase()] || QuestionType.BEHAVIORAL;
+    if (!type) return QuestionType.BEHAVIORAL;
+    const upperType = type.toUpperCase();
+    if (upperType in QuestionType) {
+      return QuestionType[upperType as keyof typeof QuestionType];
+    }
+    return QuestionType.BEHAVIORAL;
   }
 
   /**
    * Map difficulty string to enum
    */
   private mapDifficulty(difficulty: string): Difficulty {
-    const difficultyMap: Record<string, Difficulty> = {
-      easy: Difficulty.EASY,
-      medium: Difficulty.MEDIUM,
-      hard: Difficulty.HARD,
-    };
-
-    return difficultyMap[difficulty?.toLowerCase()] || Difficulty.MEDIUM;
+    if (!difficulty) return Difficulty.MEDIUM;
+    const upperDifficulty = difficulty.toUpperCase();
+    if (upperDifficulty in Difficulty) {
+      return Difficulty[upperDifficulty as keyof typeof Difficulty];
+    }
+    return Difficulty.MEDIUM;
   }
 
   /**

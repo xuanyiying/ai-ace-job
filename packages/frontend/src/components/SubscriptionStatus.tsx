@@ -6,9 +6,11 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 
+import { SubscriptionTier, SubscriptionStatus as SubStatus } from '../types';
+
 interface SubscriptionStatusProps {
-  tier: string;
-  status?: string;
+  tier: SubscriptionTier;
+  status?: SubStatus;
   expiresAt?: string | Date;
   cancelAtPeriodEnd?: boolean;
 }
@@ -20,9 +22,9 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
   cancelAtPeriodEnd,
 }) => {
   const getStatusColor = () => {
-    if (status === 'active') return 'success';
-    if (status === 'past_due') return 'warning';
-    if (status === 'canceled') return 'error';
+    if (status === SubStatus.ACTIVE) return 'success';
+    if (status === SubStatus.PAST_DUE) return 'warning';
+    if (status === SubStatus.CANCELED) return 'error';
     return 'default';
   };
 
@@ -35,7 +37,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <Tag
         color={
-          tier === 'PRO' ? 'blue' : tier === 'ENTERPRISE' ? 'purple' : 'default'
+          tier === SubscriptionTier.PRO ? 'blue' : tier === SubscriptionTier.ENTERPRISE ? 'purple' : 'default'
         }
       >
         {tier}
@@ -44,7 +46,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
       {status && (
         <Tag
           icon={
-            status === 'active' ? (
+            status === SubStatus.ACTIVE ? (
               <CheckCircleOutlined />
             ) : (
               <ClockCircleOutlined />
@@ -52,7 +54,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
           }
           color={getStatusColor()}
         >
-          {status.toUpperCase()}
+          {status}
         </Tag>
       )}
 

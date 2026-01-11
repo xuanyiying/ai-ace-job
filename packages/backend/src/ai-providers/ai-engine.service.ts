@@ -4,11 +4,29 @@
  * Requirements: 2.1, 2.3, 2.4, 2.5, 2.6
  */
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { AIRequest, AIResponse, AIStreamChunk, ModelInfo } from './interfaces';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
+import {
+  AIRequest,
+  AIResponse,
+  AIStreamChunk,
+  ModelInfo,
+  ScenarioType,
+} from './interfaces';
 import { AIProviderFactory } from './factory';
-import { ModelSelector, ScenarioType } from '@/ai-providers/selector';
-import { PromptTemplateManager } from '@/ai-providers/config';
+import {
+  ModelSelector,
+  ScenarioModelMappingService,
+  ModelRegistry,
+} from '@/ai-providers/selector';
+import {
+  ModelConfigService,
+  PromptTemplateManager,
+} from '@/ai-providers/config';
 import { UsageTrackerService } from '@/ai-providers/tracking';
 import { PerformanceMonitorService } from '@/ai-providers/monitoring';
 import { RetryHandler } from '@/ai-providers/utils';
@@ -28,20 +46,22 @@ import { AILogger } from './logging/ai-logger';
  * Validates: Requirements 2.1, 2.3, 2.4, 2.5, 2.6
  */
 @Injectable()
-export class AIEngineService implements OnModuleInit {
+export class AIEngineService implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(AIEngineService.name);
-  private modelSelector: ModelSelector;
   private retryHandler: RetryHandler;
   private availableModels: Map<string, ModelInfo> = new Map();
 
   constructor(
     private providerFactory: AIProviderFactory,
+    private modelConfigService: ModelConfigService,
     private promptTemplateManager: PromptTemplateManager,
     private usageTracker: UsageTrackerService,
     private performanceMonitor: PerformanceMonitorService,
-    private aiLogger: AILogger
+    private aiLogger: AILogger,
+    private scenarioModelMappingService: ScenarioModelMappingService,
+    private openSourceModelRegistry: ModelRegistry,
+    private modelSelector: ModelSelector
   ) {
-    this.modelSelector = new ModelSelector();
     this.retryHandler = new RetryHandler({
       maxRetries: 3,
       initialDelayMs: 1000,
@@ -52,10 +72,18 @@ export class AIEngineService implements OnModuleInit {
 
   /**
    * Initialize on module startup
-   * Load all available models from providers
    */
   async onModuleInit(): Promise<void> {
     this.logger.log('Initializing AI Engine Service');
+  }
+
+  /**
+   * Initialize on application bootstrap
+   * This runs after all onModuleInit hooks have completed,
+   * ensuring that AIProviderFactory has finished its health checks.
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    this.logger.log('Bootstrapping AI Engine Service - loading models');
 
     try {
       await this.loadAvailableModels();
@@ -64,51 +92,206 @@ export class AIEngineService implements OnModuleInit {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to initialize AI Engine Service: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to initialize AI Engine Service models: ${error instanceof Error ? error.message : String(error)}`
       );
-      throw error;
     }
   }
 
   /**
-   * Load all available models from all providers
+   * Load all available models from all providers and registry
    * Property 2: Provider initialization
-   * Validates: Requirements 1.6
+   * Validates: Requirements 1.6, 2.1
    */
   private async loadAvailableModels(): Promise<void> {
-    this.availableModels.clear();
+    this.logger.log('Loading available models...');
+    const newModels = new Map<string, ModelInfo>();
 
+    // 1. First, load default open source models from registry
+    // Requirements: 2.1
+    try {
+      this.logger.debug('Loading default open source models from registry...');
+      const registryModels = this.openSourceModelRegistry.getAvailableModels();
+      this.logger.log(
+        `Found ${registryModels.length} open source models in registry`
+      );
+
+      for (const model of registryModels) {
+        const key = `${model.provider}:${model.name}`;
+        newModels.set(key, model);
+        this.logger.debug(
+          `Loaded open source model: ${key} (quality: ${model.qualityRating}, latency: ${model.latency}ms)`
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to load open source models from registry: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // 2. Then, load models from database configurations
+    // This ensures that models explicitly configured by admin are always available
+    // regardless of whether the provider supports listing models.
+    try {
+      this.logger.debug(
+        'Fetching active model configurations from database...'
+      );
+      const activeConfigs = await this.modelConfigService.getAllModelConfigs();
+      const activeModels = activeConfigs.filter((c) => c.isActive);
+
+      this.logger.log(
+        `Found ${activeModels.length} active model configurations in database`
+      );
+
+      for (const config of activeModels) {
+        try {
+          this.logger.debug(
+            `Loading provider ${config.provider} for model ${config.name}...`
+          );
+          const provider = this.providerFactory.getProvider(config.provider);
+          if (provider) {
+            this.logger.debug(
+              `Getting model info for ${config.name} from ${config.provider}...`
+            );
+            const modelInfo = await provider.getModelInfo(config.name);
+            const key = `${provider.name}:${config.name}`;
+
+            // Merge with registry data if available
+            const registryModel = this.openSourceModelRegistry.getModel(
+              config.name
+            );
+            if (registryModel) {
+              // Merge database config with registry data
+              const mergedModel: ModelInfo = {
+                ...registryModel,
+                ...modelInfo,
+                name: config.name,
+                provider: provider.name,
+              };
+              newModels.set(key, mergedModel);
+              this.logger.debug(
+                `Merged model from database and registry: ${key}`
+              );
+            } else {
+              newModels.set(key, modelInfo);
+              this.logger.debug(
+                `Loaded model from database configuration: ${key} (cost: ${modelInfo.costPerInputToken}/${modelInfo.costPerOutputToken})`
+              );
+            }
+          } else {
+            this.logger.warn(
+              `Provider ${config.provider} for model ${config.name} is not loaded or available`
+            );
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to load configured model ${config.name} from provider ${config.provider}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to load model configurations from database: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // 3. Then, try to discover additional models from providers (if supported)
+    this.logger.debug('Discovering additional models from providers...');
     const providers = this.providerFactory.getAvailableProviders();
+    this.logger.debug(
+      `Found ${providers.length} available providers for discovery`
+    );
 
     for (const provider of providers) {
       try {
+        this.logger.debug(`Listing models for provider ${provider.name}...`);
         const modelNames = await provider.listModels();
+        this.logger.debug(
+          `Provider ${provider.name} returned ${modelNames.length} models`
+        );
 
         for (const modelName of modelNames) {
           try {
-            const modelInfo = await provider.getModelInfo(modelName);
             const key = `${provider.name}:${modelName}`;
-            this.availableModels.set(key, modelInfo);
 
-            this.logger.debug(
-              `Loaded model: ${key} (cost: ${modelInfo.costPerInputToken}/${modelInfo.costPerOutputToken})`
-            );
+            // Skip if already loaded from database or registry
+            if (newModels.has(key)) continue;
+
+            const modelInfo = await provider.getModelInfo(modelName);
+
+            // Try to merge with registry data if available
+            const registryModel =
+              this.openSourceModelRegistry.getModel(modelName);
+            if (registryModel) {
+              const mergedModel: ModelInfo = {
+                ...registryModel,
+                ...modelInfo,
+                name: modelName,
+                provider: provider.name,
+              };
+              newModels.set(key, mergedModel);
+              this.logger.debug(
+                `Discovered and merged model from provider ${provider.name}: ${key}`
+              );
+            } else {
+              newModels.set(key, modelInfo);
+              this.logger.debug(
+                `Discovered model from provider ${provider.name}: ${key}`
+              );
+            }
           } catch (error) {
             this.logger.warn(
-              `Failed to get info for model ${modelName} from provider ${provider.name}:`,
-              error
+              `Failed to get info for discovered model ${modelName} from provider ${provider.name}: ${error instanceof Error ? error.message : String(error)}`
             );
           }
         }
       } catch (error) {
         this.logger.warn(
-          `Failed to list models from provider ${provider.name}:`,
-          error
+          `Failed to list models from provider ${provider.name}: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
 
-    this.logger.log(`Loaded ${this.availableModels.size} total models`);
+    // 4. Register available models with scenario mapping service
+    // Requirements: 2.1
+    try {
+      const availableModelsArray = Array.from(newModels.values());
+      this.logger.log(
+        `Discovered ${availableModelsArray.length} available models across all providers: ${availableModelsArray.map((m) => `${m.provider}:${m.name}`).join(', ')}`
+      );
+
+      const openSourceModels = availableModelsArray.map((m) => ({
+        name: m.name,
+        provider: m.provider,
+        family: (m as any).family || 'other',
+        parameterSize: (m as any).parameterSize || 'unknown',
+        contextWindow: (m as any).contextWindow || 4096,
+        costPerInputToken: m.costPerInputToken,
+        costPerOutputToken: m.costPerOutputToken,
+        latency: m.latency || 0,
+        avgLatencyMs: m.latency || 0,
+        qualityRating: (m as any).qualityRating || 5,
+        supportedFeatures: (m as any).supportedFeatures || [],
+        isAvailable: m.isAvailable,
+        status: 'active',
+        successRate: (m as any).successRate || 1.0,
+        lastHealthCheckAt: new Date(),
+        healthStatus: 'healthy',
+      }));
+      this.scenarioModelMappingService.registerAvailableModels(
+        openSourceModels as any
+      );
+      this.logger.debug(
+        'Registered available models with scenario mapping service'
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to register available models with scenario mapping service: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // Swap the models map
+    this.availableModels = newModels;
+    this.logger.log(`Total available models: ${this.availableModels.size}`);
   }
 
   /**
@@ -139,19 +322,53 @@ export class AIEngineService implements OnModuleInit {
       // Select model if not specified
       selectedModel = request.model;
       if (!selectedModel) {
-        selectedModel = this.selectBestModel(scenario);
+        selectedModel = await this.selectModelForScenario(scenario);
       }
 
       // Get provider and model info
-      const [provider, modelName] = selectedModel.split(':');
-      providerName = provider;
+      const firstColonIndex = selectedModel.indexOf(':');
+      if (firstColonIndex === -1) {
+        throw new AIError(
+          AIErrorCode.INVALID_REQUEST,
+          `Invalid model format: ${selectedModel}. Expected provider:model`,
+          undefined,
+          false
+        );
+      }
+      providerName = selectedModel.substring(0, firstColonIndex);
+      const modelName = selectedModel.substring(firstColonIndex + 1);
       const providerInstance = this.providerFactory.getProvider(providerName);
-      const modelInfo = this.availableModels.get(selectedModel);
+
+      if (!providerInstance) {
+        throw new AIError(
+          AIErrorCode.PROVIDER_UNAVAILABLE,
+          `Provider ${providerName} not found`,
+          undefined,
+          true
+        );
+      }
+
+      let modelInfo = this.availableModels.get(selectedModel);
+
+      // If model info not found in registry but we have a provider (e.g. hard fallback)
+      // try to get it directly from the provider
+      if (!modelInfo) {
+        try {
+          this.logger.debug(
+            `Model ${selectedModel} not found in registry, attempting to get info directly from provider ${providerName}`
+          );
+          modelInfo = await providerInstance.getModelInfo(modelName);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to get model info for ${selectedModel} directly from provider: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
 
       if (!modelInfo) {
         throw new AIError(
           AIErrorCode.INVALID_REQUEST,
-          `Model ${selectedModel} not found`,
+          `Model ${selectedModel} not found and could not be retrieved from provider`,
           undefined,
           false
         );
@@ -298,13 +515,57 @@ export class AIEngineService implements OnModuleInit {
       // Select model if not specified
       selectedModel = request.model;
       if (!selectedModel) {
-        selectedModel = this.selectBestModel(scenario);
+        selectedModel = await this.selectModelForScenario(scenario);
       }
 
       // Get provider and model info
-      const [provider, modelName] = selectedModel.split(':');
-      providerName = provider;
+      const firstColonIndex = selectedModel.indexOf(':');
+      if (firstColonIndex === -1) {
+        throw new AIError(
+          AIErrorCode.INVALID_REQUEST,
+          `Invalid model format: ${selectedModel}. Expected provider:model`,
+          undefined,
+          false
+        );
+      }
+      providerName = selectedModel.substring(0, firstColonIndex);
+      const modelName = selectedModel.substring(firstColonIndex + 1);
       const providerInstance = this.providerFactory.getProvider(providerName);
+
+      if (!providerInstance) {
+        throw new AIError(
+          AIErrorCode.PROVIDER_UNAVAILABLE,
+          `Provider ${providerName} not found`,
+          undefined,
+          true
+        );
+      }
+
+      let modelInfo = this.availableModels.get(selectedModel);
+
+      // If model info not found in registry but we have a provider (e.g. hard fallback)
+      // try to get it directly from the provider
+      if (!modelInfo) {
+        try {
+          this.logger.debug(
+            `Model ${selectedModel} not found in registry, attempting to get info directly from provider ${providerName}`
+          );
+          modelInfo = await providerInstance.getModelInfo(modelName);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to get model info for ${selectedModel} directly from provider: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+
+      if (!modelInfo) {
+        throw new AIError(
+          AIErrorCode.INVALID_REQUEST,
+          `Model ${selectedModel} not found and could not be retrieved from provider`,
+          undefined,
+          false
+        );
+      }
 
       // Render prompt template if needed
       let finalPrompt = request.prompt;
@@ -399,29 +660,154 @@ export class AIEngineService implements OnModuleInit {
    * Property 23: Resume parsing cost optimization
    * Property 24: Optimization suggestion quality optimization
    * Property 25: Interview question speed optimization
-   * Validates: Requirements 5.1, 5.2, 5.3, 5.4
+   * Validates: Requirements 5.1, 5.2, 5.3, 5.4, 1.4, 6.1-6.6
    *
    * @param scenario - Scenario name
    * @returns Selected model name
    */
-  private selectBestModel(scenario: string): string {
+  private async selectBestModel(scenario: string): Promise<string> {
     const availableModels = Array.from(this.availableModels.values());
 
     if (availableModels.length === 0) {
+      this.logger.warn(
+        `No models available in registry. Attempting to find local Ollama fallback for scenario: ${scenario}`
+      );
+
+      // Try to find any Ollama model as a last resort
+      try {
+        const ollamaProvider = this.providerFactory.getProvider('ollama');
+        if (ollamaProvider) {
+          // Try to list models directly from provider if registry is empty
+          const modelNames = await (ollamaProvider as any).listModels?.();
+          if (modelNames && modelNames.length > 0) {
+            this.logger.log(
+              `Falling back to local Ollama model: ${modelNames[0]}`
+            );
+            return `ollama:${modelNames[0]}`;
+          }
+          this.logger.log('Falling back to local Ollama (llama3.2)');
+          return 'ollama:llama3.2'; // Default fallback
+        }
+      } catch (error) {
+        this.logger.error('Ollama provider not available for fallback');
+      }
+
       throw new AIError(
         AIErrorCode.PROVIDER_UNAVAILABLE,
-        'No models available',
+        'No models available and no fallback found',
         undefined,
         true
       );
     }
 
-    const selectedModel = this.modelSelector.selectModel(
-      availableModels,
-      scenario
-    );
+    try {
+      const selectedModel = this.modelSelector.selectModel(
+        availableModels,
+        scenario
+      );
+      return `${selectedModel.provider}:${selectedModel.name}`;
+    } catch (error) {
+      this.logger.warn(
+        `Model selection failed for scenario ${scenario}: ${error instanceof Error ? error.message : String(error)}. Attempting fallback.`
+      );
 
-    return `${selectedModel.provider}:${selectedModel.name}`;
+      // 1. Try to find any Ollama model already in the registry
+      const ollamaModel = availableModels.find((m) => m.provider === 'ollama');
+      if (ollamaModel) {
+        return `${ollamaModel.provider}:${ollamaModel.name}`;
+      }
+
+      // 2. Try to use Ollama provider directly if it's healthy, even if no models in registry
+      try {
+        const ollamaProvider = this.providerFactory.getProvider('ollama');
+        if (ollamaProvider) {
+          this.logger.log(
+            'Model selection failed, falling back to local Ollama (llama3.2)'
+          );
+          return 'ollama:llama3.2';
+        }
+      } catch (e) {
+        // Ollama not available, continue to last resort
+      }
+
+      // 3. Last resort: just pick the first one from registry
+      const firstModel = availableModels[0];
+      return `${firstModel.provider}:${firstModel.name}`;
+    }
+  }
+
+  /**
+   * Select model for a specific scenario using scenario configuration
+   * Requirements: 1.4, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+   *
+   * @param scenario - Scenario type
+   * @returns Selected model name
+   */
+  private async selectModelForScenario(scenario: string): Promise<string> {
+    const availableModels = Array.from(this.availableModels.values());
+
+    if (availableModels.length === 0) {
+      this.logger.warn(
+        `No models available in registry for scenario: ${scenario}`
+      );
+
+      // Try to find any Ollama model as a last resort
+      try {
+        const ollamaProvider = this.providerFactory.getProvider('ollama');
+        if (ollamaProvider) {
+          // Try to list models directly from provider if registry is empty
+          const modelNames = await (ollamaProvider as any).listModels?.();
+          if (modelNames && modelNames.length > 0) {
+            this.logger.log(
+              `Falling back to local Ollama model: ${modelNames[0]}`
+            );
+            return `ollama:${modelNames[0]}`;
+          }
+          this.logger.log('Falling back to local Ollama (llama3.2)');
+          return 'ollama:llama3.2';
+        }
+      } catch (error) {
+        this.logger.error('Ollama provider not available for fallback');
+      }
+
+      throw new AIError(
+        AIErrorCode.PROVIDER_UNAVAILABLE,
+        'No models available and no fallback found',
+        undefined,
+        true
+      );
+    }
+
+    try {
+      // Try to use scenario-based selection if available
+      const selectedModel = this.modelSelector.selectModelForScenario(
+        scenario as any,
+        availableModels
+      );
+      return `${selectedModel.provider}:${selectedModel.name}`;
+    } catch (error) {
+      this.logger.warn(
+        `Scenario-based selection failed for ${scenario}: ${error instanceof Error ? error.message : String(error)}. Falling back to default selection.`
+      );
+
+      // Fall back to default selection
+      return await this.selectBestModel(scenario);
+    }
+  }
+
+  /**
+   * Get recommended models for a scenario
+   * Requirements: 1.4, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+   *
+   * @param scenario - Scenario type
+   * @returns Array of recommended models
+   */
+  getRecommendedModelsForScenario(scenario: string): ModelInfo[] {
+    const availableModels = Array.from(this.availableModels.values());
+    return this.modelSelector.getRecommendedModels(
+      scenario as any,
+      availableModels
+    );
   }
 
   /**
@@ -498,6 +884,45 @@ export class AIEngineService implements OnModuleInit {
   }
 
   /**
+   * Get cost report
+   */
+  async getCostReport(
+    startDate: Date,
+    endDate: Date,
+    groupBy: 'model' | 'scenario' | 'user' | 'agent-type' | 'workflow-step'
+  ) {
+    return this.usageTracker.generateCostReport(startDate, endDate, groupBy);
+  }
+
+  /**
+   * Get performance metrics
+   */
+  async getPerformanceMetrics(
+    model?: string,
+    startDate?: Date,
+    endDate?: Date
+  ) {
+    if (model) {
+      return this.performanceMonitor.getMetrics(model, startDate, endDate);
+    }
+    return this.performanceMonitor.getAllMetrics();
+  }
+
+  /**
+   * Check performance alerts
+   */
+  async checkPerformanceAlerts() {
+    return this.performanceMonitor.checkAlerts();
+  }
+
+  /**
+   * Get logs
+   */
+  async getLogs(filters: any) {
+    return this.aiLogger.queryLogs(filters);
+  }
+
+  /**
    * Validate AI request
    * Property 5: Unified request format
    * Validates: Requirements 2.3
@@ -533,101 +958,5 @@ export class AIEngineService implements OnModuleInit {
         );
       }
     }
-
-    if (request.topP !== undefined) {
-      if (request.topP < 0 || request.topP > 1) {
-        throw new AIError(
-          AIErrorCode.INVALID_REQUEST,
-          'Top P must be between 0 and 1',
-          undefined,
-          false
-        );
-      }
-    }
-
-    if (request.topK !== undefined) {
-      if (request.topK < 1) {
-        throw new AIError(
-          AIErrorCode.INVALID_REQUEST,
-          'Top K must be at least 1',
-          undefined,
-          false
-        );
-      }
-    }
-  }
-
-  /**
-   * Get cost and usage statistics
-   * Property 36: Cost aggregation
-   * Validates: Requirements 7.2
-   *
-   * @param startDate - Start date
-   * @param endDate - End date
-   * @param groupBy - Group by model, scenario, or user
-   * @returns Cost report
-   */
-  async getCostReport(
-    startDate: Date,
-    endDate: Date,
-    groupBy: 'model' | 'scenario' | 'user' = 'model'
-  ) {
-    return await this.usageTracker.generateCostReport(
-      startDate,
-      endDate,
-      groupBy
-    );
-  }
-
-  /**
-   * Get performance metrics
-   * Property 42: Performance metrics calculation
-   * Validates: Requirements 8.2
-   *
-   * @param model - Model name
-   * @param startDate - Start date
-   * @param endDate - End date
-   * @returns Performance metrics
-   */
-  async getPerformanceMetrics(model: string, startDate?: Date, endDate?: Date) {
-    return await this.performanceMonitor.getMetrics(model, startDate, endDate);
-  }
-
-  /**
-   * Check for performance alerts
-   * Property 44: Failure rate alert
-   * Property 45: Response time alert
-   * Validates: Requirements 8.4, 8.5
-   *
-   * @returns Array of alerts
-   */
-  async checkPerformanceAlerts() {
-    return await this.performanceMonitor.checkAlerts();
-  }
-
-  /**
-   * Get AI logs
-   * Property 62: Log query
-   * Validates: Requirements 11.5
-   *
-   * @param filters - Log filters
-   * @returns Array of logs
-   */
-  async getLogs(filters: {
-    model?: string;
-    provider?: string;
-    scenario?: string;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }) {
-    return await this.aiLogger.queryLogs({
-      model: filters.model,
-      provider: filters.provider,
-      scenario: filters.scenario,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      limit: filters.limit,
-    });
   }
 }

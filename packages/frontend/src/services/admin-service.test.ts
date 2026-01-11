@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { adminService } from './adminService';
+import { adminService } from './admin-service';
 import axios from '../config/axios';
 
 // Mock axios

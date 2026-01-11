@@ -15,12 +15,7 @@ import { StorageService } from '@/storage/storage.service';
 import { FileType } from '@/storage/interfaces/storage.interface';
 import { AIQueueService } from '@/ai/queue/ai-queue.service';
 
-const ALLOWED_MIME_TYPES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+import { FileUploadValidator } from '@/common/validators/file-upload.validator';
 
 @Injectable()
 export class ResumeService {
@@ -43,24 +38,54 @@ export class ResumeService {
     file: any,
     title?: string
   ): Promise<Resume> {
-    // Validate file exists
-    if (!file) {
-      throw new BadRequestException('No file provided');
+    // TODO Use general utf-8 encoding for all platforms
+    // Fix encoding for originalname if it's garbled (common issue with multer on some systems)
+    if (file.originalname) {
+      try {
+        const originalName = file.originalname;
+        const rawHex = Buffer.from(originalName).toString('hex');
+        this.logger.debug(
+          `Processing filename: "${originalName}" (hex: ${rawHex})`
+        );
+
+        // Check if it's a UTF-8 string mis-interpreted as Latin1
+        // Most common garbling: ä¸ªäººç®å -> 个人简历
+        // If it's already UTF-8, it should contain characters > 255.
+        // If it's Latin1, all characters are <= 255.
+        const isLatin1 = !/[^\x00-\xff]/.test(originalName);
+
+        if (isLatin1) {
+          // Attempt conversion from Latin1 (binary) to UTF-8
+          const converted = Buffer.from(originalName, 'latin1').toString(
+            'utf8'
+          );
+
+          // Validate if the converted string is valid UTF-8 and contains CJK characters or is different
+          // A simple check: if the converted string has a different length or contains CJK
+          const hasCJK = /[\u4e00-\u9fa5]/.test(converted);
+
+          if (
+            converted !== originalName &&
+            (hasCJK || converted.length !== originalName.length)
+          ) {
+            this.logger.log(
+              `Converted filename from Latin1 to UTF-8: "${originalName}" -> "${converted}"`
+            );
+            file.originalname = converted;
+          }
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to convert filename encoding: ${message}`);
+      }
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      throw new BadRequestException(
-        `File size exceeds maximum limit of 10MB. Received: ${(file.size / 1024 / 1024).toFixed(2)}MB`
-      );
-    }
+    this.logger.log(
+      `Received file for upload: ${file?.originalname}, size: ${file?.size}, mimetype: ${file?.mimetype}`
+    );
 
-    // Validate file MIME type
-    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `Unsupported file format. Allowed formats: PDF, DOCX, TXT. Received: ${file.mimetype}`
-      );
-    }
+    // Validate file using central validator
+    FileUploadValidator.validateFile(file);
 
     try {
       // Upload file to Storage Service
@@ -309,11 +334,23 @@ export class ResumeService {
         textContent
       );
 
-      // Wait for job completion (up to 30 seconds)
+      // Wait for job completion with a timeout (up to 60 seconds)
       // This preserves the synchronous API feel for fast operations
       try {
         this.logger.debug(`Waiting for job ${job.id} to finish...`);
-        const result = await job.finished();
+
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(
+            () =>
+              reject(new Error('Parsing timeout, processing in background')),
+            60000
+          )
+        );
+
+        // Race between job completion and timeout
+        const result = await Promise.race([job.finished(), timeoutPromise]);
+
         this.logger.log(`Job ${job.id} completed successfully`);
         // Include extracted text in the response
         return {
@@ -323,12 +360,17 @@ export class ResumeService {
       } catch (error) {
         // If waiting times out or job fails, we still return the current status
         // The frontend can poll for updates if needed
+        const isTimeout =
+          error instanceof Error && error.message.includes('timeout');
         this.logger.warn(
-          `Job ${job.id} queued but not finished immediately: ${error instanceof Error ? error.message : String(error)}`
+          `Job ${job.id} ${isTimeout ? 'timed out' : 'failed'}: ${error instanceof Error ? error.message : String(error)}`
         );
         return {
-          message: 'Processing started',
+          message: isTimeout
+            ? 'Parsing is taking longer than expected, it will continue in the background'
+            : 'Processing started',
           jobId: job.id,
+          parseStatus: ParseStatus.PROCESSING,
           extractedText: textContent,
         };
       }

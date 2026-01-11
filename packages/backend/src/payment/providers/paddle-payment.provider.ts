@@ -8,6 +8,7 @@ import {
   SubscriptionDetails,
   BillingRecord,
 } from '../interfaces/payment-provider.interface';
+import { SubscriptionStatus, BillingStatus } from '@/types';
 
 @Injectable()
 export class PaddlePaymentProvider implements PaymentProvider {
@@ -104,7 +105,7 @@ export class PaddlePaymentProvider implements PaymentProvider {
           user.paddleSubscriptionId
         );
         subscriptionDetails = {
-          status: subscription.status,
+          status: this.mapSubscriptionStatus(subscription.status),
           cancelAtPeriodEnd: subscription.scheduledChange?.action === 'cancel',
           currentPeriodEnd: subscription.currentBillingPeriod?.endsAt
             ? new Date(subscription.currentBillingPeriod.endsAt)
@@ -168,7 +169,7 @@ export class PaddlePaymentProvider implements PaymentProvider {
           id: txn.id,
           amount: parseInt(txn.details?.totals?.total || '0'), // Paddle returns string amount usually, need to check SDK
           currency: txn.currencyCode,
-          status: txn.status,
+          status: this.mapBillingStatus(txn.status),
           date: new Date(txn.createdAt),
           pdfUrl: '', // Paddle might provide invoice URL in details
         });
@@ -285,5 +286,28 @@ export class PaddlePaymentProvider implements PaymentProvider {
     });
 
     this.logger.log(`Paddle Subscription canceled for user ${user.id}`);
+  }
+
+  private mapSubscriptionStatus(status: string): SubscriptionStatus {
+    const mapping: Record<string, SubscriptionStatus> = {
+      active: SubscriptionStatus.ACTIVE,
+      past_due: SubscriptionStatus.PAST_DUE,
+      canceled: SubscriptionStatus.CANCELED,
+      deleted: SubscriptionStatus.CANCELED,
+      trialing: SubscriptionStatus.TRIALING,
+      paused: SubscriptionStatus.ACTIVE, // Or map to a PAUSED status if added
+    };
+    return mapping[status] || SubscriptionStatus.ACTIVE;
+  }
+
+  private mapBillingStatus(status: string): BillingStatus {
+    const mapping: Record<string, BillingStatus> = {
+      paid: BillingStatus.PAID,
+      completed: BillingStatus.PAID,
+      billed: BillingStatus.OPEN,
+      draft: BillingStatus.DRAFT,
+      canceled: BillingStatus.VOID,
+    };
+    return mapping[status] || BillingStatus.OPEN;
   }
 }

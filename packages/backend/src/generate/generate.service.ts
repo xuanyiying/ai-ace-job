@@ -4,11 +4,14 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 import { QuotaService } from '@/quota/quota.service';
 import { GeneratedPDF, Template } from '@prisma/client';
+import { ParsedResumeData, ParsedJobData } from '@/types';
 import * as puppeteer from 'puppeteer';
 import * as Handlebars from 'handlebars';
 import {
@@ -24,60 +27,8 @@ export interface PDFOptions {
   visibleSections: string[];
 }
 
-export interface ParsedResumeData {
-  personalInfo: {
-    name: string;
-    email: string;
-    phone?: string;
-    location?: string;
-    linkedin?: string;
-    github?: string;
-    website?: string;
-  };
-  summary?: string;
-  education: Array<{
-    institution: string;
-    degree: string;
-    field: string;
-    startDate: string;
-    endDate?: string;
-    gpa?: string;
-    achievements?: string[];
-  }>;
-  experience: Array<{
-    company: string;
-    position: string;
-    startDate: string;
-    endDate?: string;
-    location?: string;
-    description: string[];
-    achievements?: string[];
-  }>;
-  skills: string[];
-  projects: Array<{
-    name: string;
-    description: string;
-    technologies: string[];
-    startDate?: string;
-    endDate?: string;
-    url?: string;
-    highlights: string[];
-  }>;
-  certifications?: Array<{
-    name: string;
-    issuer: string;
-    date: string;
-    expiryDate?: string;
-    credentialId?: string;
-  }>;
-  languages?: Array<{
-    name: string;
-    proficiency: string;
-  }>;
-}
-
 @Injectable()
-class GenerateService {
+class GenerateService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GenerateService.name);
   private browser: puppeteer.Browser | null = null;
 
@@ -85,8 +36,10 @@ class GenerateService {
     private prisma: PrismaService,
     private storageService: StorageService,
     private quotaService: QuotaService
-  ) {
-    this.initializeBrowser();
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.initializeBrowser();
   }
 
   /**
@@ -96,8 +49,10 @@ class GenerateService {
   private async initializeBrowser(): Promise<void> {
     try {
       if (!this.browser) {
-        this.browser = await puppeteer.launch({
+        this.logger.log('Initializing Puppeteer browser...');
+        const launchOptions: puppeteer.PuppeteerLaunchOptions = {
           headless: 'new',
+          pipe: true, // Use pipe instead of WebSocket for better reliability in some environments
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -106,11 +61,51 @@ class GenerateService {
             '--no-first-run',
             '--no-zygote',
             '--disable-gpu',
+            '--font-render-hinting=none', // Better font rendering for PDFs
           ],
-        });
+        };
+
+        // Allow overriding executable path via env (Requirement 12.1)
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+          launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+          this.logger.log(
+            `Using custom Puppeteer executable path: ${launchOptions.executablePath}`
+          );
+        }
+
+        try {
+          this.browser = await puppeteer.launch(launchOptions);
+        } catch (launchError) {
+          this.logger.warn(
+            `Failed to launch Puppeteer with headless: 'new', trying legacy headless mode...`
+          );
+          launchOptions.headless = true;
+          this.browser = await puppeteer.launch(launchOptions);
+        }
+        this.logger.log('Puppeteer browser initialized successfully');
       }
     } catch (error) {
-      this.logger.error('Failed to initialize Puppeteer browser:', error);
+      let errorMessage = 'Unknown error';
+      let errorStack = '';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        errorStack = error.stack || '';
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle ErrorEvent or other object-like errors
+        errorMessage =
+          (error as any).message ||
+          (error as any).error?.message ||
+          JSON.stringify(error);
+        errorStack = (error as any).stack || (error as any).error?.stack || '';
+      } else {
+        errorMessage = String(error);
+      }
+
+      this.logger.error(
+        `Failed to initialize Puppeteer browser: ${errorMessage}`,
+        errorStack
+      );
     }
   }
 
@@ -195,9 +190,9 @@ class GenerateService {
       };
       const storageFile = await this.storageService.uploadFile(uploadData);
 
-      // Set expiration date (90 days from now)
+      // Set expiration date (24 hours from now)
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
+      expiresAt.setHours(expiresAt.getHours() + 24);
 
       // Create generated PDF record
       const generatedPDF = await this.prisma.generatedPDF.create({
@@ -224,6 +219,101 @@ class GenerateService {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       this.logger.error(`Error generating PDF: ${errorMessage}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate PDF from Markdown content
+   * Converts Markdown to HTML and generates PDF
+   * Requirements: 3.1, 3.5
+   */
+  async generatePDFFromMarkdown(
+    markdown: string,
+    userId: string,
+    options?: {
+      fontSize?: number;
+      margin?: { top: number; bottom: number; left: number; right: number };
+    }
+  ): Promise<{
+    fileId: string;
+    filePath: string;
+    expiresAt: Date;
+    downloadUrl: string;
+  }> {
+    try {
+      // Check quota before generating PDF
+      await this.quotaService.enforcePdfQuota(userId);
+
+      // Convert Markdown to HTML
+      const htmlContent = this.convertMarkdownToHTML(markdown);
+
+      // Create styled HTML document
+      const styledHtml = this.createStyledMarkdownHTML(htmlContent, options);
+
+      // Generate PDF
+      const pdfBuffer = await this.renderPDFFromHTML(styledHtml);
+
+      // Validate PDF size (max 2MB)
+      const maxSizeBytes = 2 * 1024 * 1024; // 2MB
+      if (pdfBuffer.length > maxSizeBytes) {
+        throw new BadRequestException(
+          `Generated PDF exceeds maximum size of 2MB (${(pdfBuffer.length / 1024 / 1024).toFixed(2)}MB)`
+        );
+      }
+
+      // Generate unique file ID
+      const fileId = `markdown-pdf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const fileName = `resume-${fileId}.pdf`;
+
+      // Upload PDF to storage
+      const uploadData: UploadFileData = {
+        originalName: fileName,
+        mimetype: 'application/pdf',
+        size: pdfBuffer.length,
+        buffer: pdfBuffer,
+        userId,
+        fileType: FileType.DOCUMENT,
+        category: 'resume',
+      };
+      const storageFile = await this.storageService.uploadFile(uploadData);
+
+      // Set expiration date (24 hours from now)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Create temporary file record (we'll use a simple in-memory store or database)
+      // For now, we'll create a GeneratedPDF record without optimizationId and templateId
+      const generatedPDF = await this.prisma.generatedPDF.create({
+        data: {
+          userId,
+          optimizationId: 'markdown-pdf', // Placeholder for markdown PDFs
+          templateId: 'markdown-template', // Placeholder for markdown PDFs
+          fileUrl: storageFile.url,
+          fileSize: pdfBuffer.length,
+          downloadCount: 0,
+          expiresAt,
+        },
+      });
+
+      // Increment PDF generation counter for quota tracking
+      await this.quotaService.incrementPdfCount(userId);
+
+      this.logger.log(`PDF generated from Markdown for user ${userId}`);
+
+      return {
+        fileId: generatedPDF.id,
+        filePath: storageFile.url,
+        expiresAt,
+        downloadUrl: `/generate/pdfs/${generatedPDF.id}/download`,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Error generating PDF from Markdown: ${errorMessage}`,
+        error
+      );
       throw error;
     }
   }
@@ -822,6 +912,253 @@ class GenerateService {
   }
 
   /**
+   * Create styled HTML document from Markdown content
+   * Wraps the converted HTML with professional styling
+   */
+  private createStyledMarkdownHTML(
+    htmlContent: string,
+    options?: {
+      fontSize?: number;
+      margin?: { top: number; bottom: number; left: number; right: number };
+    }
+  ): string {
+    const fontSize = options?.fontSize || 12;
+    const margin = options?.margin || {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20,
+    };
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Calibri', 'Arial', sans-serif;
+      font-size: ${fontSize}px;
+      line-height: 1.6;
+      color: #333;
+      padding: ${margin.top}mm ${margin.right}mm ${margin.bottom}mm ${margin.left}mm;
+      background: white;
+    }
+    
+    h1 {
+      font-size: ${fontSize + 6}px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid #3498db;
+    }
+    
+    h2 {
+      font-size: ${fontSize + 4}px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #3498db;
+    }
+    
+    h3 {
+      font-size: ${fontSize + 2}px;
+      font-weight: 600;
+      color: #34495e;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    
+    h4, h5, h6 {
+      font-size: ${fontSize + 1}px;
+      font-weight: 600;
+      color: #34495e;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+    
+    p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+    
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+    
+    li {
+      margin-bottom: 4px;
+    }
+    
+    strong, b {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    em, i {
+      font-style: italic;
+      color: #34495e;
+    }
+    
+    blockquote {
+      border-left: 4px solid #3498db;
+      padding-left: 16px;
+      margin: 16px 0;
+      font-style: italic;
+      color: #555;
+    }
+    
+    code {
+      background-color: #f8f9fa;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: ${fontSize - 1}px;
+    }
+    
+    pre {
+      background-color: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    
+    pre code {
+      background: none;
+      padding: 0;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 24px 0;
+    }
+    
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Print-specific styles */
+    @media print {
+      body {
+        font-size: ${fontSize}px;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+      }
+      
+      p, li {
+        page-break-inside: avoid;
+      }
+      
+      blockquote, pre {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Simple Markdown to HTML converter
+   * Converts basic markdown syntax to HTML
+   */
+  private convertMarkdownToHTML(markdown: string): string {
+    let html = markdown;
+
+    // Convert headers
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // Convert bold and italic
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Convert code
+    html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+    // Convert links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+    // Convert line breaks to paragraphs
+    const paragraphs = html.split('\n\n');
+    html = paragraphs
+      .map((paragraph) => {
+        if (paragraph.trim() === '') return '';
+        if (
+          paragraph.startsWith('<h') ||
+          paragraph.startsWith('<ul') ||
+          paragraph.startsWith('<ol')
+        ) {
+          return paragraph;
+        }
+
+        // Handle lists
+        if (paragraph.includes('\n- ') || paragraph.includes('\n* ')) {
+          const lines = paragraph.split('\n');
+          let listHtml = '<ul>';
+          for (const line of lines) {
+            if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+              listHtml += `<li>${line.trim().substring(2)}</li>`;
+            } else if (line.trim()) {
+              listHtml += `<li>${line.trim()}</li>`;
+            }
+          }
+          listHtml += '</ul>';
+          return listHtml;
+        }
+
+        return `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
+      })
+      .filter((p) => p !== '')
+      .join('\n');
+
+    return html;
+  }
+
+  /**
    * Render HTML to PDF using Puppeteer
    * Requirement 7.1: Generate PDF within 10 seconds
    */
@@ -1089,6 +1426,14 @@ class GenerateService {
   }
 
   /**
+   * Clean up expired files (alias for cleanupExpiredPDFs)
+   * Requirement 3.6: Cleanup expired temporary PDF files
+   */
+  async cleanupExpiredFiles(): Promise<number> {
+    return this.cleanupExpiredPDFs();
+  }
+
+  /**
    * Clean up expired PDFs
    * Deletes PDFs that have passed their expiration date
    * Requirement 7.7: File expiration management
@@ -1137,20 +1482,16 @@ class GenerateService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `Error cleaning up expired PDFs: ${errorMessage}`,
-        error
-      );
-      throw error;
+      this.logger.error(`Error cleaning up expired PDFs: ${errorMessage}`);
+      return 0;
     }
   }
 
-  /**
-   * Cleanup on module destroy
-   */
   async onModuleDestroy(): Promise<void> {
     if (this.browser) {
+      this.logger.log('Closing Puppeteer browser...');
       await this.browser.close();
+      this.browser = null;
     }
   }
 }

@@ -1,24 +1,11 @@
 import React, { useState } from 'react';
-import { pitchPerfectService } from '../services';
-import { ParsedResumeData } from '../types';
+import { pitchPerfectService, type PitchPerfectAgentOutput } from '../services';
+import { type ParsedResumeData } from '../types';
 import './PitchPerfectCard.css';
 
 interface PitchPerfectCardProps {
   resumeData: ParsedResumeData;
   jobDescription: string;
-}
-
-interface KeywordOverlap {
-  matched: string[];
-  missing: string[];
-  overlapPercentage: number;
-}
-
-interface PitchResult {
-  introduction: string;
-  highlights: string[];
-  keywordOverlap: KeywordOverlap;
-  suggestions: string[];
 }
 
 export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
@@ -30,7 +17,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
   );
   const [duration, setDuration] = useState<30 | 60>(30);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PitchResult | null>(null);
+  const [result, setResult] = useState<PitchPerfectAgentOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
   const [refining, setRefining] = useState(false);

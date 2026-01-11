@@ -1,36 +1,5 @@
 import { create } from 'zustand';
-
-interface MatchScore {
-  overall: number;
-  skiAIatch: number;
-  experienceMatch: number;
-  educationMatch: number;
-  keywordCoverage: number;
-  strengths: string[];
-  weaknesses: string[];
-  missingKeywords: string[];
-}
-
-interface Suggestion {
-  id: string;
-  type: 'content' | 'keyword' | 'structure' | 'quantification';
-  section: string;
-  original: string;
-  optimized: string;
-  reason: string;
-  status: 'pending' | 'accepted' | 'rejected';
-}
-
-interface Optimization {
-  id: string;
-  userId: string;
-  resumeId: string;
-  jobId: string;
-  matchScore?: MatchScore;
-  suggestions: Suggestion[];
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  createdAt: string;
-}
+import { Optimization, SuggestionStatus } from '../types';
 
 interface OptimizationState {
   optimizations: Optimization[];
@@ -42,7 +11,7 @@ interface OptimizationState {
   updateSuggestionStatus: (
     optimizationId: string,
     suggestionId: string,
-    status: 'accepted' | 'rejected'
+    status: SuggestionStatus
   ) => void;
 }
 

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { WinstonModule } from 'nest-winston';
 import { MonitoringService } from './monitoring.service';
 import { MetricsService } from './metrics.service';
 import { AlertingService } from './alerting.service';
@@ -14,6 +15,7 @@ import { MonitoringGuard } from './monitoring.guard';
  * Provides APM, metrics collection, error tracking, and alerting capabilities
  */
 @Module({
+  imports: [WinstonModule],
   controllers: [MetricsController, AlertingController],
   providers: [
     MonitoringService,

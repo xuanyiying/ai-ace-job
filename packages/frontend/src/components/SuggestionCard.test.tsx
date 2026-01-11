@@ -1,19 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SuggestionCard from './SuggestionCard';
-import type { Suggestion } from './SuggestionCard';
+import { Suggestion, SuggestionStatus, SuggestionType } from '../types';
 
 describe('SuggestionCard', () => {
   const mockSuggestion: Suggestion = {
     id: 'test-1',
-    type: 'content',
+    type: SuggestionType.CONTENT,
     section: 'experience',
     itemIndex: 0,
     original: 'Worked on project',
     optimized:
       'Led and managed project implementation resulting in 30% efficiency improvement',
     reason: 'Rewritten using STAR method to better demonstrate impact',
-    status: 'pending',
+    status: SuggestionStatus.PENDING,
   };
 
   it('should render suggestion card with type and status tags', () => {
@@ -112,7 +112,7 @@ describe('SuggestionCard', () => {
   it('should disable buttons for accepted suggestions', () => {
     const acceptedSuggestion: Suggestion = {
       ...mockSuggestion,
-      status: 'accepted',
+      status: SuggestionStatus.ACCEPTED,
     };
 
     const mockOnAccept = vi.fn();
@@ -135,7 +135,7 @@ describe('SuggestionCard', () => {
   it('should disable buttons for rejected suggestions', () => {
     const rejectedSuggestion: Suggestion = {
       ...mockSuggestion,
-      status: 'rejected',
+      status: SuggestionStatus.REJECTED,
     };
 
     const mockOnAccept = vi.fn();
@@ -158,7 +158,7 @@ describe('SuggestionCard', () => {
   it('should display correct type tag for different suggestion types', () => {
     const keywordSuggestion: Suggestion = {
       ...mockSuggestion,
-      type: 'keyword',
+      type: SuggestionType.KEYWORD,
     };
 
     const mockOnAccept = vi.fn();

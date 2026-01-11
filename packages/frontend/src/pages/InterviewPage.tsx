@@ -12,16 +12,12 @@ import {
 } from 'antd';
 import {
   AudioOutlined,
-  AudioMutedOutlined,
   UserOutlined,
   RobotOutlined,
   StopOutlined,
 } from '@ant-design/icons';
-import {
-  interviewService,
-  InterviewSession,
-  InterviewMessage,
-} from '../services/interview.service';
+import { interviewService } from '../services/interview-service';
+import { InterviewMessage, InterviewSession } from '@/types';
 
 const { Title, Text } = Typography;
 

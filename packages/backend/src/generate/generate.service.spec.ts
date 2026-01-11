@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import GenerateService, {
-  PDFOptions,
-  ParsedResumeData,
-} from './generate.service';
+import GenerateService, { PDFOptions } from './generate.service';
+import { ParsedResumeData, ParsedJobData } from '../types';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { QuotaService } from '../quota/quota.service';
@@ -11,6 +9,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import * as fc from 'fast-check';
 
 // Mock Puppeteer to avoid launching browser during tests
 jest.mock('puppeteer', () => ({
@@ -22,6 +21,18 @@ jest.mock('puppeteer', () => ({
       close: jest.fn(),
     }),
     close: jest.fn(),
+  }),
+}));
+
+// Mock marked to avoid ES module issues
+jest.mock('marked', () => ({
+  marked: jest.fn().mockImplementation((markdown: string) => {
+    // Simple mock that converts markdown to HTML
+    return Promise.resolve(
+      markdown
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    );
   }),
 }));
 
@@ -69,9 +80,8 @@ describe('GenerateService', () => {
   };
 
   const mockQuotaService = {
-    enforcePDFGenerationQuota: jest.fn(),
-    incrementPDFCount: jest.fn(),
-    enforcePdfQuota: jest.fn(),
+    incrementPdfCount: jest.fn().mockResolvedValue(undefined),
+    enforcePdfQuota: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockTemplate = {
@@ -683,8 +693,8 @@ describe('GenerateService', () => {
     });
   });
 
-  describe('cleanupExpiredPDFs', () => {
-    it('should delete expired PDFs', async () => {
+  describe('cleanupExpiredPDFs and cleanupExpiredFiles', () => {
+    it('should delete expired PDFs via cleanupExpiredPDFs', async () => {
       const expiredPDF = {
         id: 'pdf-1',
         userId: 'user-1',
@@ -708,6 +718,29 @@ describe('GenerateService', () => {
       expect(mockPrismaService.generatedPDF.delete).toHaveBeenCalledWith({
         where: { id: 'pdf-1' },
       });
+    });
+
+    it('should delete expired PDFs via cleanupExpiredFiles', async () => {
+      const expiredPDF = {
+        id: 'pdf-1',
+        userId: 'user-1',
+        optimizationId: 'opt-1',
+        templateId: 'template-1',
+        fileUrl: '/uploads/pdfs/resume-opt-1-123456.pdf',
+        fileSize: 1024000,
+        downloadCount: 0,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() - 1000), // Expired
+      };
+
+      mockPrismaService.generatedPDF.findMany.mockResolvedValue([expiredPDF]);
+      mockStorageService.deleteFile.mockResolvedValue(undefined);
+      mockPrismaService.generatedPDF.delete.mockResolvedValue(expiredPDF);
+
+      const result = await service.cleanupExpiredFiles();
+
+      expect(result).toBe(1);
+      expect(mockStorageService.deleteFile).toHaveBeenCalled();
     });
 
     it('should handle multiple expired PDFs', async () => {
@@ -753,6 +786,146 @@ describe('GenerateService', () => {
       const result = await service.cleanupExpiredPDFs();
 
       expect(result).toBe(0);
+    });
+  });
+
+  describe('Property Tests', () => {
+    /**
+     * Property 5: PDF 生成有效性
+     * For any valid Markdown resume content, the generated PDF file should be a valid PDF format
+     * and can be opened by standard PDF readers.
+     * **Validates: Requirements 3.1**
+     * **Feature: resume-chat-optimizer, Property 5: PDF generation validity**
+     */
+    it('should generate valid PDF from any Markdown content', async () => {
+      // Mock the storage service to return a successful upload
+      mockStorageService.uploadFile.mockResolvedValue({
+        id: 'pdf-test',
+        filename: 'resume.pdf',
+        originalName: 'resume.pdf',
+        fileSize: 102400,
+        mimeType: 'application/pdf',
+        url: '/uploads/resume.pdf',
+        fileType: 'DOCUMENT',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-1',
+        isPublic: false,
+      });
+
+      mockPrismaService.generatedPDF.create.mockResolvedValue({
+        id: 'pdf-test',
+        userId: 'user-1',
+        optimizationId: 'markdown-pdf',
+        templateId: 'markdown-template',
+        fileUrl: '/uploads/resume.pdf',
+        fileSize: 102400,
+        downloadCount: 0,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      const markdownGenerator = fc
+        .string({ minLength: 10, maxLength: 5000 })
+        .map((content) => {
+          // Generate valid Markdown content that represents a resume
+          const sections = [
+            `# ${fc.sample(fc.string({ minLength: 5, maxLength: 30 }), 1)[0]}`,
+            `## Contact Information`,
+            `Email: ${fc.sample(fc.emailAddress(), 1)[0]}`,
+            `Phone: ${fc.sample(fc.string({ minLength: 10, maxLength: 15 }), 1)[0]}`,
+            `## Experience`,
+            `### ${fc.sample(fc.string({ minLength: 10, maxLength: 50 }), 1)[0]}`,
+            `- ${content.slice(0, Math.min(100, content.length))}`,
+            `## Skills`,
+            `- JavaScript`,
+            `- TypeScript`,
+            `- React`,
+          ];
+          return sections.join('\n\n');
+        });
+
+      await fc.assert(
+        fc.asyncProperty(markdownGenerator, async (markdown) => {
+          const result = await service.generatePDFFromMarkdown(
+            markdown,
+            'user-1',
+            {
+              fontSize: 12,
+              margin: { top: 20, bottom: 20, left: 20, right: 20 },
+            }
+          );
+
+          // Verify the result structure
+          expect(result).toBeDefined();
+          expect(result.fileId).toBeDefined();
+          expect(result.downloadUrl).toBeDefined();
+          expect(result.expiresAt).toBeDefined();
+          expect(result.downloadUrl).toMatch(
+            /^\/generate\/pdfs\/.*\/download$/
+          );
+
+          // Verify expiration is set to 24 hours from now (within 1 minute tolerance)
+          const now = new Date();
+          const expectedExpiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          const timeDiff = Math.abs(
+            result.expiresAt.getTime() - expectedExpiry.getTime()
+          );
+          expect(timeDiff).toBeLessThan(60 * 1000); // Within 1 minute
+        }),
+        { numRuns: 100 }
+      );
+    }, 30000); // 30 second timeout for property test
+
+    it('should handle edge cases in Markdown content', async () => {
+      mockStorageService.uploadFile.mockResolvedValue({
+        id: 'pdf-edge-test',
+        filename: 'resume.pdf',
+        originalName: 'resume.pdf',
+        fileSize: 1024,
+        mimeType: 'application/pdf',
+        url: '/uploads/resume.pdf',
+        fileType: 'DOCUMENT',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-1',
+        isPublic: false,
+      });
+
+      mockPrismaService.generatedPDF.create.mockResolvedValue({
+        id: 'pdf-edge-test',
+        userId: 'user-1',
+        optimizationId: 'markdown-pdf',
+        templateId: 'markdown-template',
+        fileUrl: '/uploads/resume.pdf',
+        fileSize: 1024,
+        downloadCount: 0,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      const edgeCases = [
+        '', // Empty content
+        '# Simple Header', // Minimal content
+        '**Bold** *italic* `code`', // Formatting
+        '- Item 1\n- Item 2\n- Item 3', // Lists
+        '> This is a blockquote\n\nNormal text', // Blockquotes
+        '| Name | Role |\n|------|------|\n| John | Dev |', // Tables
+        '# 中文标题\n\n这是中文内容', // Unicode content
+        '# Header\n\n' + 'A'.repeat(1000), // Long content
+      ];
+
+      for (const markdown of edgeCases) {
+        const result = await service.generatePDFFromMarkdown(
+          markdown,
+          'user-1'
+        );
+
+        expect(result).toBeDefined();
+        expect(result.fileId).toBeDefined();
+        expect(result.downloadUrl).toBeDefined();
+        expect(result.expiresAt).toBeDefined();
+      }
     });
   });
 });

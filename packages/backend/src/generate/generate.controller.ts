@@ -12,10 +12,8 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
-import GenerateService, {
-  PDFOptions,
-  ParsedResumeData,
-} from './generate.service';
+import GenerateService, { PDFOptions } from './generate.service';
+import { ParsedResumeData, ParsedJobData } from '../types';
 import { JwtAuthGuard } from '../user/guards/jwt-auth.guard';
 import {
   ApiTags,
@@ -204,6 +202,46 @@ export class GenerateController {
     return {
       success: true,
       message: 'PDF deleted successfully',
+    };
+  }
+
+  /**
+   * Generate PDF from Markdown content
+   * POST /api/v1/generate/pdf/from-markdown
+   */
+  @Post('pdf/from-markdown')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Generate PDF from Markdown content' })
+  @ApiResponse({
+    status: 201,
+    description: 'PDF generated successfully from Markdown',
+  })
+  async generatePDFFromMarkdown(
+    @Request() req: any,
+    @Body()
+    body: {
+      markdown: string;
+      options?: {
+        fontSize?: number;
+        margin?: { top: number; bottom: number; left: number; right: number };
+      };
+    }
+  ) {
+    this.logger.log(`Generating PDF from Markdown for user ${req.user.id}`);
+
+    const result = await this.generateService.generatePDFFromMarkdown(
+      body.markdown,
+      req.user.id,
+      body.options
+    );
+
+    return {
+      success: true,
+      data: {
+        downloadUrl: result.downloadUrl,
+        expiresAt: result.expiresAt,
+        fileSize: null, // Will be available after generation
+      },
     };
   }
 }

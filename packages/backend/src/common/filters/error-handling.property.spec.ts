@@ -18,9 +18,30 @@ describe('Error Handling - Property Tests', () => {
   let mockResponse: any;
   let mockRequest: any;
   let mockArgumentsHost: any;
+  let mockMonitoring: any;
+  let mockAlerting: any;
+  let mockLogger: any;
 
   beforeEach(() => {
-    filter = new HttpExceptionFilter();
+    mockMonitoring = {
+      captureException: jest.fn(),
+    };
+
+    mockAlerting = {
+      createAlert: jest.fn().mockResolvedValue({ id: 'alert-id' }),
+    };
+
+    mockLogger = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      info: jest.fn(),
+    };
+
+    filter = new HttpExceptionFilter(
+      mockMonitoring as any,
+      mockAlerting as any,
+      mockLogger as any
+    );
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),

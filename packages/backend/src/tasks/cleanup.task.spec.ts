@@ -26,6 +26,7 @@ describe('CleanupTask', () => {
     // Mock services
     const mockGenerateService = {
       cleanupExpiredPDFs: jest.fn(),
+      cleanupExpiredFiles: jest.fn(),
     } as any as jest.Mocked<GenerateService>;
 
     const mockStorageService = {
@@ -66,29 +67,29 @@ describe('CleanupTask', () => {
     jest.clearAllMocks();
   });
 
-  describe('cleanupExpiredPDFs', () => {
-    it('should call generateService.cleanupExpiredPDFs', async () => {
-      generateService.cleanupExpiredPDFs.mockResolvedValue(5);
+  describe('cleanupExpiredFiles', () => {
+    it('should call generateService.cleanupExpiredFiles', async () => {
+      generateService.cleanupExpiredFiles.mockResolvedValue(5);
 
-      await cleanupTask.cleanupExpiredPDFs();
+      await cleanupTask.cleanupExpiredFiles();
 
-      expect(generateService.cleanupExpiredPDFs).toHaveBeenCalledTimes(1);
+      expect(generateService.cleanupExpiredFiles).toHaveBeenCalledTimes(1);
     });
 
     it('should handle errors gracefully', async () => {
       const error = new Error('Cleanup failed');
-      generateService.cleanupExpiredPDFs.mockRejectedValue(error);
+      generateService.cleanupExpiredFiles.mockRejectedValue(error);
 
       // Should not throw
-      await expect(cleanupTask.cleanupExpiredPDFs()).resolves.toBeUndefined();
+      await expect(cleanupTask.cleanupExpiredFiles()).resolves.toBeUndefined();
     });
 
-    it('should return correct count of deleted PDFs', async () => {
-      generateService.cleanupExpiredPDFs.mockResolvedValue(10);
+    it('should return correct count of deleted temporary PDF files', async () => {
+      generateService.cleanupExpiredFiles.mockResolvedValue(10);
 
-      await cleanupTask.cleanupExpiredPDFs();
+      await cleanupTask.cleanupExpiredFiles();
 
-      expect(generateService.cleanupExpiredPDFs).toHaveBeenCalled();
+      expect(generateService.cleanupExpiredFiles).toHaveBeenCalled();
     });
   });
 

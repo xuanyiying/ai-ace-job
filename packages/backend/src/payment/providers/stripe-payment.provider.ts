@@ -8,6 +8,7 @@ import {
   SubscriptionDetails,
   BillingRecord,
 } from '../interfaces/payment-provider.interface';
+import { SubscriptionStatus, BillingStatus } from '@/types';
 
 @Injectable()
 export class StripePaymentProvider implements PaymentProvider {
@@ -101,7 +102,7 @@ export class StripePaymentProvider implements PaymentProvider {
           user.stripeSubscriptionId
         );
         subscriptionDetails = {
-          status: subscription.status,
+          status: this.mapSubscriptionStatus(subscription.status),
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         };
@@ -157,7 +158,7 @@ export class StripePaymentProvider implements PaymentProvider {
         id: invoice.id,
         amount: invoice.amount_paid / 100,
         currency: invoice.currency,
-        status: invoice.status || 'unknown',
+        status: this.mapBillingStatus(invoice.status),
         date: new Date(invoice.created * 1000),
         pdfUrl: invoice.hosted_invoice_url || '',
       }));
@@ -165,6 +166,34 @@ export class StripePaymentProvider implements PaymentProvider {
       this.logger.error(`Failed to fetch billing history: ${error.message}`);
       return [];
     }
+  }
+
+  private mapSubscriptionStatus(
+    status: Stripe.Subscription.Status
+  ): SubscriptionStatus {
+    const mapping: Record<string, SubscriptionStatus> = {
+      active: SubscriptionStatus.ACTIVE,
+      past_due: SubscriptionStatus.PAST_DUE,
+      canceled: SubscriptionStatus.CANCELED,
+      incomplete: SubscriptionStatus.INCOMPLETE,
+      incomplete_expired: SubscriptionStatus.INCOMPLETE_EXPIRED,
+      trialing: SubscriptionStatus.TRIALING,
+      unpaid: SubscriptionStatus.UNPAID,
+      paused: SubscriptionStatus.ACTIVE,
+    };
+    return mapping[status] || SubscriptionStatus.ACTIVE;
+  }
+
+  private mapBillingStatus(status: Stripe.Invoice.Status | null): BillingStatus {
+    if (!status) return BillingStatus.OPEN;
+    const mapping: Record<string, BillingStatus> = {
+      paid: BillingStatus.PAID,
+      open: BillingStatus.OPEN,
+      void: BillingStatus.VOID,
+      uncollectible: BillingStatus.UNCOLLECTIBLE,
+      draft: BillingStatus.DRAFT,
+    };
+    return mapping[status] || BillingStatus.OPEN;
   }
 
   async handleWebhook(signature: string, payload: Buffer) {
@@ -258,7 +287,7 @@ export class StripePaymentProvider implements PaymentProvider {
 
     if (!user) return;
 
-    const status = subscription.status;
+    const status = this.mapSubscriptionStatus(subscription.status);
     const expiresAt = new Date(subscription.current_period_end * 1000);
 
     await this.prisma.user.update({

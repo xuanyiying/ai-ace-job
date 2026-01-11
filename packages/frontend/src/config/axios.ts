@@ -57,10 +57,10 @@ axiosInstance.interceptors.response.use(
           break;
         // TODO: TEMPORARY - 403 error handling disabled for testing
         // This should be re-enabled in production
-        // case 403:
-        //   // Forbidden - quota exceeded or insufficient permissions
-        //   console.error('Access forbidden:', error.response.data);
-        //   break;
+        case 403:
+          // Forbidden - quota exceeded or insufficient permissions
+          console.error('Access forbidden:', error.response.data);
+          break;
         case 429:
           // Rate limit exceeded
           console.error('Rate limit exceeded:', error.response.data);

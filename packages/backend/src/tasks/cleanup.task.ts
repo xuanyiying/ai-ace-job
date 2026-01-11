@@ -62,22 +62,25 @@ export class CleanupTask {
   }
 
   /**
-   * Clean up expired PDFs daily at 2 AM
+   * Clean up expired temporary PDF files daily at 2 AM
+   * Requirement 3.6: Cleanup expired temporary PDF files
    * Requirement 7.7: File expiration management
-   * Requirement 9.6: Auto-delete files not accessed for 90 days
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
-  async cleanupExpiredPDFs(): Promise<void> {
+  async cleanupExpiredFiles(): Promise<void> {
     try {
-      this.logger.log('Starting cleanup of expired PDFs...');
-      const deletedCount = await this.generateService.cleanupExpiredPDFs();
+      this.logger.log('Starting cleanup of expired temporary PDF files...');
+      const deletedCount = await this.generateService.cleanupExpiredFiles();
       this.logger.log(
-        `Cleanup completed: ${deletedCount} expired PDFs deleted`
+        `Cleanup completed: ${deletedCount} expired temporary PDF files deleted`
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.logger.error(`Error during PDF cleanup: ${errorMessage}`, error);
+      this.logger.error(
+        `Error during temporary PDF cleanup: ${errorMessage}`,
+        error
+      );
     }
   }
 

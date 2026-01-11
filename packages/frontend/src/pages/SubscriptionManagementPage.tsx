@@ -15,8 +15,9 @@ import {
   paymentService,
   SubscriptionDetails,
   BillingRecord,
-} from '../services/payment.service';
+} from '../services/payment-service';
 import SubscriptionStatus from '../components/SubscriptionStatus';
+import { SubscriptionStatus as SubStatus, BillingStatus } from '../types';
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -93,9 +94,9 @@ const SubscriptionManagementPage: React.FC = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'paid' ? 'success' : 'error'}>
-          {status.toUpperCase()}
+      render: (status: BillingStatus) => (
+        <Tag color={status === BillingStatus.PAID ? 'success' : 'error'}>
+          {status}
         </Tag>
       ),
     },
@@ -127,7 +128,7 @@ const SubscriptionManagementPage: React.FC = () => {
                 />
               </Descriptions.Item>
               <Descriptions.Item label="Status">
-                {subscription.status === 'active' ? 'Active' : 'Inactive'}
+                {subscription.status === SubStatus.ACTIVE ? 'Active' : 'Inactive'}
               </Descriptions.Item>
               {subscription.currentPeriodEnd && (
                 <Descriptions.Item label="Current Period Ends">
@@ -139,7 +140,7 @@ const SubscriptionManagementPage: React.FC = () => {
             <Text>No active subscription found.</Text>
           )}
 
-          {subscription?.status === 'active' &&
+          {subscription?.status === SubStatus.ACTIVE &&
             !subscription.cancelAtPeriodEnd && (
               <div style={{ marginTop: 24 }}>
                 <Button

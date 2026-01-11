@@ -16,17 +16,7 @@ import {
   ArrowRightOutlined,
 } from '@ant-design/icons';
 import { theme } from 'antd';
-
-export interface Suggestion {
-  id: string;
-  type: 'content' | 'keyword' | 'structure' | 'quantification';
-  section: string;
-  itemIndex?: number;
-  original: string;
-  optimized: string;
-  reason: string;
-  status: 'pending' | 'accepted' | 'rejected';
-}
+import { Suggestion, SuggestionStatus, SuggestionType } from '../types';
 
 interface SuggestionCardProps {
   suggestion: Suggestion;
@@ -44,30 +34,30 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
   const { token } = theme.useToken();
   const [loading, setLoading] = useState(false);
 
-  const typeColors: Record<string, string> = {
-    content: 'blue',
-    keyword: 'green',
-    structure: 'orange',
-    quantification: 'purple',
+  const typeColors: Record<SuggestionType, string> = {
+    [SuggestionType.CONTENT]: 'blue',
+    [SuggestionType.KEYWORD]: 'green',
+    [SuggestionType.STRUCTURE]: 'orange',
+    [SuggestionType.QUANTIFICATION]: 'purple',
   };
 
-  const typeLabels: Record<string, string> = {
-    content: '内容优化',
-    keyword: '关键词',
-    structure: '结构调整',
-    quantification: '量化指标',
+  const typeLabels: Record<SuggestionType, string> = {
+    [SuggestionType.CONTENT]: '内容优化',
+    [SuggestionType.KEYWORD]: '关键词',
+    [SuggestionType.STRUCTURE]: '结构调整',
+    [SuggestionType.QUANTIFICATION]: '量化指标',
   };
 
   const statusColors: Record<string, string> = {
-    pending: 'default',
-    accepted: 'success',
-    rejected: 'error',
+    [SuggestionStatus.PENDING]: 'default',
+    [SuggestionStatus.ACCEPTED]: 'success',
+    [SuggestionStatus.REJECTED]: 'error',
   };
 
   const statusLabels: Record<string, string> = {
-    pending: '待处理',
-    accepted: '已接受',
-    rejected: '已拒绝',
+    [SuggestionStatus.PENDING]: '待处理',
+    [SuggestionStatus.ACCEPTED]: '已接受',
+    [SuggestionStatus.REJECTED]: '已拒绝',
   };
 
   const handleAccept = async () => {
@@ -96,7 +86,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
     }
   };
 
-  const isDisabled = suggestion.status !== 'pending';
+  const isDisabled = suggestion.status !== SuggestionStatus.PENDING;
 
   return (
     <Card
@@ -280,8 +270,8 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
                 textAlign: 'right',
               }}
             >
-              {suggestion.status === 'accepted' && '✓ 已接受此建议'}
-              {suggestion.status === 'rejected' && '✗ 已拒绝此建议'}
+              {suggestion.status === SuggestionStatus.ACCEPTED && '✓ 已接受此建议'}
+              {suggestion.status === SuggestionStatus.REJECTED && '✗ 已拒绝此建议'}
             </div>
           )}
         </div>

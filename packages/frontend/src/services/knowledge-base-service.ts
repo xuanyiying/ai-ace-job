@@ -3,7 +3,7 @@
  * API client for knowledge base operations
  */
 
-import axios from 'axios';
+import axios from '../config/axios';
 import type {
   KBDocument,
   KBStats,
@@ -11,7 +11,7 @@ import type {
   DocumentCategory,
 } from '@/types';
 
-const API_BASE = '/api/admin/knowledge-base';
+const API_BASE = '/admin/knowledge-base';
 
 /**
  * Upload a document to the knowledge base

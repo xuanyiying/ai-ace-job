@@ -42,7 +42,7 @@ import type {
   DocumentCategory,
   KBQueryResponse,
 } from '@/types';
-import * as knowledgeBaseService from '@/services/knowledgeBaseService';
+import * as knowledgeBaseService from '@/services/knowledge-base-service';
 import './admin.css';
 
 const { TextArea } = Input;

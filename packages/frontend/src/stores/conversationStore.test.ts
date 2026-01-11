@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useConversationStore } from './conversationStore';
+import { MessageRole } from '../types';
 
 describe('useConversationStore', () => {
   beforeEach(() => {
@@ -66,7 +67,7 @@ describe('useConversationStore', () => {
         id: 'msg-1',
         conversationId: 'conv-1',
         userId: 'user-1',
-        role: 'user' as const,
+        role: MessageRole.USER,
         content: 'Hello',
         createdAt: '2024-01-01T00:00:00Z',
       };
@@ -86,7 +87,7 @@ describe('useConversationStore', () => {
         id: 'msg-1',
         conversationId: 'conv-1',
         userId: 'user-1',
-        role: 'user' as const,
+        role: MessageRole.USER,
         content: 'Hello',
         createdAt: '2024-01-01T00:00:00Z',
       };
@@ -95,7 +96,7 @@ describe('useConversationStore', () => {
         id: 'msg-2',
         conversationId: 'conv-1',
         userId: 'user-1',
-        role: 'assistant' as const,
+        role: MessageRole.ASSISTANT,
         content: 'Hi there!',
         createdAt: '2024-01-01T00:01:00Z',
       };
@@ -115,17 +116,17 @@ describe('useConversationStore', () => {
     it('should clear all messages', () => {
       const { result } = renderHook(() => useConversationStore());
 
-      const mockMessage = {
+      const initialMessage = {
         id: 'msg-1',
         conversationId: 'conv-1',
         userId: 'user-1',
-        role: 'user' as const,
-        content: 'Hello',
+        role: MessageRole.USER,
+        content: 'Old content',
         createdAt: '2024-01-01T00:00:00Z',
       };
 
       act(() => {
-        result.current.addMessageToState(mockMessage);
+        result.current.addMessageToState(initialMessage);
       });
 
       expect(result.current.messages.length).toBe(1);

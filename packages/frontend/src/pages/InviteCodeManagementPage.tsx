@@ -21,7 +21,7 @@ import {
   CopyOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { adminService, InviteCode } from '../services/adminService';
+import { adminService, InviteCode } from '../services/admin-service';
 import './admin.css';
 
 const { Title } = Typography;

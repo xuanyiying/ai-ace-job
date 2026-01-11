@@ -15,39 +15,21 @@ import {
   CloudUploadOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
+  FileTextOutlined,
+  PaperClipOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import type { UploadProps, UploadFile } from 'antd';
-import { resumeService } from '../services/resumeService';
+import { resumeService } from '../services/resume-service';
 import { theme } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ParseStatus, ParsedResumeData } from '../types';
 
 interface ResumeUploadDialogProps {
   visible: boolean;
   onClose: () => void;
   onUploadSuccess: (resumeData: any) => void;
-}
-
-interface ParsedResumeData {
-  personalInfo?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-  };
-  education?: Array<{
-    institution: string;
-    degree: string;
-    field: string;
-  }>;
-  experience?: Array<{
-    company: string;
-    position: string;
-    description: string[];
-  }>;
-  skills?: string[];
-  markdown?: string;
-  extractedText?: string;
 }
 
 const { TextArea } = Input;
@@ -63,6 +45,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [parseProgress, setParseProgress] = useState(0);
   const [uploadedResume, setUploadedResume] = useState<any>(null);
   const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -74,6 +57,10 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
 
     let finalResume = uploadedResume;
     let finalParsedData = parsedData;
+
+    let uploadInterval: any;
+    let parseInterval: any;
+    let pollInterval: any;
 
     try {
       if (fileList.length > 0 && !uploadedResume) {
@@ -97,24 +84,67 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
         setUploading(true);
         setUploadProgress(0);
 
-        const progressInterval = setInterval(() => {
-          setUploadProgress((prev) => (prev >= 90 ? 90 : prev + 10));
-        }, 200);
+        uploadInterval = setInterval(() => {
+          setUploadProgress((prev) => (prev >= 95 ? 95 : prev + 5));
+        }, 100);
 
         finalResume = await resumeService.uploadResume(
           renamedFile,
           title || originalName
         );
-        clearInterval(progressInterval);
+        clearInterval(uploadInterval);
         setUploadProgress(100);
         setUploadedResume(finalResume);
 
         message.success('文件上传成功，正在解析...');
 
         setParsing(true);
-        finalParsedData = await resumeService.parseResume(finalResume.id);
-        setParsedData(finalParsedData);
-        message.success('简历解析完成');
+        setParseProgress(0);
+
+        // Simulate parsing progress
+        parseInterval = setInterval(() => {
+          setParseProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+        }, 300);
+
+        const parseResponse = (await resumeService.parseResume(
+          finalResume.id
+        )) as any;
+        clearInterval(parseInterval);
+
+        if (parseResponse.parseStatus === ParseStatus.PROCESSING) {
+          setParsedData({
+            extractedText: parseResponse.extractedText,
+          });
+          message.info('简历内容已提取，正在进行深度解析...');
+
+          // Start polling for completion
+          pollInterval = setInterval(async () => {
+            try {
+              const currentResume = await resumeService.getResume(
+                finalResume.id
+              );
+              const status = currentResume.parseStatus;
+              if (status === ParseStatus.COMPLETED) {
+                clearInterval(pollInterval);
+                setParseProgress(100);
+                setParsing(false);
+                setParsedData(currentResume.parsedData as ParsedResumeData);
+                message.success('简历解析完成');
+              } else if (status === ParseStatus.FAILED) {
+                clearInterval(pollInterval);
+                setParsing(false);
+                message.error('简历解析失败');
+              }
+            } catch (pollError) {
+              console.error('Polling error:', pollError);
+            }
+          }, 3000);
+          return; // Don't close modal yet
+        } else {
+          setParseProgress(100);
+          setParsedData(parseResponse);
+          message.success('简历解析完成');
+        }
       }
 
       if (!finalResume && !finalParsedData && !hasText) {
@@ -153,8 +183,11 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
       message.error(errorMsg);
       console.error('Confirm error:', error);
     } finally {
+      if (uploadInterval) clearInterval(uploadInterval);
+      if (parseInterval) clearInterval(parseInterval);
+      if (pollInterval && !parsing) clearInterval(pollInterval);
       setUploading(false);
-      setParsing(false);
+      if (!pollInterval) setParsing(false);
     }
   };
 
@@ -220,19 +253,74 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
       ]}
     >
       <Form form={form} layout="vertical">
-        <Form.Item label="选择简历文件（支持 PDF / DOCX）">
-          <Upload.Dragger {...uploadProps} disabled={uploading || parsing}>
-            <p style={{ marginBottom: '8px' }}>
-              <CloudUploadOutlined style={{ fontSize: '32px' }} />
-            </p>
-            <p>点击或拖拽文件到此区域上传</p>
-            <p style={{ color: token.colorTextTertiary, fontSize: '12px' }}>
-              支持 PDF、Word 格式，文件大小不超过 10MB
-            </p>
-          </Upload.Dragger>
-        </Form.Item>
+        {!parsedData && (
+          <Form.Item label="选择简历文件（支持 PDF / DOCX）">
+            {fileList.length === 0 ? (
+              <Upload.Dragger {...uploadProps} disabled={uploading || parsing}>
+                <p style={{ marginBottom: '8px' }}>
+                  <CloudUploadOutlined style={{ fontSize: '32px' }} />
+                </p>
+                <p>点击或拖拽文件到此区域上传</p>
+                <p style={{ color: token.colorTextTertiary, fontSize: '12px' }}>
+                  支持 PDF、Word 格式，文件大小不超过 10MB
+                </p>
+              </Upload.Dragger>
+            ) : (
+              <div
+                style={{
+                  padding: '16px',
+                  background: token.colorBgContainer,
+                  borderRadius: '8px',
+                  border: `1px dashed ${token.colorBorder}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      background: token.colorPrimaryBg,
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: token.colorPrimary,
+                    }}
+                  >
+                    <FileTextOutlined style={{ fontSize: '20px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500 }}>{fileList[0].name}</div>
+                    <div style={{ fontSize: '12px', color: token.colorTextSecondary }}>
+                      {(fileList[0].size! / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  </div>
+                </div>
+                {!uploading && !parsing && !uploadedResume && (
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => setFileList([])}
+                  />
+                )}
+                {(uploading || parsing) && (
+                  <div style={{ color: token.colorPrimary }}>
+                    <Spin size="small" />
+                  </div>
+                )}
+                {uploadedResume && !parsing && !parsedData && (
+                  <CheckCircleOutlined style={{ color: token.colorSuccess, fontSize: '20px' }} />
+                )}
+              </div>
+            )}
+          </Form.Item>
+        )}
 
-        {fileList.length > 0 && (
+        {fileList.length > 0 && !parsedData && (
           <Form.Item
             label="简历标题（可选）"
             name="title"
@@ -245,79 +333,50 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
           </Form.Item>
         )}
 
-        {fileList.length > 0 && !uploadedResume && (
-          <Form.Item>
-            <div
-              style={{
-                textAlign: 'center',
-                color: token.colorTextSecondary,
-                fontSize: '12px',
-              }}
-            >
-              文件已选择，请等待上传完成或点击确认继续
-            </div>
-          </Form.Item>
+        {fileList.length === 0 && !parsedData && (
+          <>
+            <Divider plain>或</Divider>
+
+            <Form.Item label="直接粘贴简历内容" name="resumeText">
+              <TextArea
+                rows={6}
+                placeholder="在此粘贴完整的简历内容，建议包含个人信息、教育背景和工作经历。"
+                disabled={uploading || parsing}
+              />
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 12,
+                  color: token.colorTextTertiary,
+                }}
+              >
+                至少提供上传文件或粘贴文本中的一种方式。
+              </div>
+            </Form.Item>
+          </>
         )}
-
-        <Divider plain>或</Divider>
-
-        <Form.Item label="直接粘贴简历内容" name="resumeText">
-          <TextArea
-            rows={6}
-            placeholder="在此粘贴完整的简历内容，建议包含个人信息、教育背景和工作经历。"
-            disabled={uploading || parsing}
-          />
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 12,
-              color: token.colorTextTertiary,
-            }}
-          >
-            至少提供上传文件或粘贴文本中的一种方式。
-          </div>
-        </Form.Item>
 
         {uploading && (
           <Form.Item label="上传进度">
             <Progress
               percent={Math.round(uploadProgress)}
               status={uploadProgress === 100 ? 'success' : 'active'}
-            />
-          </Form.Item>
-        )}
-
-        {uploadedResume && !parseError && (
-          <Form.Item>
-            <Alert
-              message="上传成功"
-              description={`文件 "${uploadedResume.originalFilename}" 已上传`}
-              type="success"
-              icon={<CheckCircleOutlined />}
-              showIcon
-            />
-          </Form.Item>
-        )}
-
-        {parseError && (
-          <Form.Item>
-            <Alert
-              message="解析失败"
-              description={parseError}
-              type="error"
-              icon={<ExclamationCircleOutlined />}
-              showIcon
+              strokeColor={token.colorPrimary}
             />
           </Form.Item>
         )}
 
         {parsing && (
-          <Form.Item label="解析状态">
-            <Spin tip="正在解析简历内容..." />
+          <Form.Item label="解析进度">
+            <Progress
+              percent={Math.round(parseProgress)}
+              status={parseProgress === 100 ? 'success' : 'active'}
+              strokeColor={token.colorInfo}
+            />
           </Form.Item>
         )}
 
-        {parsedData && !parsing && (
+        {parsedData && (
           <>
             <Divider>解析结果预览</Divider>
 
@@ -340,7 +399,7 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
                   </ReactMarkdown>
                 </div>
               </Form.Item>
-            ) : (
+            ) : parsedData.personalInfo ? (
               <>
                 {parsedData.personalInfo && (
                   <Form.Item label="个人信息">
@@ -467,7 +526,20 @@ const ResumeUploadDialog: React.FC<ResumeUploadDialogProps> = ({
                   </Form.Item>
                 )}
               </>
-            )}
+            ) : parsedData.extractedText ? (
+              <Form.Item label="提取的文本内容（深度解析中...）">
+                <TextArea
+                  rows={12}
+                  value={parsedData.extractedText}
+                  readOnly
+                  style={{
+                    background: token.colorBgContainer,
+                    fontFamily: 'monospace',
+                    fontSize: '12px',
+                  }}
+                />
+              </Form.Item>
+            ) : null}
           </>
         )}
       </Form>

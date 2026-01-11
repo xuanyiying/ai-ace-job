@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'antd';
 import { LinkOutlined, FileTextOutlined } from '@ant-design/icons';
-import { jobService, type JobInput } from '../services/jobService';
+import { jobService, type JobInput } from '../services/job-service';
 
 interface JobInputDialogProps {
   visible: boolean;

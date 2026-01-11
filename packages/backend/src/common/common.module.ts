@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
-import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { MonitoringModule } from '../monitoring/monitoring.module';
+import { WinstonModule } from 'nest-winston';
 
 @Module({
+  imports: [MonitoringModule, WinstonModule],
   providers: [HttpExceptionFilter],
   exports: [HttpExceptionFilter],
 })

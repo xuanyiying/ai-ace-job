@@ -31,7 +31,7 @@ import {
   modelAdminService,
   ModelConfig,
   CreateModelConfigDto,
-} from '../services/modelAdminService';
+} from '../services/model-admin-service';
 import './common.css';
 import './admin.css';
 

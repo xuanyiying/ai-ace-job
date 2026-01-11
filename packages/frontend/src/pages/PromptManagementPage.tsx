@@ -28,7 +28,7 @@ import {
   promptAdminService,
   PromptTemplate,
   CreatePromptDto,
-} from '../services/promptAdminService';
+} from '../services/prompt-admin-service';
 import './admin.css';
 
 const { TextArea } = Input;

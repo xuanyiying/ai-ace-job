@@ -1,10 +1,10 @@
 import { SubscriptionTier } from '@prisma/client';
-import Stripe from 'stripe';
+import { SubscriptionStatus, BillingStatus } from '@/types';
 
 export interface SubscriptionDetails {
   tier: SubscriptionTier;
   expiresAt: Date | null;
-  status?: Stripe.Subscription.Status | string;
+  status?: SubscriptionStatus;
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: Date;
 }
@@ -13,7 +13,7 @@ export interface BillingRecord {
   id: string;
   amount: number;
   currency: string;
-  status: string;
+  status: BillingStatus;
   date: Date;
   pdfUrl: string;
 }

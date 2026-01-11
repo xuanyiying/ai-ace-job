@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAuthStore } from '../stores/authStore';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth-service';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

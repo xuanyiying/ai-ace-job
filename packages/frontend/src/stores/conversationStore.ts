@@ -1,41 +1,9 @@
 import { create } from 'zustand';
-import { conversationService } from '../services/conversationService';
-
-export interface Conversation {
-  id: string;
-  userId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt?: string;
-  messageCount: number;
-  isActive: boolean;
-}
-
-export interface Message {
-  id: string;
-  conversationId: string;
-  userId: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  attachments?: Record<string, unknown>[];
-  metadata?: Record<string, unknown>;
-  createdAt: string;
-}
-
-export interface Suggestion {
-  id: string;
-  type: 'content' | 'keyword' | 'structure' | 'quantification';
-  section: string;
-  itemIndex?: number;
-  original: string;
-  optimized: string;
-  reason: string;
-  status: 'pending' | 'accepted' | 'rejected';
-}
+import { conversationService } from '../services/conversation-service';
+import { Conversation, Message, MessageRole } from '../types';
 
 interface ConversationState {
-  // Conversations
+  // ... existing state fields ...
   conversations: Conversation[];
   currentConversation: Conversation | null;
   isLoadingConversations: boolean;
@@ -62,7 +30,8 @@ interface ConversationState {
   sendMessage: (
     conversationId: string,
     content: string,
-    role?: 'user' | 'assistant' | 'system'
+    role?: MessageRole,
+    metadata?: Record<string, unknown>
   ) => Promise<Message>;
   addMessageToState: (message: Message) => void;
   clearMessages: () => void;
@@ -210,13 +179,15 @@ export const useConversationStore = create<ConversationState>((set) => ({
   sendMessage: async (
     conversationId: string,
     content: string,
-    role: 'user' | 'assistant' | 'system' = 'user'
+    role: MessageRole = MessageRole.USER,
+    metadata?: Record<string, unknown>
   ) => {
     try {
       set({ messageError: null });
       const message = await conversationService.addMessage(conversationId, {
         role,
         content,
+        metadata,
       });
       set((state) => ({
         messages: [...state.messages, message],

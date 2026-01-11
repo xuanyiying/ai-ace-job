@@ -11,41 +11,37 @@ import type { UploadProps } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
-import { useConversationStore } from '../stores';
+import { useConversationStore, useResumeStore } from '../stores';
 import ResumeUploadDialog from '../components/ResumeUploadDialog';
 import JobInputDialog from '../components/JobInputDialog';
 import JobInfoCard from '../components/JobInfoCard';
 import SuggestionsList from '../components/SuggestionsList';
 import PDFGenerationCard from '../components/PDFGenerationCard';
 import InterviewQuestionsCard from '../components/InterviewQuestionsCard';
-import { jobService, type JobInput, type Job } from '../services/jobService';
-import { optimizationService } from '../services/optimizationService';
-import type { InterviewQuestion, Resume, ParsedResumeData } from '../types';
+import StreamingMarkdownBubble from '../components/StreamingMarkdownBubble';
+import { useStreamingOptimization } from '../hooks/useStreamingOptimization';
+import { jobService, type JobInput, type Job } from '../services/job-service';
+import {
+  MessageRole,
+  type InterviewQuestion,
+  type Resume,
+  type ParsedResumeData,
+  type Suggestion,
+} from '../types';
 import './chat.css';
-
 interface MessageItem {
   key: string;
-  role: 'user' | 'ai';
+  role: MessageRole;
   content: string;
   type?: 'text' | 'job' | 'suggestions' | 'pdf' | 'interview';
   jobData?: Job;
   optimizationId?: string;
-  suggestions?: Array<{
-    id: string;
-    type: 'content' | 'keyword' | 'structure' | 'quantification';
-    section: string;
-    itemIndex?: number;
-    original: string;
-    optimized: string;
-    reason: string;
-    status: 'pending' | 'accepted' | 'rejected';
-  }>;
+  suggestions?: Suggestion[];
   interviewQuestions?: InterviewQuestion[];
 }
 
 const ChatPage: React.FC = () => {
   const { t } = useTranslation();
-  const { token } = theme.useToken();
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadDialogVisible, setUploadDialogVisible] = useState(false);
@@ -53,15 +49,46 @@ const ChatPage: React.FC = () => {
   const [items, setItems] = useState<MessageItem[]>([
     {
       key: 'welcome',
-      role: 'ai',
+      role: MessageRole.ASSISTANT,
       content: t('chat.welcome'),
       type: 'text',
     },
   ]);
 
   // Conversation store
+  const { currentResume } = useResumeStore();
+  const [lastParsedMarkdown, setLastParsedMarkdown] = useState<string>('');
+
   const { currentConversation, messages, createConversation, sendMessage } =
     useConversationStore();
+
+  const {
+    content: streamingContent,
+    isStreaming,
+    optimize: startStreamingOptimization,
+    reset: resetStreaming,
+  } = useStreamingOptimization({
+    onDone: async (finalContent) => {
+      if (currentConversation && finalContent) {
+        try {
+          // Save the final optimized content to the conversation
+          await sendMessage(currentConversation.id, finalContent, MessageRole.ASSISTANT);
+
+          // Optionally show the PDF generation card after optimization
+          // In a real flow, we might need an optimizationId from the backend
+          // For now, we can use a placeholder or trigger the display
+          displayPDFGeneration('latest-optimization');
+
+          resetStreaming();
+        } catch (error) {
+          console.error('Failed to save optimized content:', error);
+        }
+      }
+    },
+    onError: (err) => {
+      antMessage.error(err);
+    },
+  });
 
   // Initialize conversation on mount
   useEffect(() => {
@@ -77,10 +104,12 @@ const ChatPage: React.FC = () => {
     initializeConversation();
   }, []);
 
-  // Update items when messages change
+  // Update items when messages change or streaming content changes
   useEffect(() => {
+    let mappedItems: MessageItem[] = [];
+
     if (messages.length > 0) {
-      const mappedItems: MessageItem[] = messages.map((msg) => {
+      mappedItems = messages.map((msg) => {
         let messageType: MessageItem['type'] = 'text';
         if (msg.metadata?.type === 'job') {
           messageType = 'job';
@@ -94,7 +123,7 @@ const ChatPage: React.FC = () => {
 
         return {
           key: msg.id,
-          role: msg.role === 'assistant' ? 'ai' : 'user',
+          role: msg.role === MessageRole.ASSISTANT ? MessageRole.ASSISTANT : MessageRole.USER,
           content: msg.content,
           type: messageType,
           jobData: msg.metadata?.jobData as Job | undefined,
@@ -107,17 +136,30 @@ const ChatPage: React.FC = () => {
             | undefined,
         };
       });
-      setItems([
-        {
-          key: 'welcome',
-          role: 'ai',
-          content: t('chat.welcome'),
-          type: 'text',
-        },
-        ...mappedItems,
-      ]);
     }
-  }, [messages, t]);
+
+    // Add streaming message if active
+    const displayItems: MessageItem[] = [
+      {
+        key: 'welcome',
+        role: MessageRole.ASSISTANT,
+        content: t('chat.welcome'),
+        type: 'text',
+      },
+      ...mappedItems,
+    ];
+
+    if (isStreaming && streamingContent) {
+      displayItems.push({
+        key: 'streaming-optimization',
+        role: MessageRole.ASSISTANT,
+        content: streamingContent,
+        type: 'text',
+      });
+    }
+
+    setItems(displayItems);
+  }, [messages, streamingContent, isStreaming, t]);
 
   const suggestions: PromptsItemType[] = [
     {
@@ -144,6 +186,12 @@ const ChatPage: React.FC = () => {
       description: t('suggestions.interview_desc'),
       icon: <span style={{ fontSize: '16px' }}>🎤</span>,
     },
+    {
+      key: 'optimize',
+      label: t('suggestions.optimize_label'),
+      description: t('suggestions.optimize_desc'),
+      icon: <span style={{ fontSize: '16px' }}>⚡</span>,
+    },
   ];
 
   const handleSubmit = async (nextValue: string) => {
@@ -151,7 +199,7 @@ const ChatPage: React.FC = () => {
 
     try {
       // Add user message to store
-      await sendMessage(currentConversation.id, nextValue, 'user');
+      await sendMessage(currentConversation.id, nextValue, MessageRole.USER);
       setValue('');
       setLoading(true);
 
@@ -161,7 +209,7 @@ const ChatPage: React.FC = () => {
           await sendMessage(
             currentConversation.id,
             t('chat.processing'),
-            'assistant'
+            MessageRole.ASSISTANT
           );
         } catch (error) {
           console.error('Failed to send AI response:', error);
@@ -185,11 +233,53 @@ const ChatPage: React.FC = () => {
     } else if (key === 'pdf') {
       // Show PDF generation card in chat
       displayPDFGeneration('current-optimization-id');
+    } else if (key === 'optimize') {
+      handleStartOptimization();
     } else {
       const label = typeof info.data.label === 'string' ? info.data.label : '';
       if (label) {
         handleSubmit(label);
       }
+    }
+  };
+
+  const handleStartOptimization = async () => {
+    if (!currentResume) {
+      antMessage.warning(
+        t('chat.upload_resume_first', 'Please upload a resume first')
+      );
+      setUploadDialogVisible(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Get latest job if exists
+      const jobs = await jobService.getJobs();
+      const latestJob = jobs.length > 0 ? jobs[0] : null;
+
+      if (!latestJob) {
+        antMessage.warning(
+          t('chat.input_job_first', 'Please input job information first')
+        );
+        setJobInputDialogVisible(true);
+        return;
+      }
+
+      // Start streaming optimization
+      const optimizationContent =
+        lastParsedMarkdown ||
+        t(
+          'chat.default_optimization_prompt',
+          'Optimize my resume for this job'
+        );
+      startStreamingOptimization(optimizationContent, 'zh-CN');
+    } catch (error) {
+      console.error('Failed to start optimization:', error);
+      antMessage.error(t('common.error'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,7 +294,7 @@ const ChatPage: React.FC = () => {
         t('chat.upload_success', {
           filename: uploadData?.resume?.originalFilename || '简历文件',
         }),
-        'assistant'
+        MessageRole.ASSISTANT
       );
 
       // Add parsed data summary message
@@ -215,7 +305,7 @@ const ChatPage: React.FC = () => {
         await sendMessage(
           currentConversation.id,
           parsedData.markdown,
-          'assistant'
+          MessageRole.ASSISTANT
         );
       } else {
         // Fallback to manual summary if markdown is missing
@@ -245,10 +335,13 @@ const ChatPage: React.FC = () => {
 
         summaryMessage += '\n' + t('chat.parsed_next_steps');
 
-        await sendMessage(currentConversation.id, summaryMessage, 'assistant');
+        await sendMessage(currentConversation.id, summaryMessage, MessageRole.ASSISTANT);
       }
 
       setUploadDialogVisible(false);
+      if (parsedData?.markdown) {
+        setLastParsedMarkdown(parsedData.markdown);
+      }
     } catch (error) {
       console.error('Failed to send resume upload messages:', error);
       antMessage.error(t('common.error'));
@@ -271,14 +364,14 @@ const ChatPage: React.FC = () => {
           title: createdJob.title,
           company: createdJob.company,
         }),
-        'assistant'
+        MessageRole.ASSISTANT
       );
 
       // Add job info card message with metadata
       await sendMessage(
         currentConversation.id,
         t('chat.job_extracted_title'),
-        'assistant'
+        MessageRole.ASSISTANT
       );
 
       setJobInputDialogVisible(false);
@@ -291,7 +384,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const displayPDFGeneration = async (_optimizationId: string) => {
+  const displayPDFGeneration = async (optimizationId: string) => {
     if (!currentConversation) return;
 
     try {
@@ -299,7 +392,11 @@ const ChatPage: React.FC = () => {
       await sendMessage(
         currentConversation.id,
         t('chat.pdf_ready'),
-        'assistant'
+        MessageRole.ASSISTANT,
+        {
+          type: 'pdf',
+          optimizationId,
+        }
       );
     } catch (error) {
       console.error('Failed to display PDF generation:', error);
@@ -325,16 +422,6 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const uploadProps: UploadProps = {
-    name: 'file',
-    accept: '.pdf,.doc,.docx,.txt',
-    showUploadList: false,
-    beforeUpload: () => {
-      setUploadDialogVisible(true);
-      return false;
-    },
-  };
-
   return (
     <div className="flex h-full w-full relative overflow-hidden bg-primary/5">
       {/* Main Chat Area */}
@@ -345,12 +432,19 @@ const ChatPage: React.FC = () => {
             items={items.map((item) => ({
               key: item.key,
               role: item.role,
-              placement: item.role === 'user' ? 'end' : 'start',
+              placement: item.role === MessageRole.USER ? 'end' : 'start',
               content: (
                 <div className="message-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {item.content}
-                  </ReactMarkdown>
+                  {item.key === 'streaming-optimization' ? (
+                    <StreamingMarkdownBubble
+                      content={item.content}
+                      isStreaming={isStreaming}
+                    />
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {item.content}
+                    </ReactMarkdown>
+                  )}
 
                   {item.type === 'job' && item.jobData && (
                     <div className="mt-4">
@@ -385,7 +479,7 @@ const ChatPage: React.FC = () => {
                 </div>
               ),
               avatar:
-                item.role === 'user' ? (
+                item.role === MessageRole.USER ? (
                   <div
                     style={{
                       background: 'var(--primary-gradient)',
@@ -481,11 +575,12 @@ const ChatPage: React.FC = () => {
               loading={loading}
               placeholder={t('chat.placeholder')}
               prefix={
-                <Upload {...uploadProps}>
-                  <div className="cursor-pointer px-2 text-gray-400 hover:text-primary-400 transition-colors">
-                    <CloudUploadOutlined className="text-xl" />
-                  </div>
-                </Upload>
+                <div
+                  className="cursor-pointer px-2 text-gray-400 hover:text-primary-400 transition-colors"
+                  onClick={() => setUploadDialogVisible(true)}
+                >
+                  <CloudUploadOutlined className="text-xl" />
+                </div>
               }
               className="modern-sender overflow-hidden shadow-2xl"
             />

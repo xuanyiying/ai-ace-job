@@ -23,7 +23,7 @@ import {
 } from '@ant-design/icons';
 import type { Template } from '../stores/generateStore';
 import { useGenerateStore } from '../stores/generateStore';
-import { generateService } from '../services/generateService';
+import { generateService } from '../services/generate-service';
 
 interface PDFGenerationDialogProps {
   visible: boolean;

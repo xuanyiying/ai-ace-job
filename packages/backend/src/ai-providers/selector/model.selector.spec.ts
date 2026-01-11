@@ -5,14 +5,14 @@
  * **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7**
  */
 
-import { ModelInfo } from '../interfaces';
-import { ModelSelector, ScenarioType } from './model.selector';
+import { ModelInfo, ScenarioType } from '../interfaces';
+import { ModelSelector } from '@/ai-providers';
 import {
   CostOptimizedStrategy,
   QualityOptimizedStrategy,
   LatencyOptimizedStrategy,
   BalancedStrategy,
-} from './model-selection.strategy';
+} from '@/ai-providers';
 
 describe('ModelSelector', () => {
   let selector: ModelSelector;
@@ -82,8 +82,48 @@ describe('ModelSelector', () => {
     isAvailable: false,
   };
 
+  const mockScenarioModelMappingService = {
+    getScenarioConfig: jest.fn(),
+    updateScenarioConfig: jest.fn(),
+    getRecommendedModels: jest.fn(() => []),
+    getPrimaryModels: jest.fn(() => []),
+    getFallbackModels: jest.fn(() => []),
+    getSelectionStrategy: jest.fn(),
+    getSelectionWeights: jest.fn(),
+    getAllScenarios: jest.fn(() => []),
+    registerAvailableModels: jest.fn(),
+    getAvailableRecommendedModels: jest.fn(() => []),
+    resetToDefaults: jest.fn(),
+  };
+
+  const mockOpenSourceModelRegistry = {
+    registerModel: jest.fn(),
+    getModel: jest.fn(),
+    getModelsByFamily: jest.fn(() => []),
+    getAvailableModels: jest.fn(() => []),
+    getAllModels: jest.fn(() => []),
+    updateModelStatus: jest.fn(),
+    updateModelMetrics: jest.fn(),
+  };
+
+  const mockStrategyConfig = {
+    quality: {
+      qualityRanking: ['gpt-3.5-turbo', 'qwen-max', 'gpt-4'],
+    },
+    cost: {
+      minQualityThreshold: 6,
+      lowCostModels: ['gpt-3.5-turbo', 'deepseek-chat', 'llama-2'],
+    },
+    latency: {
+      maxLatencyThreshold: 1000,
+    },
+  };
+
   beforeEach(() => {
-    selector = new ModelSelector();
+    selector = new ModelSelector(
+      mockScenarioModelMappingService as any,
+      mockStrategyConfig as any
+    );
   });
 
   describe('Initialization', () => {

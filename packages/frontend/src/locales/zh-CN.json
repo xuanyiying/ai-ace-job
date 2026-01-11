@@ -166,17 +166,23 @@
     "try_asking": "你可以试着问我：",
     "no_history": "暂无对话记录",
     "create_failed": "创建新对话失败",
-    "switch_failed": "切换对话失败"
+    "switch_failed": "切换对话失败",
+    "upload_resume_first": "请先上传一份简历",
+    "input_job_first": "请先输入目标职位信息",
+    "default_optimization_prompt": "请根据以上职位要求优化我的简历",
+    "optimizing": "正在为您深度优化简历，请稍候..."
   },
   "suggestions": {
-    "resume_label": "简历优化",
-    "resume_desc": "帮我分析并优化当前简历",
+    "resume_label": "上传简历",
+    "resume_desc": "上传并解析您的简历文件",
     "job_label": "输入职位",
     "job_desc": "输入目标职位信息进行匹配分析",
-    "pdf_label": "生成 PDF",
-    "pdf_desc": "生成专业格式的 PDF 简历",
+    "pdf_label": "导出 PDF",
+    "pdf_desc": "将优化后的内容导出为 PDF",
     "interview_label": "面试解忧",
-    "interview_desc": "针对职位的模拟面试"
+    "interview_desc": "针对职位的模拟面试",
+    "optimize_label": "深度优化",
+    "optimize_desc": "基于目标职位对简历进行深度优化"
   },
   "pricing": {
     "title": "简单透明的价格方案",

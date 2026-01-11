@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Card,
   Button,
-  Space,
   Statistic,
   Row,
   Col,
@@ -16,10 +15,10 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CheckOutlined,
-  CloseOutlined,
 } from '@ant-design/icons';
 import { theme } from 'antd';
-import SuggestionCard, { Suggestion } from './SuggestionCard';
+import SuggestionCard from './SuggestionCard';
+import { Suggestion, SuggestionStatus } from '../types';
 
 interface SuggestionsListProps {
   suggestions: Suggestion[];
@@ -40,12 +39,14 @@ const SuggestionsList: React.FC<SuggestionsListProps> = ({
   const [acceptAllLoading, setAcceptAllLoading] = useState(false);
 
   const acceptedCount = suggestions.filter(
-    (s) => s.status === 'accepted'
+    (s) => s.status === SuggestionStatus.ACCEPTED
   ).length;
   const rejectedCount = suggestions.filter(
-    (s) => s.status === 'rejected'
+    (s) => s.status === SuggestionStatus.REJECTED
   ).length;
-  const pendingCount = suggestions.filter((s) => s.status === 'pending').length;
+  const pendingCount = suggestions.filter(
+    (s) => s.status === SuggestionStatus.PENDING
+  ).length;
 
   const handleAcceptAll = async () => {
     try {

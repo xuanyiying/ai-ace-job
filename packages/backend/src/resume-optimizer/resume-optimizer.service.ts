@@ -1,64 +1,45 @@
+/**
+ * Unified Resume Optimizer Service
+ * Handles both streaming and batch resume optimization using AI
+ * Combines functionality from optimization and resume-optimizer modules
+ */
+
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
-  Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AIEngine } from '../ai/ai.engine';
-import { QuotaService } from '../quota/quota.service';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AIEngineService } from '@/ai-providers/ai-engine.service';
+import { QuotaService } from '@/quota/quota.service';
+import { AIRequest } from '@/ai-providers/interfaces';
+import { PromptScenario } from '@/ai-providers/interfaces/prompt-template.interface';
 import { Optimization, OptimizationStatus } from '@prisma/client';
-import { ParsedJobData, ParsedResumeData } from '@/types';
-
-export interface MatchScore {
-  overall: number;
-  skiAIatch: number;
-  experienceMatch: number;
-  educationMatch: number;
-  keywordCoverage: number;
-  strengths: string[];
-  weaknesses: string[];
-  missingKeywords: string[];
-}
-
-export enum SuggestionType {
-  CONTENT = 'content',
-  KEYWORD = 'keyword',
-  STRUCTURE = 'structure',
-  QUANTIFICATION = 'quantification',
-}
-
-export enum SuggestionStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  REJECTED = 'rejected',
-}
-
-export interface Suggestion {
-  id: string;
-  type: SuggestionType;
-  section: string;
-  itemIndex?: number;
-  original: string;
-  optimized: string;
-  reason: string;
-  status: SuggestionStatus;
-}
+import {
+  ParsedResumeData,
+  ParsedJobData,
+  MatchScore,
+  Suggestion,
+  SuggestionType,
+  SuggestionStatus,
+  StreamChunk,
+  OptimizationOptions,
+} from '@/types';
 
 @Injectable()
-export class OptimizationService {
-  private readonly logger = new Logger(OptimizationService.name);
+export class ResumeOptimizerService {
+  private readonly logger = new Logger(ResumeOptimizerService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private aiEngine: AIEngine,
-    private quotaService: QuotaService
+    private readonly prisma: PrismaService,
+    private readonly aiEngineService: AIEngineService,
+    private readonly quotaService: QuotaService
   ) {}
 
   /**
    * Create a new optimization record
    * Initiates the matching and suggestion generation process
-   * Requirement 11.1, 11.3: Check quota before creating optimization
    */
   async createOptimization(
     userId: string,
@@ -66,8 +47,6 @@ export class OptimizationService {
     jobId: string
   ): Promise<Optimization> {
     // Check quota before creating optimization
-    // Requirement 11.1: Free users limited to 10 optimizations per hour
-    // Requirement 11.3: Pro users have unlimited optimizations
     await this.quotaService.enforceOptimizationQuota(userId);
 
     // Verify user owns both resume and job
@@ -90,7 +69,6 @@ export class OptimizationService {
         'You do not have permission to access this job'
       );
     }
-
     // Create optimization record
     const optimization = await this.prisma.optimization.create({
       data: {
@@ -108,8 +86,113 @@ export class OptimizationService {
   }
 
   /**
+   * Optimize resume content with streaming output
+   * Uses semantic segmentation for better user experience
+   */
+  async *optimizeResume(
+    content: string,
+    userId: string,
+    options: OptimizationOptions = {}
+  ): AsyncGenerator<StreamChunk> {
+    try {
+      const { language = 'zh-CN' } = options;
+
+      this.logger.debug(
+        `Starting resume optimization for user ${userId} in language ${language}`
+      );
+
+      // Validate input
+      if (!content || !content.trim()) {
+        yield {
+          type: 'error',
+          message: 'Resume content is required',
+          timestamp: Date.now(),
+        };
+        return;
+      }
+
+      if (!userId || !userId.trim()) {
+        yield {
+          type: 'error',
+          message: 'User ID is required',
+          timestamp: Date.now(),
+        };
+        return;
+      }
+
+      // Build optimization prompt
+      const optimizationPrompt = this.buildOptimizationPrompt(content);
+
+      // Create AI request
+      const aiRequest: AIRequest = {
+        model: '', // Will be selected by AI engine based on scenario
+        prompt: optimizationPrompt,
+        temperature: 0.7,
+        maxTokens: 4000,
+      };
+
+      // Start streaming optimization
+      const stream = this.aiEngineService.stream(
+        aiRequest,
+        userId,
+        PromptScenario.RESUME_CONTENT_OPTIMIZATION,
+        language
+      );
+
+      let buffer = '';
+      const CHUNK_SIZE = 300; // Characters per chunk for optimal streaming
+
+      // Process stream chunks with semantic segmentation
+      for await (const chunk of stream) {
+        buffer += chunk.content;
+
+        // Send chunks when buffer reaches threshold using semantic breaks
+        while (buffer.length >= CHUNK_SIZE) {
+          const breakPoint = this.findSemanticBreakPoint(buffer, CHUNK_SIZE);
+          const segment = buffer.slice(0, breakPoint);
+          buffer = buffer.slice(breakPoint);
+
+          yield {
+            type: 'chunk',
+            content: segment,
+            timestamp: Date.now(),
+          };
+        }
+      }
+
+      // Send remaining content if any
+      if (buffer.length > 0) {
+        yield {
+          type: 'chunk',
+          content: buffer,
+          timestamp: Date.now(),
+        };
+      }
+
+      // Send completion signal
+      yield {
+        type: 'done',
+        complete: true,
+        timestamp: Date.now(),
+      };
+
+      this.logger.debug(`Resume optimization completed for user ${userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Resume optimization failed for user ${userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+
+      yield {
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: Date.now(),
+      };
+    }
+  }
+  /**
    * Get an optimization record by ID
-   * Ensures user owns the optimization
    */
   async getOptimization(
     optimizationId: string,
@@ -136,7 +219,6 @@ export class OptimizationService {
 
   /**
    * List all optimization records for a user
-   * Returns optimization history for viewing and management
    */
   async listOptimizations(userId: string): Promise<Optimization[]> {
     return this.prisma.optimization.findMany({
@@ -146,64 +228,13 @@ export class OptimizationService {
   }
 
   /**
-   * List optimization records for a specific resume
-   * Returns optimization history for a particular resume
-   */
-  async listOptimizationsByResume(
-    userId: string,
-    resumeId: string
-  ): Promise<Optimization[]> {
-    // Verify user owns the resume
-    const resume = await this.prisma.resume.findUnique({
-      where: { id: resumeId },
-    });
-
-    if (!resume || resume.userId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to access this resume'
-      );
-    }
-
-    return this.prisma.optimization.findMany({
-      where: { userId, resumeId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  /**
-   * List optimization records for a specific job
-   * Returns optimization history for a particular job
-   */
-  async listOptimizationsByJob(
-    userId: string,
-    jobId: string
-  ): Promise<Optimization[]> {
-    // Verify user owns the job
-    const job = await this.prisma.job.findUnique({
-      where: { id: jobId },
-    });
-
-    if (!job || job.userId !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to access this job'
-      );
-    }
-
-    return this.prisma.optimization.findMany({
-      where: { userId, jobId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  /**
    * Calculate match score between resume and job
-   * Analyzes skill match, experience match, education match, and keyword coverage
    */
   calculateMatchScore(
     resumeData: ParsedResumeData,
     jobData: ParsedJobData
   ): MatchScore {
-    const skiAIatch = this.calculateSkiAIatch(resumeData.skills, jobData);
+    const skillMatch = this.calculateSkillMatch(resumeData.skills, jobData);
     const experienceMatch = this.calculateExperienceMatch(
       resumeData.experience,
       jobData
@@ -216,7 +247,7 @@ export class OptimizationService {
 
     // Calculate overall score as weighted average
     const overall = Math.round(
-      skiAIatch * 0.4 +
+      skillMatch * 0.4 +
         experienceMatch * 0.3 +
         educationMatch * 0.15 +
         keywordCoverage * 0.15
@@ -227,13 +258,13 @@ export class OptimizationService {
 
     // Identify strengths and weaknesses
     const strengths = this.identifyStrengths(
-      skiAIatch,
+      skillMatch,
       experienceMatch,
       educationMatch,
       keywordCoverage
     );
     const weaknesses = this.identifyWeaknesses(
-      skiAIatch,
+      skillMatch,
       experienceMatch,
       educationMatch,
       keywordCoverage
@@ -244,7 +275,7 @@ export class OptimizationService {
 
     return {
       overall: boundedOverall,
-      skiAIatch: Math.max(0, Math.min(100, skiAIatch)),
+      skillMatch: Math.max(0, Math.min(100, skillMatch)),
       experienceMatch: Math.max(0, Math.min(100, experienceMatch)),
       educationMatch: Math.max(0, Math.min(100, educationMatch)),
       keywordCoverage: Math.max(0, Math.min(100, keywordCoverage)),
@@ -253,12 +284,309 @@ export class OptimizationService {
       missingKeywords,
     };
   }
+  /**
+   * Generate optimization suggestions
+   */
+  async generateSuggestions(
+    resumeData: ParsedResumeData,
+    jobData: ParsedJobData
+  ): Promise<Suggestion[]> {
+    try {
+      const suggestions: Suggestion[] = [];
+
+      // Generate STAR method suggestions for experience
+      const starSuggestions = this.generateSTARSuggestions(
+        resumeData.experience,
+        jobData
+      );
+      suggestions.push(...starSuggestions);
+
+      // Generate quantification suggestions
+      const quantificationSuggestions = this.generateQuantificationSuggestions(
+        resumeData.experience
+      );
+      suggestions.push(...quantificationSuggestions);
+
+      // Generate keyword insertion suggestions
+      const keywordSuggestions = this.generateKeywordSuggestions(
+        resumeData,
+        jobData
+      );
+      suggestions.push(...keywordSuggestions);
+
+      // Try to get AI-enhanced suggestions if available
+      // Note: This feature is not yet implemented
+      // try {
+      //   const aiSuggestions = await this.aiEngineService.generateOptimizationSuggestions?.(
+      //     resumeData,
+      //     JSON.stringify(jobData)
+      //   );
+      //   if (aiSuggestions && Array.isArray(aiSuggestions)) {
+      //     // Convert AI suggestions to our format
+      //     const convertedAISuggestions = aiSuggestions.map(
+      //       (s: any, index: number) => ({
+      //         id: `ai-${index}`,
+      //         type: s.type || SuggestionType.CONTENT,
+      //         section: s.section || 'general',
+      //         itemIndex: s.itemIndex,
+      //         original: s.original || '',
+      //         optimized: s.optimized || '',
+      //         reason: s.reason || '',
+      //         status: SuggestionStatus.PENDING,
+      //       })
+      //     );
+      //     suggestions.push(...convertedAISuggestions);
+      //   }
+      // } catch (aiError) {
+      //   this.logger.warn(
+      //     'AI suggestion generation failed, using rule-based suggestions only',
+      //     aiError
+      //   );
+      // }
+
+      // Ensure we have at least 10 suggestions
+      if (suggestions.length < 10) {
+        const additionalSuggestions = this.generateDefaultSuggestions(
+          resumeData,
+          jobData,
+          10 - suggestions.length
+        );
+        suggestions.push(...additionalSuggestions);
+      }
+
+      // Assign unique IDs if not already assigned
+      return suggestions.map((s, index) => ({
+        ...s,
+        id: s.id || `suggestion-${index}`,
+        status: s.status || SuggestionStatus.PENDING,
+      }));
+    } catch (error) {
+      this.logger.error('Error generating suggestions:', error);
+      return [];
+    }
+  }
+  /**
+   * Apply a suggestion to the optimization
+   */
+  async applySuggestion(
+    optimizationId: string,
+    userId: string,
+    suggestionId: string
+  ): Promise<Optimization> {
+    const optimization = await this.getOptimization(optimizationId, userId);
+
+    // Find and update the suggestion
+    const suggestions = (optimization.suggestions || []) as any[];
+    const suggestionIndex = suggestions.findIndex((s) => s.id === suggestionId);
+
+    if (suggestionIndex === -1) {
+      throw new NotFoundException(
+        `Suggestion with ID ${suggestionId} not found`
+      );
+    }
+
+    suggestions[suggestionIndex].status = SuggestionStatus.ACCEPTED;
+
+    // Get the resume to update its content
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: optimization.resumeId },
+    });
+
+    if (!resume) {
+      throw new NotFoundException(
+        `Resume with ID ${optimization.resumeId} not found`
+      );
+    }
+
+    // Apply the suggestion to the resume's parsed data
+    const updatedParsedData = this.applySuggestionToResumeData(
+      resume.parsedData as unknown as ParsedResumeData,
+      suggestions[suggestionIndex]
+    );
+
+    // Create a new resume version with the updated content
+    const newVersion = resume.version + 1;
+    await this.prisma.resume.update({
+      where: { id: optimization.resumeId },
+      data: {
+        parsedData: updatedParsedData as any,
+        version: newVersion,
+      },
+    });
+
+    // Update optimization with the accepted suggestion
+    return this.prisma.optimization.update({
+      where: { id: optimizationId },
+      data: {
+        suggestions: suggestions as any,
+      },
+    });
+  }
 
   /**
-   * Calculate skill match percentage
-   * Compares resume skills with required and preferred skills
+   * Apply multiple suggestions in batch
    */
-  private calculateSkiAIatch(
+  async applyBatchSuggestions(
+    optimizationId: string,
+    userId: string,
+    suggestionIds: string[]
+  ): Promise<Optimization> {
+    const optimization = await this.getOptimization(optimizationId, userId);
+
+    // Get the resume
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: optimization.resumeId },
+    });
+
+    if (!resume) {
+      throw new NotFoundException(
+        `Resume with ID ${optimization.resumeId} not found`
+      );
+    }
+
+    // Find and update all suggestions
+    const suggestions = (optimization.suggestions || []) as any[];
+    let updatedParsedData = resume.parsedData as unknown as ParsedResumeData;
+
+    for (const suggestionId of suggestionIds) {
+      const suggestionIndex = suggestions.findIndex(
+        (s) => s.id === suggestionId
+      );
+
+      if (suggestionIndex === -1) {
+        throw new NotFoundException(
+          `Suggestion with ID ${suggestionId} not found`
+        );
+      }
+
+      suggestions[suggestionIndex].status = SuggestionStatus.ACCEPTED;
+
+      // Apply the suggestion to the resume data
+      updatedParsedData = this.applySuggestionToResumeData(
+        updatedParsedData,
+        suggestions[suggestionIndex]
+      );
+    }
+
+    // Create a new resume version with all applied suggestions
+    const newVersion = resume.version + 1;
+    await this.prisma.resume.update({
+      where: { id: optimization.resumeId },
+      data: {
+        parsedData: updatedParsedData as any,
+        version: newVersion,
+      },
+    });
+
+    // Update optimization with all accepted suggestions
+    return this.prisma.optimization.update({
+      where: { id: optimizationId },
+      data: {
+        suggestions: suggestions as any,
+      },
+    });
+  }
+  /**
+   * Reject a suggestion
+   */
+  async rejectSuggestion(
+    optimizationId: string,
+    userId: string,
+    suggestionId: string
+  ): Promise<Optimization> {
+    const optimization = await this.getOptimization(optimizationId, userId);
+
+    // Find and update the suggestion
+    const suggestions = (optimization.suggestions || []) as any[];
+    const suggestionIndex = suggestions.findIndex((s) => s.id === suggestionId);
+
+    if (suggestionIndex === -1) {
+      throw new NotFoundException(
+        `Suggestion with ID ${suggestionId} not found`
+      );
+    }
+
+    suggestions[suggestionIndex].status = SuggestionStatus.REJECTED;
+
+    // Update optimization
+    return this.prisma.optimization.update({
+      where: { id: optimizationId },
+      data: {
+        suggestions: suggestions as any,
+      },
+    });
+  }
+
+  // Private helper methods
+
+  /**
+   * Build optimization prompt for resume content
+   */
+  private buildOptimizationPrompt(content: string): string {
+    return `请优化以下简历内容，保持核心信息不变，优化表达方式和格式，以 Markdown 格式输出：
+
+${content}
+
+要求：
+1. 保留所有关键信息（姓名、联系方式、工作经历、教育背景等）
+2. 使用专业的表达方式
+3. 突出成就和量化结果
+4. 使用清晰的 Markdown 格式
+5. 适当使用项目符号和标题层级
+6. 确保内容结构清晰，易于阅读
+
+请直接输出优化后的简历内容，不需要额外的说明文字。`;
+  }
+
+  /**
+   * Find semantic break point for content chunking
+   */
+  private findSemanticBreakPoint(text: string, minLength: number): number {
+    // Priority 1: Paragraph breaks (double newlines)
+    const paragraphEnd = text.indexOf('\n\n', minLength);
+    if (paragraphEnd !== -1 && paragraphEnd < minLength + 200) {
+      return paragraphEnd + 2;
+    }
+
+    // Priority 2: Single line breaks
+    const lineEnd = text.indexOf('\n', minLength);
+    if (lineEnd !== -1 && lineEnd < minLength + 100) {
+      return lineEnd + 1;
+    }
+
+    // Priority 3: Sentence endings (Chinese and English)
+    const sentenceEnds = ['。', '！', '？', '.', '!', '?'];
+    for (const end of sentenceEnds) {
+      const pos = text.indexOf(end, minLength);
+      if (pos !== -1 && pos < minLength + 100) {
+        return pos + 1;
+      }
+    }
+
+    // Priority 4: Word boundaries (spaces)
+    const spacePos = text.indexOf(' ', minLength);
+    if (spacePos !== -1 && spacePos < minLength + 50) {
+      return spacePos + 1;
+    }
+
+    // Priority 5: Comma boundaries
+    const commaPos = text.indexOf('，', minLength);
+    if (commaPos !== -1 && commaPos < minLength + 50) {
+      return commaPos + 1;
+    }
+
+    const englishCommaPos = text.indexOf(',', minLength);
+    if (englishCommaPos !== -1 && englishCommaPos < minLength + 50) {
+      return englishCommaPos + 1;
+    }
+
+    // Fallback: Use minimum length to avoid breaking characters
+    return Math.min(minLength, text.length);
+  }
+  /**
+   * Calculate skill match percentage
+   */
+  private calculateSkillMatch(
     resumeSkills: string[],
     jobData: ParsedJobData
   ): number {
@@ -302,7 +630,6 @@ export class OptimizationService {
 
   /**
    * Calculate experience match percentage
-   * Compares resume experience with job requirements
    */
   private calculateExperienceMatch(
     resumeExperience: ParsedResumeData['experience'],
@@ -361,10 +688,8 @@ export class OptimizationService {
 
     return null;
   }
-
   /**
    * Calculate education match percentage
-   * Compares resume education with job requirements
    */
   private calculateEducationMatch(
     resumeEducation: ParsedResumeData['education'],
@@ -402,7 +727,6 @@ export class OptimizationService {
 
   /**
    * Calculate keyword coverage percentage
-   * Measures how many job keywords are present in resume
    */
   private calculateKeywordCoverage(
     resumeData: ParsedResumeData,
@@ -472,19 +796,18 @@ export class OptimizationService {
 
     return parts.join(' ');
   }
-
   /**
    * Identify strengths based on match scores
    */
   private identifyStrengths(
-    skiAIatch: number,
+    skillMatch: number,
     experienceMatch: number,
     educationMatch: number,
     keywordCoverage: number
   ): string[] {
     const strengths: string[] = [];
 
-    if (skiAIatch >= 80) {
+    if (skillMatch >= 80) {
       strengths.push('Strong skill match with job requirements');
     }
 
@@ -509,14 +832,14 @@ export class OptimizationService {
    * Identify weaknesses based on match scores
    */
   private identifyWeaknesses(
-    skiAIatch: number,
+    skillMatch: number,
     experienceMatch: number,
     educationMatch: number,
     keywordCoverage: number
   ): string[] {
     const weaknesses: string[] = [];
 
-    if (skiAIatch < 60) {
+    if (skillMatch < 60) {
       weaknesses.push('Missing several required skills');
     }
 
@@ -550,101 +873,12 @@ export class OptimizationService {
       (keyword) => !resumeText.includes(keyword.toLowerCase())
     );
   }
-
-  /**
-   * Generate optimization suggestions
-   * Uses AI engine to create specific improvement recommendations
-   * Implements STAR method, quantification, and keyword insertion
-   */
-  async generateSuggestions(
-    resumeData: ParsedResumeData,
-    jobData: ParsedJobData
-  ): Promise<Suggestion[]> {
-    try {
-      const suggestions: Suggestion[] = [];
-
-      // Generate STAR method suggestions for experience
-      const starSuggestions = this.generateSTARSuggestions(
-        resumeData.experience,
-        jobData
-      );
-      suggestions.push(...starSuggestions);
-
-      // Generate quantification suggestions
-      const quantificationSuggestions = this.generateQuantificationSuggestions(
-        resumeData.experience
-      );
-      suggestions.push(...quantificationSuggestions);
-
-      // Generate keyword insertion suggestions
-      const keywordSuggestions = this.generateKeywordSuggestions(
-        resumeData,
-        jobData
-      );
-      suggestions.push(...keywordSuggestions);
-
-      // Try to get AI-enhanced suggestions if available
-      try {
-        const aiSuggestions =
-          await this.aiEngine.generateOptimizationSuggestions(
-            resumeData,
-            JSON.stringify(jobData)
-          );
-
-        if (aiSuggestions && Array.isArray(aiSuggestions)) {
-          // Convert AI suggestions to our format
-          const convertedAISuggestions = aiSuggestions.map(
-            (s: any, index: number) => ({
-              id: `ai-${index}`,
-              type: s.type || SuggestionType.CONTENT,
-              section: s.section || 'general',
-              itemIndex: s.itemIndex,
-              original: s.original || '',
-              optimized: s.optimized || '',
-              reason: s.reason || '',
-              status: SuggestionStatus.PENDING,
-            })
-          );
-
-          suggestions.push(...convertedAISuggestions);
-        }
-      } catch (aiError) {
-        this.logger.warn(
-          'AI suggestion generation failed, using rule-based suggestions only',
-          aiError
-        );
-      }
-
-      // Ensure we have at least 10 suggestions (requirement 5.1)
-      if (suggestions.length < 10) {
-        const additionalSuggestions = this.generateDefaultSuggestions(
-          resumeData,
-          jobData,
-          10 - suggestions.length
-        );
-        suggestions.push(...additionalSuggestions);
-      }
-
-      // Assign unique IDs if not already assigned
-      return suggestions.map((s, index) => ({
-        ...s,
-        id: s.id || `suggestion-${index}`,
-        status: s.status || SuggestionStatus.PENDING,
-      }));
-    } catch (error) {
-      this.logger.error('Error generating suggestions:', error);
-      // Return empty array if all fails
-      return [];
-    }
-  }
-
   /**
    * Generate STAR method suggestions for experience descriptions
-   * STAR = Situation, Task, Action, Result
    */
   private generateSTARSuggestions(
     experience: ParsedResumeData['experience'],
-    jobData: ParsedJobData
+    _jobData: ParsedJobData
   ): Suggestion[] {
     const suggestions: Suggestion[] = [];
 
@@ -697,7 +931,7 @@ export class OptimizationService {
    */
   private optimizeWithSTAR(
     description: string,
-    experience: ParsedResumeData['experience'][0]
+    _experience: ParsedResumeData['experience'][0]
   ): string {
     // Extract key information
     const actionVerbs = [
@@ -741,10 +975,8 @@ export class OptimizationService {
       description
     );
   }
-
   /**
    * Generate quantification suggestions
-   * Identifies achievements that could benefit from metrics
    */
   private generateQuantificationSuggestions(
     experience: ParsedResumeData['experience']
@@ -798,7 +1030,6 @@ export class OptimizationService {
 
   /**
    * Generate keyword insertion suggestions
-   * Identifies missing keywords from job description
    */
   private generateKeywordSuggestions(
     resumeData: ParsedResumeData,
@@ -845,11 +1076,8 @@ export class OptimizationService {
 
     return suggestions;
   }
-
   /**
    * Generate default suggestions when AI is unavailable
-   * Provides generic but valuable suggestions
-   * Always generates enough suggestions to meet the minimum requirement
    */
   private generateDefaultSuggestions(
     resumeData: ParsedResumeData,
@@ -858,7 +1086,7 @@ export class OptimizationService {
   ): Suggestion[] {
     const suggestions: Suggestion[] = [];
 
-    // Suggestion 1: Add summary if missing
+    // Add summary suggestion
     if (count > suggestions.length) {
       if (!resumeData.summary) {
         suggestions.push({
@@ -887,7 +1115,7 @@ export class OptimizationService {
       }
     }
 
-    // Suggestion 2: Improve skills section
+    // Add skills suggestion
     if (count > suggestions.length) {
       const missingSkillCount = jobData.requiredSkills.filter(
         (skill) =>
@@ -906,176 +1134,19 @@ export class OptimizationService {
           reason: `You are missing ${missingSkillCount} required skills. Adding them will improve your match score`,
           status: SuggestionStatus.PENDING,
         });
-      } else {
-        suggestions.push({
-          id: 'default-skills-expand',
-          type: SuggestionType.STRUCTURE,
-          section: 'skills',
-          original: `Current skills: ${resumeData.skills.join(', ')}`,
-          optimized:
-            'Expand skills section with proficiency levels and related technologies',
-          reason:
-            'Detailed skills information helps recruiters better understand your capabilities',
-          status: SuggestionStatus.PENDING,
-        });
       }
     }
 
-    // Suggestion 3: Enhance experience descriptions
-    if (count > suggestions.length) {
-      if (resumeData.experience.length > 0) {
-        suggestions.push({
-          id: 'default-experience',
-          type: SuggestionType.CONTENT,
-          section: 'experience',
-          original: 'Current experience descriptions',
-          optimized:
-            'Rewrite experience using action verbs and quantifiable results',
-          reason:
-            'Strong action verbs and metrics make your experience more compelling to recruiters',
-          status: SuggestionStatus.PENDING,
-        });
-      } else {
-        suggestions.push({
-          id: 'default-experience-add',
-          type: SuggestionType.STRUCTURE,
-          section: 'experience',
-          original: 'No experience listed',
-          optimized: 'Add relevant work experience or volunteer positions',
-          reason:
-            'Experience section is crucial for demonstrating your qualifications',
-          status: SuggestionStatus.PENDING,
-        });
-      }
-    }
-
-    // Suggestion 4: Add projects if available
-    if (count > suggestions.length) {
-      if (resumeData.projects.length > 0) {
-        suggestions.push({
-          id: 'default-projects',
-          type: SuggestionType.STRUCTURE,
-          section: 'projects',
-          original: 'Current projects section',
-          optimized:
-            'Highlight projects that demonstrate relevant skills for this role',
-          reason:
-            'Projects that align with job requirements strengthen your candidacy',
-          status: SuggestionStatus.PENDING,
-        });
-      } else {
-        suggestions.push({
-          id: 'default-projects-add',
-          type: SuggestionType.STRUCTURE,
-          section: 'projects',
-          original: 'No projects listed',
-          optimized:
-            'Add relevant projects that showcase your technical skills',
-          reason:
-            'Projects provide concrete evidence of your abilities and experience',
-          status: SuggestionStatus.PENDING,
-        });
-      }
-    }
-
-    // Suggestion 5: Improve education section
-    if (count > suggestions.length) {
-      if (resumeData.education.length > 0) {
-        suggestions.push({
-          id: 'default-education',
-          type: SuggestionType.STRUCTURE,
-          section: 'education',
-          original: 'Current education section',
-          optimized: 'Add relevant coursework or achievements if applicable',
-          reason:
-            'Additional education details can strengthen your profile for specialized roles',
-          status: SuggestionStatus.PENDING,
-        });
-      } else {
-        suggestions.push({
-          id: 'default-education-add',
-          type: SuggestionType.STRUCTURE,
-          section: 'education',
-          original: 'No education listed',
-          optimized: 'Add your educational background and qualifications',
-          reason:
-            'Education section helps recruiters understand your academic foundation',
-          status: SuggestionStatus.PENDING,
-        });
-      }
-    }
-
-    // Suggestion 6: Add certifications
-    if (count > suggestions.length) {
+    // Add more default suggestions as needed
+    while (suggestions.length < count) {
       suggestions.push({
-        id: 'default-certifications',
-        type: SuggestionType.STRUCTURE,
-        section: 'certifications',
-        original: 'Current certifications section',
-        optimized:
-          'Add relevant certifications and licenses that match job requirements',
-        reason:
-          'Certifications demonstrate specialized expertise and commitment to professional development',
-        status: SuggestionStatus.PENDING,
-      });
-    }
-
-    // Suggestion 7: Improve formatting and structure
-    if (count > suggestions.length) {
-      suggestions.push({
-        id: 'default-formatting',
-        type: SuggestionType.STRUCTURE,
-        section: 'general',
-        original: 'Current resume formatting',
-        optimized:
-          'Ensure consistent formatting, clear section headers, and proper spacing',
-        reason:
-          'Professional formatting improves readability and ATS compatibility',
-        status: SuggestionStatus.PENDING,
-      });
-    }
-
-    // Suggestion 8: Add metrics and numbers
-    if (count > suggestions.length) {
-      suggestions.push({
-        id: 'default-metrics',
-        type: SuggestionType.QUANTIFICATION,
-        section: 'experience',
-        original: 'Achievements without metrics',
-        optimized:
-          'Add specific numbers, percentages, or dollar amounts to achievements',
-        reason:
-          'Quantifiable results are more impressive and memorable to hiring managers',
-        status: SuggestionStatus.PENDING,
-      });
-    }
-
-    // Suggestion 9: Tailor to job description
-    if (count > suggestions.length) {
-      suggestions.push({
-        id: 'default-tailoring',
-        type: SuggestionType.KEYWORD,
-        section: 'general',
-        original: 'Generic resume content',
-        optimized:
-          'Customize resume to match specific job description language and requirements',
-        reason:
-          'Tailored resumes have higher match scores and pass ATS filters more effectively',
-        status: SuggestionStatus.PENDING,
-      });
-    }
-
-    // Suggestion 10: Highlight relevant achievements
-    if (count > suggestions.length) {
-      suggestions.push({
-        id: 'default-achievements',
+        id: `default-${suggestions.length}`,
         type: SuggestionType.CONTENT,
-        section: 'experience',
-        original: 'Current achievement descriptions',
+        section: 'general',
+        original: 'Current resume content',
         optimized:
-          'Prioritize and highlight achievements most relevant to the target role',
-        reason:
-          'Relevant achievements immediately demonstrate your fit for the position',
+          'Consider enhancing content with more specific details and achievements',
+        reason: 'More detailed content helps demonstrate your qualifications',
         status: SuggestionStatus.PENDING,
       });
     }
@@ -1084,133 +1155,7 @@ export class OptimizationService {
   }
 
   /**
-   * Apply a suggestion to the optimization
-   * Updates the optimization record with accepted suggestion
-   * Creates a new resume version with the optimized content
-   */
-  async applySuggestion(
-    optimizationId: string,
-    userId: string,
-    suggestionId: string
-  ): Promise<Optimization> {
-    const optimization = await this.getOptimization(optimizationId, userId);
-
-    // Find and update the suggestion
-    const suggestions = (optimization.suggestions || []) as any[];
-    const suggestionIndex = suggestions.findIndex((s) => s.id === suggestionId);
-
-    if (suggestionIndex === -1) {
-      throw new NotFoundException(
-        `Suggestion with ID ${suggestionId} not found`
-      );
-    }
-
-    suggestions[suggestionIndex].status = 'ACCEPTED';
-
-    // Get the resume to update its content
-    const resume = await this.prisma.resume.findUnique({
-      where: { id: optimization.resumeId },
-    });
-
-    if (!resume) {
-      throw new NotFoundException(
-        `Resume with ID ${optimization.resumeId} not found`
-      );
-    }
-
-    // Apply the suggestion to the resume's parsed data
-    const updatedParsedData = this.applySuggestionToResumeData(
-      resume.parsedData as unknown as ParsedResumeData,
-      suggestions[suggestionIndex]
-    );
-
-    // Create a new resume version with the updated content
-    const newVersion = resume.version + 1;
-    await this.prisma.resume.update({
-      where: { id: optimization.resumeId },
-      data: {
-        parsedData: updatedParsedData as any,
-        version: newVersion,
-      },
-    });
-
-    // Update optimization with the accepted suggestion
-    return this.prisma.optimization.update({
-      where: { id: optimizationId },
-      data: {
-        suggestions: suggestions as any,
-      },
-    });
-  }
-
-  /**
-   * Apply multiple suggestions in batch
-   * Updates all accepted suggestions and creates a new resume version
-   */
-  async applyBatchSuggestions(
-    optimizationId: string,
-    userId: string,
-    suggestionIds: string[]
-  ): Promise<Optimization> {
-    const optimization = await this.getOptimization(optimizationId, userId);
-
-    // Get the resume
-    const resume = await this.prisma.resume.findUnique({
-      where: { id: optimization.resumeId },
-    });
-
-    if (!resume) {
-      throw new NotFoundException(
-        `Resume with ID ${optimization.resumeId} not found`
-      );
-    }
-
-    // Find and update all suggestions
-    const suggestions = (optimization.suggestions || []) as any[];
-    let updatedParsedData = resume.parsedData as unknown as ParsedResumeData;
-
-    for (const suggestionId of suggestionIds) {
-      const suggestionIndex = suggestions.findIndex(
-        (s) => s.id === suggestionId
-      );
-
-      if (suggestionIndex === -1) {
-        throw new NotFoundException(
-          `Suggestion with ID ${suggestionId} not found`
-        );
-      }
-
-      suggestions[suggestionIndex].status = 'ACCEPTED';
-
-      // Apply the suggestion to the resume data
-      updatedParsedData = this.applySuggestionToResumeData(
-        updatedParsedData,
-        suggestions[suggestionIndex]
-      );
-    }
-
-    // Create a new resume version with all applied suggestions
-    const newVersion = resume.version + 1;
-    await this.prisma.resume.update({
-      where: { id: optimization.resumeId },
-      data: {
-        parsedData: updatedParsedData as any,
-        version: newVersion,
-      },
-    });
-
-    // Update optimization with all accepted suggestions
-    return this.prisma.optimization.update({
-      where: { id: optimizationId },
-      data: {
-        suggestions: suggestions as any,
-      },
-    });
-  }
-
-  /**
    * Apply a single suggestion to resume data
-   * Updates the specific section and field based on suggestion type
    */
   private applySuggestionToResumeData(
     resumeData: ParsedResumeData,
@@ -1253,38 +1198,8 @@ export class OptimizationService {
         }
         break;
 
-      case 'education':
-        if (itemIndex !== undefined && updated.education[itemIndex]) {
-          const edu = updated.education[itemIndex];
-          // Update education field if it matches
-          if (edu.institution === original) {
-            edu.institution = optimized;
-          } else if (edu.degree === original) {
-            edu.degree = optimized;
-          } else if (edu.field === original) {
-            edu.field = optimized;
-          }
-        }
-        break;
-
       case 'summary':
         updated.summary = optimized;
-        break;
-
-      case 'projects':
-        if (itemIndex !== undefined && updated.projects[itemIndex]) {
-          const proj = updated.projects[itemIndex];
-          if (proj.description === original) {
-            proj.description = optimized;
-          }
-        }
-        break;
-
-      case 'general':
-        // For general suggestions, we might update summary or add to skills
-        if (!updated.summary) {
-          updated.summary = optimized;
-        }
         break;
 
       default:
@@ -1297,7 +1212,6 @@ export class OptimizationService {
 
   /**
    * Replace text in resume data recursively
-   * Used for general suggestions where section is not specific
    */
   private replaceTextInResume(
     data: any,
@@ -1325,37 +1239,5 @@ export class OptimizationService {
         }
       }
     }
-  }
-
-  /**
-   * Reject a suggestion
-   * Updates the optimization record with rejected suggestion
-   */
-  async rejectSuggestion(
-    optimizationId: string,
-    userId: string,
-    suggestionId: string
-  ): Promise<Optimization> {
-    const optimization = await this.getOptimization(optimizationId, userId);
-
-    // Find and update the suggestion
-    const suggestions = (optimization.suggestions || []) as any[];
-    const suggestionIndex = suggestions.findIndex((s) => s.id === suggestionId);
-
-    if (suggestionIndex === -1) {
-      throw new NotFoundException(
-        `Suggestion with ID ${suggestionId} not found`
-      );
-    }
-
-    suggestions[suggestionIndex].status = 'REJECTED';
-
-    // Update optimization
-    return this.prisma.optimization.update({
-      where: { id: optimizationId },
-      data: {
-        suggestions: suggestions as any,
-      },
-    });
   }
 }

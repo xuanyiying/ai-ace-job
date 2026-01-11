@@ -43,7 +43,7 @@ describe('ResumeService', () => {
     destination: '/uploads',
     filename: 'resume.pdf',
     path: '/uploads/resume.pdf',
-    buffer: Buffer.from('test'),
+    buffer: Buffer.from('%PDF-1.4'),
   } as Express.Multer.File;
 
   beforeEach(async () => {
@@ -141,6 +141,7 @@ describe('ResumeService', () => {
         originalname: 'resume.docx',
         mimetype:
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
       };
 
       (fs.existsSync as jest.Mock).mockReturnValue(true);
@@ -172,6 +173,45 @@ describe('ResumeService', () => {
       const result = await service.uploadResume('user-1', txtFile);
 
       expect(result.fileType).toBe('txt');
+    });
+
+    it('should upload a markdown file successfully', async () => {
+      const mdFile = {
+        ...mockFile,
+        originalname: 'resume.md',
+        mimetype: 'text/markdown',
+      };
+
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (prismaService.resume.create as jest.Mock).mockResolvedValue({
+        ...mockResume,
+        fileType: 'md',
+      });
+
+      const result = await service.uploadResume('user-1', mdFile);
+
+      expect(result.fileType).toBe('md');
+    });
+
+    it('should upload application/octet-stream with valid extension successfully', async () => {
+      const octetStreamFile = {
+        ...mockFile,
+        originalname: 'resume.pdf',
+        mimetype: 'application/octet-stream',
+        buffer: Buffer.from('%PDF'),
+      };
+
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (prismaService.resume.create as jest.Mock).mockResolvedValue({
+        ...mockResume,
+        fileType: 'pdf',
+      });
+
+      const result = await service.uploadResume('user-1', octetStreamFile);
+
+      expect(result.fileType).toBe('pdf');
     });
 
     it('should throw BadRequestException if no file provided', async () => {
@@ -417,7 +457,10 @@ describe('ResumeService', () => {
 
       const result = await service.parseResume('resume-1', 'user-1');
 
-      expect(result).toEqual(parsedData);
+      expect(result).toEqual({
+        ...parsedData,
+        extractedText: null,
+      });
     });
 
     it('should parse resume and update database', async () => {
@@ -453,7 +496,10 @@ describe('ResumeService', () => {
 
       const result = await service.parseResume('resume-1', 'user-1');
 
-      expect(result).toEqual(parsedData);
+      expect(result).toEqual({
+        ...parsedData,
+        extractedText: 'John Doe\\njohn@example.com',
+      });
       expect(aiQueueService.addResumeParsingJob).toHaveBeenCalledWith(
         'resume-1',
         'user-1',
@@ -491,7 +537,16 @@ describe('ResumeService', () => {
         parseStatus: ParseStatus.COMPLETED,
       });
 
-      await service.parseResume('resume-1', 'user-1');
+      const result = await service.parseResume('resume-1', 'user-1');
+
+      expect(result).toEqual({
+        personalInfo: { name: 'John Doe', email: 'john@example.com' },
+        education: [],
+        experience: [],
+        skills: [],
+        projects: [],
+        extractedText: 'content',
+      });
 
       // Check that status was updated to PROCESSING
       expect(prismaService.resume.update).toHaveBeenCalledWith(

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { rolePlayService } from '../services';
-import { ParsedResumeData } from '../types';
+import { ParsedResumeData, MessageRole } from '../types';
 import './RolePlayCard.css';
 
 interface RolePlayCardProps {
@@ -9,7 +9,7 @@ interface RolePlayCardProps {
 }
 
 interface Message {
-  role: 'interviewer' | 'user';
+  role: MessageRole.ASSISTANT | MessageRole.USER;
   content: string;
   timestamp: Date;
 }
@@ -79,7 +79,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
       setSessionId(response.sessionId);
       setMessages([
         {
-          role: 'interviewer',
+          role: MessageRole.ASSISTANT,
           content: response.currentQuestion,
           timestamp: new Date(),
         },
@@ -103,7 +103,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
 
       // Add user message
       const userMessage: Message = {
-        role: 'user',
+        role: MessageRole.USER,
         content: userInput,
         timestamp: new Date(),
       };
@@ -118,7 +118,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
 
       // Add interviewer follow-up
       const interviewerMessage: Message = {
-        role: 'interviewer',
+        role: MessageRole.ASSISTANT,
         content: response.followUpQuestion,
         timestamp: new Date(),
       };
@@ -210,9 +210,9 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
           <div className="chat-area">
             <div className="messages-container">
               {messages.map((msg, idx) => (
-                <div key={idx} className={`message message-${msg.role}`}>
+                <div key={idx} className={`message message-${msg.role.toLowerCase()}`}>
                   <div className="message-role">
-                    {msg.role === 'interviewer' ? '👤 Interviewer' : '👤 You'}
+                    {msg.role === MessageRole.ASSISTANT ? '👤 Interviewer' : '👤 You'}
                   </div>
                   <div className="message-content">{msg.content}</div>
                   <div className="message-time">

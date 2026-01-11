@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth-service';
 import './auth.css';
 
 const { Title, Text } = Typography;

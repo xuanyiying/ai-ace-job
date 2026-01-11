@@ -23,6 +23,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useConversationStore, useUIStore } from '@/stores';
+import { Role } from '@/types';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 
@@ -52,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const [searchText, setSearchText] = React.useState('');
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === Role.ADMIN;
 
   const filteredConversations = React.useMemo(() => {
     if (!searchText.trim()) return conversations;

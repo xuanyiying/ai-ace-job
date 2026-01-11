@@ -163,14 +163,13 @@ export class AIProviderFactory implements OnModuleInit {
     }
 
     // Convert ModelConfig to specific provider config
-    // Note: ModelConfig doesn't have all fields like 'organization' or 'timeout',
-    // so we use defaults or undefined.
+    // Increased timeout to 120s to handle slow AI responses (especially local Ollama)
     const baseConfig = {
       apiKey: modelConfig.apiKey,
       endpoint: modelConfig.endpoint,
       defaultTemperature: modelConfig.defaultTemperature,
       defaultMaxTokens: modelConfig.defaultMaxTokens,
-      timeout: 30000, // Default timeout
+      timeout: providerName === 'ollama' ? 300000 : 120000, // 5 min for Ollama, 2 min for others
       isActive: modelConfig.isActive,
     };
 

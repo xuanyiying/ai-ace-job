@@ -28,10 +28,39 @@ export class StorageService {
    * Upload a single file
    */
   async uploadFile(data: UploadFileData): Promise<StorageFile> {
-    // Properly encode Chinese filename
-    const originalName = Buffer.from(data.originalName, 'latin1').toString(
-      'utf-8'
-    );
+    // Properly encode Chinese filename if it's in Latin1 (common issue with multer)
+    let originalName = data.originalName;
+    try {
+      const rawHex = Buffer.from(originalName).toString('hex');
+      this.logger.debug(
+        `Processing storage filename: "${originalName}" (hex: ${rawHex})`
+      );
+
+      // Check if it's a UTF-8 string mis-interpreted as Latin1
+      const isLatin1 = !/[^\x00-\xff]/.test(originalName);
+      if (isLatin1) {
+        const converted = Buffer.from(originalName, 'latin1').toString('utf8');
+        const hasCJK = /[\u4e00-\u9fa5]/.test(converted);
+
+        if (
+          converted !== originalName &&
+          (hasCJK || converted.length !== originalName.length)
+        ) {
+          this.logger.log(
+            `Converted storage filename from Latin1 to UTF-8: "${originalName}" -> "${converted}"`
+          );
+          originalName = converted;
+        }
+      }
+    } catch (error) {
+      // Fallback to original if conversion fails
+      originalName = data.originalName;
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Failed to convert storage filename encoding: ${message}`
+      );
+    }
+
     this.logger.log(`Starting file upload: ${originalName}`);
 
     // Validate file type
@@ -402,6 +431,9 @@ export class StorageService {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'text/plain',
+        'text/markdown',
+        'text/x-markdown',
+        'application/octet-stream',
       ],
       [FileType.AUDIO]: ['audio/'],
     };

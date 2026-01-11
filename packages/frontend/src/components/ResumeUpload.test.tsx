@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import ResumeUpload from './ResumeUpload';
-import * as resumeService from '../services/resumeService';
+import * as resumeService from '../services/resume-service';
 
 // Mock the resume service
 vi.mock('../services/resumeService');

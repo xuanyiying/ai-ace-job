@@ -1,8 +1,13 @@
+import {
+  SubscriptionTier,
+  SubscriptionStatus,
+  BillingStatus,
+} from '../types';
 import axios from '../config/axios';
 
 export interface SubscriptionDetails {
-  tier: string;
-  status?: string;
+  tier: SubscriptionTier;
+  status?: SubscriptionStatus;
   expiresAt?: string;
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: string;
@@ -12,7 +17,7 @@ export interface BillingRecord {
   id: string;
   amount: number;
   currency: string;
-  status: string;
+  status: BillingStatus;
   date: string;
   pdfUrl: string;
 }

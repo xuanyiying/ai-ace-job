@@ -1,0 +1,48 @@
+.streaming-markdown-bubble {
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  max-height: 600px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  scroll-behavior: smooth;
+}
+
+.markdown-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #212529;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 20px;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: #6c757d;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.typing-text {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}

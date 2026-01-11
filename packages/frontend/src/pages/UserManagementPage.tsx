@@ -22,7 +22,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { adminService } from '../services/adminService';
+import { adminService } from '../services/admin-service';
 import './common.css';
 
 const { Title } = Typography;

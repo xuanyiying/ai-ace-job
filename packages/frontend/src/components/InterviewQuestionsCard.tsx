@@ -13,7 +13,7 @@ import {
 import { DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { theme } from 'antd';
 import type { InterviewQuestion } from '../types';
-import { interviewService } from '../services/interviewService';
+import { interviewService } from '../services/interview-service';
 
 interface InterviewQuestionsCardProps {
   questions: InterviewQuestion[];

@@ -21,7 +21,7 @@ import {
   jobService,
   type Job,
   type ParsedJobData,
-} from '../services/jobService';
+} from '../services/job-service';
 
 interface JobInfoCardProps {
   job: Job;
@@ -267,7 +267,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
                 <div style={{ marginBottom: '12px' }}>
                   <strong>必需技能：</strong>
                   <div style={{ marginTop: '8px' }}>
-                    {parsedData.requiredSkills.map((skill) => (
+                    {parsedData.requiredSkills.map((skill: string) => (
                       <Tag
                         key={skill}
                         color="cyan"
@@ -285,7 +285,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
                 <div style={{ marginBottom: '12px' }}>
                   <strong>优先技能：</strong>
                   <div style={{ marginTop: '8px' }}>
-                    {parsedData.preferredSkills.map((skill) => (
+                    {parsedData.preferredSkills.map((skill: string) => (
                       <Tag
                         key={skill}
                         color="purple"
@@ -323,7 +323,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
                   <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
                     {parsedData.responsibilities
                       .slice(0, 5)
-                      .map((resp, idx) => (
+                      .map((resp: string, idx: number) => (
                         <li key={idx}>{resp}</li>
                       ))}
                     {parsedData.responsibilities.length > 5 && (
@@ -339,7 +339,7 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
               <div>
                 <strong>关键词：</strong>
                 <div style={{ marginTop: '8px' }}>
-                  {parsedData.keywords.slice(0, 10).map((keyword) => (
+                  {parsedData.keywords.slice(0, 10).map((keyword: string) => (
                     <Tag key={keyword} style={{ marginRight: '4px' }}>
                       {keyword}
                     </Tag>

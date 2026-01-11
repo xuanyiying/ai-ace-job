@@ -22,6 +22,13 @@ import { ModelAdminController } from '@/ai-providers/model-admin.controller';
 import { EncryptionService } from './utils/encryption.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { loggerConfig } from '@/logger/logger.config';
+import {
+  ScenarioModelMappingService,
+  ModelRegistry,
+  ModelSelector,
+  StrategyConfig,
+  DEFAULT_STRATEGY_CONFIG,
+} from '@/ai-providers/selector';
 
 @Module({
   imports: [ConfigModule, PrismaModule, WinstonModule.forRoot(loggerConfig)],
@@ -35,6 +42,13 @@ import { loggerConfig } from '@/logger/logger.config';
     PerformanceMonitorService,
     SecurityService,
     AILogger,
+    ScenarioModelMappingService,
+    ModelRegistry,
+    ModelSelector,
+    {
+      provide: StrategyConfig,
+      useValue: DEFAULT_STRATEGY_CONFIG,
+    },
     AIEngineService,
     EncryptionService,
   ],
@@ -47,6 +61,10 @@ import { loggerConfig } from '@/logger/logger.config';
     PerformanceMonitorService,
     SecurityService,
     AILogger,
+    ScenarioModelMappingService,
+    ModelRegistry,
+    ModelSelector,
+    StrategyConfig,
     AIEngineService,
     EncryptionService,
   ],

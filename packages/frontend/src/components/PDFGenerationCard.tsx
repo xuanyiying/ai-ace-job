@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Card, Button, Space, Row, Col, message } from 'antd';
+import { Card, Button, Space, Row, Col, message, Typography, Tag } from 'antd';
 import {
   FileTextOutlined,
   DownloadOutlined,
   SettingOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import type { GeneratedPDF } from '../stores/generateStore';
-import { generateService } from '../services/generateService';
+
+import { generateService } from '../services/generate-service';
 import PDFGenerationDialog from './PDFGenerationDialog';
 
 interface PDFGenerationCardProps {
@@ -116,7 +119,7 @@ const PDFGenerationCard: React.FC<PDFGenerationCardProps> = ({
                     {generatedPDF.downloadCount}
                   </div>
                 </Col>
-                <Col xs={12} sm={8}>
+                <Col xs={12} sm={6}>
                   <div
                     style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}
                   >
@@ -129,7 +132,31 @@ const PDFGenerationCard: React.FC<PDFGenerationCardProps> = ({
                       marginTop: '4px',
                     }}
                   >
-                    {new Date(generatedPDF.createdAt).toLocaleTimeString()}
+                    {dayjs(generatedPDF.createdAt).format('HH:mm:ss')}
+                  </div>
+                </Col>
+                <Col xs={12} sm={10}>
+                  <div
+                    style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}
+                  >
+                    有效期至 (24h)
+                  </div>
+                  <div
+                    style={{
+                      color: '#fff',
+                      fontSize: '12px',
+                      marginTop: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <ClockCircleOutlined style={{ fontSize: '12px' }} />
+                    {generatedPDF.expiresAt
+                      ? dayjs(generatedPDF.expiresAt).format('MM-DD HH:mm')
+                      : dayjs(generatedPDF.createdAt)
+                          .add(24, 'hour')
+                          .format('MM-DD HH:mm')}
                   </div>
                 </Col>
               </Row>
@@ -138,6 +165,17 @@ const PDFGenerationCard: React.FC<PDFGenerationCardProps> = ({
 
           <Col span={24}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              {generatedPDF &&
+                dayjs().isAfter(
+                  dayjs(
+                    generatedPDF.expiresAt ||
+                      dayjs(generatedPDF.createdAt).add(24, 'hour')
+                  )
+                ) && (
+                  <Tag color="error" style={{ marginRight: 8 }}>
+                    链接已过期
+                  </Tag>
+                )}
               <Button
                 icon={<SettingOutlined />}
                 onClick={() => setDialogVisible(true)}
@@ -154,6 +192,12 @@ const PDFGenerationCard: React.FC<PDFGenerationCardProps> = ({
                   type="primary"
                   icon={<DownloadOutlined />}
                   loading={downloading}
+                  disabled={dayjs().isAfter(
+                    dayjs(
+                      generatedPDF.expiresAt ||
+                        dayjs(generatedPDF.createdAt).add(24, 'hour')
+                    )
+                  )}
                   onClick={handleDownload}
                   style={{
                     background: '#fff',

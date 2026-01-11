@@ -1,33 +1,12 @@
 import axios from '../config/axios';
-
-export interface Conversation {
-  id: string;
-  userId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt?: string;
-  messageCount: number;
-  isActive: boolean;
-}
-
-export interface Message {
-  id: string;
-  conversationId: string;
-  userId: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  attachments?: Record<string, unknown>[];
-  metadata?: Record<string, unknown>;
-  createdAt: string;
-}
+import { Conversation, Message, MessageRole } from '../types';
 
 export interface CreateConversationInput {
   title?: string;
 }
 
 export interface AddMessageInput {
-  role: 'user' | 'assistant' | 'system';
+  role: MessageRole;
   content: string;
   attachments?: Record<string, unknown>[];
   metadata?: Record<string, unknown>;

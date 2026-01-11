@@ -141,6 +141,27 @@ Return as JSON with detailed breakdown.`,
     variables: ['resume_content', 'job_description'],
     isEncrypted: false,
   },
+  {
+    name: 'resume_content_optimization_default',
+    scenario: PromptScenario.RESUME_CONTENT_OPTIMIZATION,
+    language: 'en',
+    template: `Please optimize the following resume content while preserving all key information. Output the result in well-formatted Markdown:
+
+Resume Content:
+{resume_content}
+
+Requirements:
+1. Preserve all essential information (name, contact details, work experience, education, etc.)
+2. Use professional language and expressions
+3. Highlight achievements with quantified results where possible
+4. Use clear Markdown formatting with appropriate headers and bullet points
+5. Improve readability and structure
+6. Enhance professional presentation without changing factual content
+
+Please output the optimized resume in clean, professional Markdown format that would be suitable for conversion to PDF.`,
+    variables: ['resume_content'],
+    isEncrypted: false,
+  },
 
   // ============ CHINESE TEMPLATES ============
   {
@@ -321,6 +342,29 @@ Return as JSON with detailed breakdown.`,
 计算加权平均后的总体匹配分数（0-100）。
 以JSON格式返回详细分解结果。`,
     variables: ['resume_content', 'job_description'],
+    isEncrypted: false,
+  },
+  {
+    name: 'resume_content_optimization_default',
+    scenario: PromptScenario.RESUME_CONTENT_OPTIMIZATION,
+    language: 'zh-CN',
+    template: `请优化以下简历内容，保持所有关键信息不变，以精美的 Markdown 格式输出：
+
+简历内容：
+{resume_content}
+
+要求：
+1. 保留所有核心信息（姓名、联系方式、工作经历、教育背景等）
+2. 使用专业的表达方式和措辞
+3. 突出成就并尽可能使用量化结果
+4. 使用清晰的 Markdown 格式，包含合适的标题层级和项目符号
+5. 提升可读性和结构性
+6. 增强专业性展示，但不改变事实内容
+7. 优化语言表达，使其更加简洁有力
+8. 确保格式适合转换为 PDF
+
+请输出优化后的简历，使用干净、专业的 Markdown 格式，适合转换为 PDF 文件。`,
+    variables: ['resume_content'],
     isEncrypted: false,
   },
 ];

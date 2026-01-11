@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { message, Spin, Typography } from 'antd';
 import { useAuthStore } from '../stores/authStore';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth-service';
 
 const { Title } = Typography;
 

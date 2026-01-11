@@ -1,38 +1,38 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SuggestionsList from './SuggestionsList';
-import type { Suggestion } from './SuggestionCard';
+import { Suggestion, SuggestionStatus, SuggestionType } from '../types';
 
 describe('SuggestionsList', () => {
   const mockSuggestions: Suggestion[] = [
     {
       id: 'test-1',
-      type: 'content',
+      type: SuggestionType.CONTENT,
       section: 'experience',
       itemIndex: 0,
       original: 'Worked on project',
       optimized: 'Led and managed project implementation',
       reason: 'Rewritten using STAR method',
-      status: 'pending',
+      status: SuggestionStatus.PENDING,
     },
     {
       id: 'test-2',
-      type: 'keyword',
+      type: SuggestionType.KEYWORD,
       section: 'skills',
       original: 'Current skills',
       optimized: 'Add React to skills',
       reason: 'React is required for this role',
-      status: 'pending',
+      status: SuggestionStatus.PENDING,
     },
     {
       id: 'test-3',
-      type: 'quantification',
+      type: SuggestionType.QUANTIFICATION,
       section: 'experience',
       itemIndex: 1,
       original: 'Improved performance',
       optimized: 'Improved performance by 40%',
       reason: 'Add quantifiable metrics',
-      status: 'accepted',
+      status: SuggestionStatus.ACCEPTED,
     },
   ];
 

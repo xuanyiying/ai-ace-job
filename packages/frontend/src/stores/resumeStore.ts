@@ -1,15 +1,5 @@
 import { create } from 'zustand';
-
-interface Resume {
-  id: string;
-  userId: string;
-  title: string;
-  version: number;
-  isPrimary: boolean;
-  parseStatus: 'pending' | 'processing' | 'completed' | 'failed';
-  createdAt: string;
-  updatedAt: string;
-}
+import { Resume } from '../types';
 
 interface ResumeState {
   resumes: Resume[];

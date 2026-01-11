@@ -15,10 +15,8 @@ model User {
   name                  String?
   image                 String?
   role                  Role               @default(USER)
-  status                String             @default("ACTIVE")
   phone                 String?
   avatarUrl             String?
-  avatar                String?
   subscriptionTier      SubscriptionTier   @default(FREE)
   subscriptionExpiresAt DateTime?
   createdAt             DateTime           @default(now())
@@ -34,6 +32,8 @@ model User {
   paddleCustomerId      String?
   paddleSubscriptionId  String?
   subscriptionProvider  String?
+  status                String             @default("ACTIVE")
+  avatar                String?
   accounts              Account[]
   agentSessions         AgentSession[]
   conversations         Conversation[]

@@ -166,17 +166,23 @@
     "try_asking": "You can try asking me:",
     "no_history": "No conversation history",
     "create_failed": "Failed to create new conversation",
-    "switch_failed": "Failed to switch conversation"
+    "switch_failed": "Failed to switch conversation",
+    "upload_resume_first": "Please upload a resume first",
+    "input_job_first": "Please input job information first",
+    "default_optimization_prompt": "Please optimize my resume based on the job requirements above",
+    "optimizing": "Optimizing your resume deeply, please wait..."
   },
   "suggestions": {
-    "resume_label": "Resume Optimization",
-    "resume_desc": "Analyze and optimize current resume",
+    "resume_label": "Upload Resume",
+    "resume_desc": "Upload and parse your resume file",
     "job_label": "Input Job",
     "job_desc": "Input target job info for matching analysis",
-    "pdf_label": "Generate PDF",
-    "pdf_desc": "Generate professional format PDF resume",
+    "pdf_label": "Export PDF",
+    "pdf_desc": "Export optimized content as PDF",
     "interview_label": "Interview Help",
-    "interview_desc": "Mock interview for the position"
+    "interview_desc": "Mock interview for the position",
+    "optimize_label": "Deep Optimize",
+    "optimize_desc": "Deeply optimize resume based on target job"
   },
   "pricing": {
     "title": "Simple, Transparent Pricing",

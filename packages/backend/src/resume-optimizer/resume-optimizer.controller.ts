@@ -1,3 +1,8 @@
+/**
+ * Unified Resume Optimizer Controller
+ * Handles both REST API and WebSocket endpoints for resume optimization
+ */
+
 import {
   Controller,
   Post,
@@ -9,26 +14,26 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { OptimizationService } from './optimization.service';
-import { JwtAuthGuard } from '../user/guards/jwt-auth.guard';
-import type { Optimization } from '@prisma/client';
+import { ResumeOptimizerService } from './resume-optimizer.service';
+import { JwtAuthGuard } from '@/user/guards/jwt-auth.guard';
+import { Optimization } from '@prisma/client';
 
-@Controller('optimizations')
+@Controller('resume-optimizer')
 @UseGuards(JwtAuthGuard)
-export class OptimizationController {
-  constructor(private optimizationService: OptimizationService) {}
+export class ResumeOptimizerController {
+  constructor(private resumeOptimizerService: ResumeOptimizerService) {}
 
   /**
    * Create a new optimization
-   * POST /api/v1/optimizations
+   * POST /api/v1/resume-optimizer/optimizations
    */
-  @Post()
+  @Post('optimizations')
   @HttpCode(HttpStatus.CREATED)
   async createOptimization(
     @Request() req: any,
     @Body() body: { resumeId: string; jobId: string }
   ): Promise<Optimization> {
-    return this.optimizationService.createOptimization(
+    return this.resumeOptimizerService.createOptimization(
       req.user.id,
       body.resumeId,
       body.jobId
@@ -37,23 +42,23 @@ export class OptimizationController {
 
   /**
    * List all optimizations for the user
-   * GET /api/v1/optimizations
+   * GET /api/v1/resume-optimizer/optimizations
    */
-  @Get()
+  @Get('optimizations')
   async listOptimizations(@Request() req: any): Promise<Optimization[]> {
-    return this.optimizationService.listOptimizations(req.user.id);
+    return this.resumeOptimizerService.listOptimizations(req.user.id);
   }
 
   /**
    * Get an optimization by ID
-   * GET /api/v1/optimizations/:id
+   * GET /api/v1/resume-optimizer/optimizations/:id
    */
-  @Get(':id')
+  @Get('optimizations/:id')
   async getOptimization(
     @Request() req: any,
     @Param('id') optimizationId: string
   ): Promise<Optimization> {
-    return this.optimizationService.getOptimization(
+    return this.resumeOptimizerService.getOptimization(
       optimizationId,
       req.user.id
     );
@@ -61,16 +66,16 @@ export class OptimizationController {
 
   /**
    * Apply a single suggestion
-   * POST /api/v1/optimizations/:id/suggestions/:suggestionId/accept
+   * POST /api/v1/resume-optimizer/optimizations/:id/suggestions/:suggestionId/accept
    */
-  @Post(':id/suggestions/:suggestionId/accept')
+  @Post('optimizations/:id/suggestions/:suggestionId/accept')
   @HttpCode(HttpStatus.OK)
   async applySuggestion(
     @Request() req: any,
     @Param('id') optimizationId: string,
     @Param('suggestionId') suggestionId: string
   ): Promise<Optimization> {
-    return this.optimizationService.applySuggestion(
+    return this.resumeOptimizerService.applySuggestion(
       optimizationId,
       req.user.id,
       suggestionId
@@ -79,16 +84,16 @@ export class OptimizationController {
 
   /**
    * Apply multiple suggestions in batch
-   * POST /api/v1/optimizations/:id/suggestions/accept-batch
+   * POST /api/v1/resume-optimizer/optimizations/:id/suggestions/accept-batch
    */
-  @Post(':id/suggestions/accept-batch')
+  @Post('optimizations/:id/suggestions/accept-batch')
   @HttpCode(HttpStatus.OK)
   async applyBatchSuggestions(
     @Request() req: any,
     @Param('id') optimizationId: string,
     @Body() body: { suggestionIds: string[] }
   ): Promise<Optimization> {
-    return this.optimizationService.applyBatchSuggestions(
+    return this.resumeOptimizerService.applyBatchSuggestions(
       optimizationId,
       req.user.id,
       body.suggestionIds
@@ -97,16 +102,16 @@ export class OptimizationController {
 
   /**
    * Reject a suggestion
-   * POST /api/v1/optimizations/:id/suggestions/:suggestionId/reject
+   * POST /api/v1/resume-optimizer/optimizations/:id/suggestions/:suggestionId/reject
    */
-  @Post(':id/suggestions/:suggestionId/reject')
+  @Post('optimizations/:id/suggestions/:suggestionId/reject')
   @HttpCode(HttpStatus.OK)
   async rejectSuggestion(
     @Request() req: any,
     @Param('id') optimizationId: string,
     @Param('suggestionId') suggestionId: string
   ): Promise<Optimization> {
-    return this.optimizationService.rejectSuggestion(
+    return this.resumeOptimizerService.rejectSuggestion(
       optimizationId,
       req.user.id,
       suggestionId

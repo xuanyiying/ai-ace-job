@@ -68,6 +68,37 @@ describe('FileUploadValidator', () => {
         BadRequestException
       );
     });
+
+    it('should accept application/octet-stream with valid extension', () => {
+      const file = createMockFile({
+        mimetype: 'application/octet-stream',
+        originalname: 'resume.pdf',
+      });
+      expect(() => FileUploadValidator.validateMimeType(file)).not.toThrow();
+    });
+
+    it('should reject application/octet-stream with invalid extension', () => {
+      const file = createMockFile({
+        mimetype: 'application/octet-stream',
+        originalname: 'resume.exe',
+      });
+      expect(() => FileUploadValidator.validateMimeType(file)).toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should accept markdown files', () => {
+      const mdFile = createMockFile({
+        mimetype: 'text/markdown',
+        originalname: 'test.md',
+      });
+      const xMdFile = createMockFile({
+        mimetype: 'text/x-markdown',
+        originalname: 'test.md',
+      });
+      expect(() => FileUploadValidator.validateMimeType(mdFile)).not.toThrow();
+      expect(() => FileUploadValidator.validateMimeType(xMdFile)).not.toThrow();
+    });
   });
 
   describe('validateFileExtension', () => {
@@ -86,6 +117,15 @@ describe('FileUploadValidator', () => {
     it('should accept .txt extension', () => {
       expect(() =>
         FileUploadValidator.validateFileExtension('resume.txt')
+      ).not.toThrow();
+    });
+
+    it('should accept .md and .markdown extensions', () => {
+      expect(() =>
+        FileUploadValidator.validateFileExtension('resume.md')
+      ).not.toThrow();
+      expect(() =>
+        FileUploadValidator.validateFileExtension('resume.markdown')
       ).not.toThrow();
     });
 
@@ -128,6 +168,14 @@ describe('FileUploadValidator', () => {
         mimetype:
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         buffer: zipSignature,
+      });
+      expect(() => FileUploadValidator.validateFileContent(file)).not.toThrow();
+    });
+
+    it('should accept markdown content', () => {
+      const file = createMockFile({
+        mimetype: 'text/markdown',
+        buffer: Buffer.from('# Test Resume\n\n- Skill 1'),
       });
       expect(() => FileUploadValidator.validateFileContent(file)).not.toThrow();
     });

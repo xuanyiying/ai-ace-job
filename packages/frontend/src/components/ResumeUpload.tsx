@@ -24,53 +24,9 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload/interface';
-import { resumeService } from '../services/resumeService';
+import { resumeService } from '../services/resume-service';
 import { useResumeStore } from '../stores/resumeStore';
-
-interface ParsedResumeData {
-  personalInfo: {
-    name: string;
-    email: string;
-    phone?: string;
-    location?: string;
-    linkedin?: string;
-    github?: string;
-    website?: string;
-  };
-  summary?: string;
-  education: Array<{
-    institution: string;
-    degree: string;
-    field: string;
-    startDate: string;
-    endDate?: string;
-    gpa?: string;
-  }>;
-  experience: Array<{
-    company: string;
-    position: string;
-    startDate: string;
-    endDate?: string;
-    location?: string;
-    description: string[];
-  }>;
-  skills: string[];
-  projects?: Array<{
-    name: string;
-    description: string;
-    technologies: string[];
-    url?: string;
-  }>;
-}
-
-interface UploadedResume {
-  id: string;
-  title: string;
-  fileUrl?: string;
-  parseStatus: 'pending' | 'processing' | 'completed' | 'failed';
-  parsedData?: ParsedResumeData;
-  createdAt: string;
-}
+import { ParseStatus, Resume, ParsedResumeData } from '@/types';
 
 const ResumeUpload: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -78,7 +34,7 @@ const ResumeUpload: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [parsing, setParsing] = useState(false);
   const [parseProgress, setParseProgress] = useState(0);
-  const [uploadedResumes, setUploadedResumes] = useState<UploadedResume[]>([]);
+  const [uploadedResumes, setUploadedResumes] = useState<Resume[]>([]);
   const [form] = Form.useForm();
   const { addResume } = useResumeStore();
 
@@ -149,13 +105,7 @@ const ResumeUpload: React.FC = () => {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      const newResume: UploadedResume = {
-        id: response.id,
-        title: response.title,
-        fileUrl: response.fileUrl,
-        parseStatus: response.parseStatus || 'pending',
-        createdAt: response.createdAt,
-      };
+      const newResume: Resume = response;
 
       setUploadedResumes([newResume, ...uploadedResumes]);
       addResume({
@@ -164,7 +114,7 @@ const ResumeUpload: React.FC = () => {
         title: response.title,
         version: response.version || 1,
         isPrimary: response.isPrimary || false,
-        parseStatus: response.parseStatus || 'pending',
+        parseStatus: response.parseStatus,
         createdAt: response.createdAt,
         updatedAt: response.updatedAt,
       });
@@ -215,8 +165,8 @@ const ResumeUpload: React.FC = () => {
           resume.id === resumeId
             ? {
                 ...resume,
-                parseStatus: 'completed',
-                parsedData: response.parsedData,
+                parseStatus: ParseStatus.COMPLETED,
+                parsedData: response,
               }
             : resume
         )
@@ -232,7 +182,7 @@ const ResumeUpload: React.FC = () => {
       console.error('Parse error:', error);
       setUploadedResumes((prev) =>
         prev.map((resume) =>
-          resume.id === resumeId ? { ...resume, parseStatus: 'failed' } : resume
+          resume.id === resumeId ? { ...resume, parseStatus: ParseStatus.FAILED } : resume
         )
       );
     } finally {
@@ -246,39 +196,39 @@ const ResumeUpload: React.FC = () => {
     message.success('已删除');
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: ParseStatus) => {
     switch (status) {
-      case 'completed':
+      case ParseStatus.COMPLETED:
         return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
-      case 'processing':
+      case ParseStatus.PROCESSING:
         return <LoadingOutlined style={{ color: '#1890ff' }} />;
-      case 'failed':
+      case ParseStatus.FAILED:
         return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
       default:
         return <LoadingOutlined style={{ color: '#faad14' }} />;
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: ParseStatus) => {
     switch (status) {
-      case 'completed':
+      case ParseStatus.COMPLETED:
         return '已解析';
-      case 'processing':
+      case ParseStatus.PROCESSING:
         return '处理中';
-      case 'failed':
+      case ParseStatus.FAILED:
         return '解析失败';
       default:
         return '待处理';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: ParseStatus) => {
     switch (status) {
-      case 'completed':
+      case ParseStatus.COMPLETED:
         return 'success';
-      case 'processing':
+      case ParseStatus.PROCESSING:
         return 'processing';
-      case 'failed':
+      case ParseStatus.FAILED:
         return 'error';
       default:
         return 'default';
@@ -398,7 +348,7 @@ const ResumeUpload: React.FC = () => {
                   </Row>
 
                   {/* Parsed Data Display */}
-                  {resume.parseStatus === 'completed' && resume.parsedData && (
+                  {resume.parseStatus === ParseStatus.COMPLETED && resume.parsedData && (
                     <div style={{ marginTop: '16px' }}>
                       <Alert
                         message="解析结果预览"
@@ -416,19 +366,19 @@ const ResumeUpload: React.FC = () => {
                               <div>
                                 <p>
                                   <strong>姓名:</strong>{' '}
-                                  {resume.parsedData.personalInfo.name}
+                                  {resume.parsedData.personalInfo?.name}
                                 </p>
                                 <p>
                                   <strong>邮箱:</strong>{' '}
-                                  {resume.parsedData.personalInfo.email}
+                                  {resume.parsedData.personalInfo?.email}
                                 </p>
-                                {resume.parsedData.personalInfo.phone && (
+                                {resume.parsedData.personalInfo?.phone && (
                                   <p>
                                     <strong>电话:</strong>{' '}
                                     {resume.parsedData.personalInfo.phone}
                                   </p>
                                 )}
-                                {resume.parsedData.personalInfo.location && (
+                                {resume.parsedData.personalInfo?.location && (
                                   <p>
                                     <strong>地点:</strong>{' '}
                                     {resume.parsedData.personalInfo.location}
@@ -439,10 +389,10 @@ const ResumeUpload: React.FC = () => {
                           },
                           {
                             key: 'education',
-                            label: `教育背景 (${resume.parsedData.education.length})`,
+                            label: `教育背景 (${resume.parsedData.education?.length || 0})`,
                             children: (
                               <div>
-                                {resume.parsedData.education.map((edu, idx) => (
+                                {resume.parsedData.education?.map((edu, idx) => (
                                   <div
                                     key={idx}
                                     style={{ marginBottom: '12px' }}
@@ -469,10 +419,10 @@ const ResumeUpload: React.FC = () => {
                           },
                           {
                             key: 'experience',
-                            label: `工作经历 (${resume.parsedData.experience.length})`,
+                            label: `工作经历 (${resume.parsedData.experience?.length || 0})`,
                             children: (
                               <div>
-                                {resume.parsedData.experience.map(
+                                {resume.parsedData.experience?.map(
                                   (exp, idx) => (
                                     <div
                                       key={idx}
@@ -505,11 +455,11 @@ const ResumeUpload: React.FC = () => {
                           },
                           {
                             key: 'skills',
-                            label: `技能 (${resume.parsedData.skills.length})`,
+                            label: `技能 (${resume.parsedData.skills?.length || 0})`,
                             children: (
                               <div>
                                 <Space wrap>
-                                  {resume.parsedData.skills.map(
+                                  {resume.parsedData.skills?.map(
                                     (skill, idx) => (
                                       <Tag key={idx}>{skill}</Tag>
                                     )
@@ -523,7 +473,7 @@ const ResumeUpload: React.FC = () => {
                     </div>
                   )}
 
-                  {resume.parseStatus === 'failed' && (
+                  {resume.parseStatus === ParseStatus.FAILED && ( 
                     <Alert
                       message="解析失败"
                       description="请检查文件格式是否正确，或尝试重新上传"

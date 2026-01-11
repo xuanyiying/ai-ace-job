@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth-service';
 
 const { Title, Text } = Typography;
 

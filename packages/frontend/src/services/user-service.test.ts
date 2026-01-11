@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { userService } from './userService';
+import { userService } from './user-service';
 import axios from '../config/axios';
 
 // Mock axios
