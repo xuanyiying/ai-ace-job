@@ -119,11 +119,8 @@ export const useChatSocket = (
     socketRef.current.on('done', (data: ChatMessage) => {
       setIsStreaming(false);
       options?.onDone?.(data);
-      // Reset streaming content after a short delay
-      setTimeout(() => {
-        streamingContentRef.current = '';
-        setStreamingContent('');
-      }, 100);
+      // Note: streaming content will be cleared by the parent component
+      // after it has loaded the persisted messages from the database
     });
 
     socketRef.current.on('error', (data: ChatMessage) => {

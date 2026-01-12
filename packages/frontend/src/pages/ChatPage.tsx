@@ -125,14 +125,15 @@ const ChatPage: React.FC = () => {
                 (msg.metadata?.optimizedContent as string) || prev.optimized,
             }));
           }
+
+          // Wait for React to update the UI with new messages before clearing streaming content
+          // This ensures smooth transition from streaming to persisted messages
+          await new Promise((resolve) => setTimeout(resolve, 500));
         } catch (error) {
           console.error('Failed to load messages:', error);
         } finally {
-          // Reset socket AFTER messages are loaded (or failed)
-          // Small delay to ensure React has updated the UI with new messages
-          setTimeout(() => {
-            resetSocket();
-          }, 200);
+          // Reset socket state after ensuring messages are loaded and rendered
+          resetSocket();
         }
       }
     },

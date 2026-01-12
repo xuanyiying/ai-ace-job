@@ -45,7 +45,12 @@ export class ResumeController {
     @Request() req: any
   ) {
     const userId = req.user.id;
-    return this.resumeService.uploadResume(userId, file, dto.title);
+    return this.resumeService.uploadResume(
+      userId,
+      file,
+      dto.title,
+      dto.conversationId
+    );
   }
 
   /**

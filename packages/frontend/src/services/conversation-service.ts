@@ -48,7 +48,7 @@ export const conversationService = {
    */
   updateConversation: async (
     conversationId: string,
-    data: { title?: string; isActive?: boolean }
+    data: { title?: string }
   ): Promise<Conversation> => {
     const response = await axios.put(`/conversations/${conversationId}`, data);
     return response.data;

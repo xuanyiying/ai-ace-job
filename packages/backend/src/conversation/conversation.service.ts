@@ -13,7 +13,6 @@ export interface CreateConversationInput {
 
 export interface UpdateConversationInput {
   title?: string;
-  isActive?: boolean;
 }
 
 export interface AddMessageInput {
@@ -57,7 +56,6 @@ export class ConversationService {
       data: {
         userId,
         title,
-        isActive: true,
         messageCount: 0,
       },
     });
@@ -95,7 +93,6 @@ export class ConversationService {
     return this.prisma.conversation.findMany({
       where: {
         userId,
-        isActive: true,
       },
       orderBy: {
         lastMessageAt: 'desc',
@@ -129,10 +126,6 @@ export class ConversationService {
       updateData.title = Sanitizer.sanitizeString(input.title);
     }
 
-    if (input.isActive !== undefined) {
-      updateData.isActive = input.isActive;
-    }
-
     return this.prisma.conversation.update({
       where: { id: conversationId },
       data: updateData,
@@ -140,7 +133,7 @@ export class ConversationService {
   }
 
   /**
-   * Delete a conversation (soft delete by marking as inactive)
+   * Delete a conversation (hard delete)
    * Requirement 1.9: Support deleting conversations
    * Property 5: Conversation deletion consistency
    */
@@ -157,11 +150,78 @@ export class ConversationService {
       throw new NotFoundException('Conversation not found');
     }
 
-    // Soft delete by marking as inactive
-    await this.prisma.conversation.update({
+    // Hard delete
+    await this.prisma.conversation.delete({
       where: { id: conversationId },
-      data: { isActive: false },
     });
+  }
+
+  /**
+   * Add an optimization result message to a conversation
+   * Requirement 6.2: Link optimization results to conversation
+   */
+  async addOptimizationResultMessage(
+    conversationId: string,
+    userId: string,
+    data: {
+      resumeId: string;
+      optimizationId?: string;
+      content: string;
+      optimizedContent?: any;
+    }
+  ): Promise<any> {
+    return this.addMessage(conversationId, userId, {
+      role: MessageRole.ASSISTANT,
+      content: data.content,
+      metadata: {
+        type: 'optimization_result',
+        resumeId: data.resumeId,
+        optimizationId: data.optimizationId,
+        optimizedContent: data.optimizedContent,
+        source: 'manual_optimization',
+      },
+    });
+  }
+
+  /**
+   * Get a conversation with all its relations (resumes and optimizations)
+   * Requirement 6.4: Retrieve conversation with associated data
+   */
+  async getConversationWithRelations(
+    conversationId: string,
+    userId: string
+  ): Promise<any> {
+    const conversation = await (this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+        resumes: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            optimizations: {
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      } as any,
+    }) as any);
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    if (conversation.userId !== userId) {
+      throw new BadRequestException(
+        'You do not have permission to access this conversation'
+      );
+    }
+
+    return {
+      ...conversation,
+      messages: (conversation.messages || []).map((msg: any) => this.mapMessage(msg)),
+    };
   }
 
   /**

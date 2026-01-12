@@ -37,4 +37,36 @@ export class AIQueueService {
       }
     );
   }
+
+  /**
+   * Add a job to send cached optimization result to conversation
+   */
+  async addSendOptimizationJob(
+    userId: string,
+    conversationId: string,
+    resumeId: string,
+    optimizedContent: string
+  ) {
+    this.logger.log(
+      `Adding send optimization job for resume ${resumeId} to conversation ${conversationId}`
+    );
+    return this.aiQueue.add(
+      'send-optimization',
+      {
+        userId,
+        conversationId,
+        resumeId,
+        optimizedContent,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
+    );
+  }
 }

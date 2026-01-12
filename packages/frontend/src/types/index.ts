@@ -139,7 +139,6 @@ export interface Conversation {
   updatedAt: string;
   lastMessageAt?: string;
   messageCount: number;
-  isActive: boolean;
 }
 
 export enum MessageRole {

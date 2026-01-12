@@ -11,11 +11,17 @@ import { Sanitizer } from '@/common/utils/sanitizer';
 import { ParseStatus, Resume } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { StorageService } from '@/storage/storage.service';
 import { FileType } from '@/storage/interfaces/storage.interface';
 import { AIQueueService } from '@/ai/queue/ai-queue.service';
 
 import { FileUploadValidator } from '@/common/validators/file-upload.validator';
+
+export interface ResumeUploadResult {
+  resume: Resume;
+  isDuplicate: boolean;
+}
 
 @Injectable()
 export class ResumeService {
@@ -29,98 +35,176 @@ export class ResumeService {
   ) {}
 
   /**
+   * Calculate MD5 hash of a buffer
+   */
+  calculateFileMd5(buffer: Buffer): string {
+    return crypto.createHash('md5').update(buffer).digest('hex');
+  }
+
+  /**
+   * Find a resume by user ID and MD5 hash
+   */
+  async findByUserIdAndMd5(
+    userId: string,
+    md5: string
+  ): Promise<Resume | null> {
+    return this.prisma.resume.findFirst({
+      where: { userId, fileMd5: md5 } as any,
+    });
+  }
+
+  /**
    * Upload a resume file for a user
-   * Validates file format and size
-   * Stores file and creates resume record
+   *
+   * @param userId The ID of the user uploading the resume
+   * @param file The uploaded file object (Express.Multer.File)
+   * @param title Optional custom title for the resume
+   * @param conversationId Optional ID of the conversation to associate with
+   * @returns Promise containing the created resume and duplication status
+   * @throws BadRequestException if file is missing or invalid
    */
   async uploadResume(
     userId: string,
-    file: any,
-    title?: string
-  ): Promise<Resume> {
-    // TODO Use general utf-8 encoding for all platforms
-    // Fix encoding for originalname if it's garbled (common issue with multer on some systems)
-    if (file.originalname) {
-      try {
-        const originalName = file.originalname;
-        const rawHex = Buffer.from(originalName).toString('hex');
-        this.logger.debug(
-          `Processing filename: "${originalName}" (hex: ${rawHex})`
-        );
-
-        // Check if it's a UTF-8 string mis-interpreted as Latin1
-        // Most common garbling: ä¸ªäººç®å -> 个人简历
-        // If it's already UTF-8, it should contain characters > 255.
-        // If it's Latin1, all characters are <= 255.
-        const isLatin1 = !/[^\x00-\xff]/.test(originalName);
-
-        if (isLatin1) {
-          // Attempt conversion from Latin1 (binary) to UTF-8
-          const converted = Buffer.from(originalName, 'latin1').toString(
-            'utf8'
-          );
-
-          // Validate if the converted string is valid UTF-8 and contains CJK characters or is different
-          // A simple check: if the converted string has a different length or contains CJK
-          const hasCJK = /[\u4e00-\u9fa5]/.test(converted);
-
-          if (
-            converted !== originalName &&
-            (hasCJK || converted.length !== originalName.length)
-          ) {
-            this.logger.log(
-              `Converted filename from Latin1 to UTF-8: "${originalName}" -> "${converted}"`
-            );
-            file.originalname = converted;
-          }
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`Failed to convert filename encoding: ${message}`);
-      }
+    file: Express.Multer.File,
+    title?: string,
+    conversationId?: string
+  ): Promise<ResumeUploadResult> {
+    if (!file) {
+      throw new BadRequestException('No file provided');
     }
 
+    // 1. Normalize filename encoding
+    file.originalname = this.normalizeFilenameEncoding(file.originalname);
+
     this.logger.log(
-      `Received file for upload: ${file?.originalname}, size: ${file?.size}, mimetype: ${file?.mimetype}`
+      `Received file for upload: ${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}`
     );
 
-    // Validate file using central validator
+    // 2. Validate file
     FileUploadValidator.validateFile(file);
 
-    try {
-      // Upload file to Storage Service
-      const storageFile = await this.storageService.uploadFile({
-        originalName: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        buffer: file.buffer,
-        userId,
-        fileType: FileType.DOCUMENT,
-        category: 'resumes',
-      });
+    // 3. Check for duplicates using MD5
+    const fileMd5 = this.calculateFileMd5(file.buffer);
+    const existingResume = await this.findByUserIdAndMd5(userId, fileMd5);
 
-      // Sanitize inputs
-      const sanitizedTitle = Sanitizer.sanitizeString(
-        title || file.originalname
+    if (existingResume) {
+      this.logger.log(
+        `Duplicate resume found for user ${userId} with MD5 ${fileMd5}`
       );
-      const sanitizedFilename = Sanitizer.sanitizeFilename(file.originalname);
-      return await this.prisma.resume.create({
-        data: {
-          userId,
-          title: sanitizedTitle,
-          originalFilename: sanitizedFilename,
-          fileUrl: storageFile.url,
-          fileType: path.extname(file.originalname).toLowerCase().substring(1),
-          fileSize: file.size,
-          parseStatus: ParseStatus.PENDING,
-        },
-      });
+      return {
+        resume: existingResume,
+        isDuplicate: true,
+      };
+    }
+
+    // 4. Save to storage and database
+    try {
+      const resume = await this.saveResumeToStorageAndDb(
+        userId,
+        file,
+        fileMd5,
+        title,
+        conversationId
+      );
+
+      return {
+        resume,
+        isDuplicate: false,
+      };
     } catch (error: any) {
       this.logger.error(`Failed to upload resume: ${error.message}`, error);
       throw new BadRequestException(
         `Failed to upload resume: ${error.message}`
       );
     }
+  }
+
+  /**
+   * Normalizes filename encoding to UTF-8
+   * Fixes common issues where UTF-8 filenames are misinterpreted as Latin1 (ISO-8859-1)
+   *
+   * @param originalName The original filename from the upload
+   * @returns The normalized UTF-8 filename
+   */
+  private normalizeFilenameEncoding(originalName: string): string {
+    if (!originalName) return originalName;
+
+    try {
+      // Check if it's a UTF-8 string mis-interpreted as Latin1
+      // If it's Latin1, all characters are <= 255.
+      const isLatin1 = !/[^\x00-\xff]/.test(originalName);
+
+      if (isLatin1) {
+        // Attempt conversion from Latin1 (binary) to UTF-8
+        const converted = Buffer.from(originalName, 'latin1').toString('utf8');
+
+        // Validate if the converted string is valid UTF-8 and contains CJK characters or is different
+        const hasCJK = /[\u4e00-\u9fa5]/.test(converted);
+
+        if (
+          converted !== originalName &&
+          (hasCJK || converted.length !== originalName.length)
+        ) {
+          this.logger.log(
+            `Converted filename from Latin1 to UTF-8: "${originalName}" -> "${converted}"`
+          );
+          return converted;
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to convert filename encoding: ${message}`);
+    }
+
+    return originalName;
+  }
+
+  /**
+   * Saves the resume file to storage and creates a database record
+   *
+   * @param userId The ID of the user
+   * @param file The file to save
+   * @param fileMd5 The MD5 hash of the file
+   * @param title Optional title
+   * @param conversationId Optional conversation ID
+   * @returns The created Resume record
+   */
+  private async saveResumeToStorageAndDb(
+    userId: string,
+    file: Express.Multer.File,
+    fileMd5: string,
+    title?: string,
+    conversationId?: string
+  ): Promise<Resume> {
+    // 1. Upload file to Storage Service
+    const storageFile = await this.storageService.uploadFile({
+      originalName: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      buffer: file.buffer,
+      userId,
+      fileType: FileType.DOCUMENT,
+      category: 'resumes',
+    });
+
+    // 2. Sanitize inputs
+    const sanitizedTitle = Sanitizer.sanitizeString(title || file.originalname);
+    const sanitizedFilename = Sanitizer.sanitizeFilename(file.originalname);
+
+    // 3. Create database record
+    return this.prisma.resume.create({
+      data: {
+        userId,
+        title: sanitizedTitle,
+        originalFilename: sanitizedFilename,
+        fileUrl: storageFile.url,
+        fileType: path.extname(file.originalname).toLowerCase().substring(1),
+        fileSize: file.size,
+        fileMd5,
+        conversationId,
+        parseStatus: ParseStatus.PENDING,
+      } as any,
+    });
   }
 
   /**
@@ -143,6 +227,56 @@ export class ResumeService {
     }
 
     return resume;
+  }
+
+  /**
+   * Get the latest resume for a user
+   * Priority:
+   * 1. Primary resume (isPrimary=true)
+   * 2. Most recently updated COMPLETED resume
+   * 3. Most recently updated resume
+   */
+  async getLatestResume(userId: string): Promise<Resume | null> {
+    // 1. Try to find primary resume
+    const primaryResume = await this.prisma.resume.findFirst({
+      where: { userId, isPrimary: true },
+    });
+
+    if (primaryResume) {
+      return primaryResume;
+    }
+
+    // 2. Try to find latest completed resume
+    const latestCompleted = await this.prisma.resume.findFirst({
+      where: { userId, parseStatus: ParseStatus.COMPLETED },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (latestCompleted) {
+      return latestCompleted;
+    }
+
+    // 3. Just get the latest one
+    return this.prisma.resume.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Get the latest parsed content for a user
+   */
+  async getLatestParsedContent(userId: string): Promise<any | null> {
+    const latestResume = await this.getLatestResume(userId);
+
+    if (!latestResume || !latestResume.parsedData) {
+      return null;
+    }
+
+    return {
+      ...(latestResume.parsedData as Record<string, any>),
+      extractedText: (latestResume as any).extractedText,
+    };
   }
 
   /**
@@ -265,6 +399,21 @@ export class ResumeService {
     // Return cached parsed data if already completed
     if (resume.parseStatus === ParseStatus.COMPLETED && resume.parsedData) {
       const parsedData = resume.parsedData as Record<string, any>;
+
+      // If conversationId is provided and we have optimized content,
+      // add a job to send the cached optimization to conversation
+      if (conversationId && parsedData.optimizedContent) {
+        this.logger.log(
+          `Queueing cached optimization send for resume ${resumeId}`
+        );
+        await this.aiQueueService.addSendOptimizationJob(
+          userId,
+          conversationId,
+          resumeId,
+          parsedData.optimizedContent
+        );
+      }
+
       return {
         ...parsedData,
         extractedText: parsedData.extractedText || null,

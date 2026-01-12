@@ -58,7 +58,7 @@ export class ConversationController {
   @Put(':id')
   async updateConversation(
     @Param('id') conversationId: string,
-    @Body() body: { title?: string; isActive?: boolean }
+    @Body() body: { title?: string }
   ) {
     return this.conversationService.updateConversation(conversationId, body);
   }

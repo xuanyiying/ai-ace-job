@@ -107,13 +107,18 @@ model Resume {
   version          Int            @default(1)
   isPrimary        Boolean        @default(false)
   parseStatus      ParseStatus    @default(PENDING)
+  fileMd5          String?
+  extractedText    String?
+  conversationId   String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   optimizations    Optimization[]
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation     Conversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([userId, isPrimary])
+  @@index([userId, fileMd5])
   @@map("resumes")
 }
 
@@ -173,7 +178,6 @@ model GeneratedPDF {
   createdAt      DateTime     @default(now())
   expiresAt      DateTime?
   optimization   Optimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
-  template       Template     @relation(fields: [templateId], references: [id])
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -182,17 +186,16 @@ model GeneratedPDF {
 }
 
 model Template {
-  id            String         @id @default(uuid())
-  name          String         @unique
+  id            String   @id @default(uuid())
+  name          String   @unique
   category      String
   description   String
   previewUrl    String
-  isPremium     Boolean        @default(false)
-  isActive      Boolean        @default(true)
+  isPremium     Boolean  @default(false)
+  isActive      Boolean  @default(true)
   configuration Json
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  generatedPdfs GeneratedPDF[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([category])
   @@index([isActive])
@@ -398,12 +401,11 @@ model Conversation {
   updatedAt     DateTime  @updatedAt
   lastMessageAt DateTime?
   messageCount  Int       @default(0)
-  isActive      Boolean   @default(true)
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages      Message[]
+  resumes       Resume[]
 
   @@index([userId])
-  @@index([userId, isActive])
   @@map("conversations")
 }
 

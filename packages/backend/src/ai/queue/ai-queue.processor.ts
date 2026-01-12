@@ -67,10 +67,11 @@ export class AIQueueProcessor {
       const updateData: any = {
         parsedData: {
           ...parsedData,
-          extractedText: content,
           optimizedContent: optimizedContent,
         },
+        extractedText: content, // Save extracted text to top-level field
         parseStatus: ParseStatus.COMPLETED,
+        version: { increment: 1 }, // Increment version when completed
       };
 
       await this.prisma.resume.update({
@@ -96,6 +97,33 @@ export class AIQueueProcessor {
 
       throw error;
     }
+  }
+
+  /**
+   * Handle sending cached optimization result to conversation
+   */
+  @Process('send-optimization')
+  async handleSendOptimization(
+    job: Job<{
+      userId: string;
+      conversationId: string;
+      resumeId: string;
+      optimizedContent: string;
+    }>
+  ) {
+    const { userId, conversationId, resumeId, optimizedContent } = job.data;
+    this.logger.log(
+      `Processing send optimization job for resume ${resumeId} to conversation ${conversationId} (Job ID: ${job.id})`
+    );
+
+    await this.sendOptimizationToConversation(
+      userId,
+      conversationId,
+      resumeId,
+      optimizedContent
+    );
+
+    return { success: true };
   }
 
   /**

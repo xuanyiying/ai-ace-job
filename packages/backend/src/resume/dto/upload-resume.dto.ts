@@ -4,4 +4,8 @@ export class UploadResumeDto {
   @IsString()
   @IsOptional()
   title?: string;
+
+  @IsString()
+  @IsOptional()
+  conversationId?: string;
 }

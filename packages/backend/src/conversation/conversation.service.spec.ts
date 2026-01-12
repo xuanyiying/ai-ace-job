@@ -15,7 +15,6 @@ describe('ConversationService', () => {
     updatedAt: new Date(),
     lastMessageAt: null,
     messageCount: 0,
-    isActive: true,
   };
 
   const mockMessage = {
@@ -27,6 +26,7 @@ describe('ConversationService', () => {
     attachments: null,
     metadata: null,
     createdAt: new Date(),
+    timestamp: expect.any(Number),
   };
 
   beforeEach(async () => {
@@ -61,7 +61,7 @@ describe('ConversationService', () => {
     it('should create a new conversation with default title', async () => {
       jest
         .spyOn(prismaService.conversation, 'create')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
 
       const result = await service.createConversation('user-1');
 
@@ -69,7 +69,6 @@ describe('ConversationService', () => {
         data: {
           userId: 'user-1',
           title: expect.any(String),
-          isActive: true,
           messageCount: 0,
         },
       });
@@ -79,7 +78,7 @@ describe('ConversationService', () => {
     it('should create a new conversation with custom title', async () => {
       jest
         .spyOn(prismaService.conversation, 'create')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
 
       const result = await service.createConversation('user-1', {
         title: 'Custom Title',
@@ -89,7 +88,6 @@ describe('ConversationService', () => {
         data: {
           userId: 'user-1',
           title: 'Custom Title',
-          isActive: true,
           messageCount: 0,
         },
       });
@@ -107,7 +105,7 @@ describe('ConversationService', () => {
     it('should return a conversation by ID', async () => {
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
 
       const result = await service.getConversation('conv-1');
 
@@ -135,18 +133,17 @@ describe('ConversationService', () => {
   });
 
   describe('listConversations', () => {
-    it('should return all active conversations for a user', async () => {
+    it('should return all conversations for a user', async () => {
       const conversations = [mockConversation];
       jest
         .spyOn(prismaService.conversation, 'findMany')
-        .mockResolvedValue(conversations);
+        .mockResolvedValue(conversations as any);
 
       const result = await service.listConversations('user-1');
 
       expect(prismaService.conversation.findMany).toHaveBeenCalledWith({
         where: {
           userId: 'user-1',
-          isActive: true,
         },
         orderBy: {
           lastMessageAt: 'desc',
@@ -170,10 +167,10 @@ describe('ConversationService', () => {
       };
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
       jest
         .spyOn(prismaService.conversation, 'update')
-        .mockResolvedValue(updatedConversation);
+        .mockResolvedValue(updatedConversation as any);
 
       const result = await service.updateConversation('conv-1', {
         title: 'Updated Title',
@@ -182,29 +179,6 @@ describe('ConversationService', () => {
       expect(prismaService.conversation.update).toHaveBeenCalledWith({
         where: { id: 'conv-1' },
         data: { title: 'Updated Title' },
-      });
-      expect(result).toEqual(updatedConversation);
-    });
-
-    it('should update conversation isActive status', async () => {
-      const updatedConversation = {
-        ...mockConversation,
-        isActive: false,
-      };
-      jest
-        .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
-      jest
-        .spyOn(prismaService.conversation, 'update')
-        .mockResolvedValue(updatedConversation);
-
-      const result = await service.updateConversation('conv-1', {
-        isActive: false,
-      });
-
-      expect(prismaService.conversation.update).toHaveBeenCalledWith({
-        where: { id: 'conv-1' },
-        data: { isActive: false },
       });
       expect(result).toEqual(updatedConversation);
     });
@@ -221,20 +195,18 @@ describe('ConversationService', () => {
   });
 
   describe('deleteConversation', () => {
-    it('should soft delete a conversation', async () => {
+    it('should hard delete a conversation', async () => {
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
-      jest.spyOn(prismaService.conversation, 'update').mockResolvedValue({
-        ...mockConversation,
-        isActive: false,
-      });
+        .mockResolvedValue(mockConversation as any);
+      jest
+        .spyOn(prismaService.conversation, 'delete')
+        .mockResolvedValue(mockConversation as any);
 
       await service.deleteConversation('conv-1');
 
-      expect(prismaService.conversation.update).toHaveBeenCalledWith({
+      expect(prismaService.conversation.delete).toHaveBeenCalledWith({
         where: { id: 'conv-1' },
-        data: { isActive: false },
       });
     });
 
@@ -259,7 +231,7 @@ describe('ConversationService', () => {
     it('should add a message to a conversation', async () => {
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
       jest
         .spyOn(prismaService.message, 'create')
         .mockResolvedValue(mockMessage);
@@ -267,7 +239,7 @@ describe('ConversationService', () => {
         ...mockConversation,
         messageCount: 1,
         lastMessageAt: new Date(),
-      });
+      } as any);
 
       const result = await service.addMessage('conv-1', 'user-1', {
         role: 'USER',
@@ -288,7 +260,7 @@ describe('ConversationService', () => {
     it('should throw BadRequestException if content is empty', async () => {
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
 
       await expect(
         service.addMessage('conv-1', 'user-1', {
@@ -317,7 +289,7 @@ describe('ConversationService', () => {
       const messages = [mockMessage];
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
       jest.spyOn(prismaService.message, 'findMany').mockResolvedValue(messages);
 
       const result = await service.getMessages('conv-1');
@@ -345,7 +317,7 @@ describe('ConversationService', () => {
       const messages = [mockMessage];
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
       jest.spyOn(prismaService.message, 'findMany').mockResolvedValue(messages);
 
       const result = await service.getMessagesPaginated('conv-1', 0, 50);
@@ -364,7 +336,7 @@ describe('ConversationService', () => {
     it('should delete all messages and reset conversation', async () => {
       jest
         .spyOn(prismaService.conversation, 'findUnique')
-        .mockResolvedValue(mockConversation);
+        .mockResolvedValue(mockConversation as any);
       jest
         .spyOn(prismaService.message, 'deleteMany')
         .mockResolvedValue({ count: 5 });
@@ -372,7 +344,7 @@ describe('ConversationService', () => {
         ...mockConversation,
         messageCount: 0,
         lastMessageAt: null,
-      });
+      } as any);
 
       await service.clearConversation('conv-1');
 

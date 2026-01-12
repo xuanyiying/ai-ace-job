@@ -30,6 +30,9 @@ describe('ResumeService', () => {
     version: 1,
     isPrimary: false,
     parseStatus: ParseStatus.PENDING,
+    fileMd5: 'mock-md5',
+    extractedText: null,
+    conversationId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -56,6 +59,7 @@ describe('ResumeService', () => {
             resume: {
               create: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               findMany: jest.fn(),
               update: jest.fn(),
               updateMany: jest.fn(),
@@ -130,8 +134,9 @@ describe('ResumeService', () => {
         'My Resume'
       );
 
-      expect(result.id).toBe('resume-1');
-      expect(result.fileType).toBe('pdf');
+      expect(result.resume.id).toBe('resume-1');
+      expect(result.resume.fileType).toBe('pdf');
+      expect(result.isDuplicate).toBe(false);
       expect(prismaService.resume.create).toHaveBeenCalled();
     });
 
@@ -153,7 +158,7 @@ describe('ResumeService', () => {
 
       const result = await service.uploadResume('user-1', docxFile);
 
-      expect(result.fileType).toBe('docx');
+      expect(result.resume.fileType).toBe('docx');
     });
 
     it('should upload a TXT file successfully', async () => {
@@ -172,7 +177,7 @@ describe('ResumeService', () => {
 
       const result = await service.uploadResume('user-1', txtFile);
 
-      expect(result.fileType).toBe('txt');
+      expect(result.resume.fileType).toBe('txt');
     });
 
     it('should upload a markdown file successfully', async () => {
@@ -191,7 +196,7 @@ describe('ResumeService', () => {
 
       const result = await service.uploadResume('user-1', mdFile);
 
-      expect(result.fileType).toBe('md');
+      expect(result.resume.fileType).toBe('md');
     });
 
     it('should upload application/octet-stream with valid extension successfully', async () => {
@@ -211,12 +216,12 @@ describe('ResumeService', () => {
 
       const result = await service.uploadResume('user-1', octetStreamFile);
 
-      expect(result.fileType).toBe('pdf');
+      expect(result.resume.fileType).toBe('pdf');
     });
 
     it('should throw BadRequestException if no file provided', async () => {
       await expect(
-        service.uploadResume('user-1', null as unknown)
+        service.uploadResume('user-1', null as any)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -260,7 +265,7 @@ describe('ResumeService', () => {
 
       const result = await service.uploadResume('user-1', mockFile);
 
-      expect(result.id).toBe('resume-1');
+      expect(result.resume.id).toBe('resume-1');
       expect(prismaService.resume.create).toHaveBeenCalled();
     });
   });
@@ -503,7 +508,8 @@ describe('ResumeService', () => {
       expect(aiQueueService.addResumeParsingJob).toHaveBeenCalledWith(
         'resume-1',
         'user-1',
-        'John Doe\\njohn@example.com'
+        'John Doe\\njohn@example.com',
+        undefined
       );
       // Verify status was updated to PROCESSING when job started
       expect(prismaService.resume.update).toHaveBeenCalledWith(
