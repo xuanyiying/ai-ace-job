@@ -18,15 +18,15 @@ export const RolePlayPage: React.FC = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>Role-Play - Mock Interview Simulator</h1>
-        <p>Practice with an AI interviewer and get real-time feedback</p>
+        <h1>模拟面试</h1>
+        <p>AI 面试官实时互动，模拟真实面试场景并提供即时反馈</p>
       </div>
 
       {showForm ? (
         <div className="form-container">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="resume">Resume Data (JSON) - Optional:</label>
+              <label htmlFor="resume">简历数据 (JSON) - 可选:</label>
               <textarea
                 id="resume"
                 value={resumeData ? JSON.stringify(resumeData, null, 2) : ''}
@@ -41,18 +41,18 @@ export const RolePlayPage: React.FC = () => {
                     // Invalid JSON, ignore
                   }
                 }}
-                placeholder="Paste your parsed resume data as JSON (optional)"
+                placeholder="粘贴您的简历数据 JSON（可选）"
                 rows={6}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="jd">Job Description:</label>
+              <label htmlFor="jd">职位描述:</label>
               <textarea
                 id="jd"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description"
+                placeholder="粘贴职位描述内容"
                 rows={6}
                 required
               />
@@ -60,7 +60,7 @@ export const RolePlayPage: React.FC = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary">
-                Continue
+                继续
               </button>
             </div>
           </form>
@@ -74,7 +74,7 @@ export const RolePlayPage: React.FC = () => {
             />
           )}
           <button onClick={() => setShowForm(true)} className="btn-secondary">
-            ← Back to Input
+            ← 返回输入
           </button>
         </div>
       )}

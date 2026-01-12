@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Bubble, Sender, Prompts } from '@ant-design/x';
+import { UserOutlined, RobotOutlined } from '@ant-design/icons';
+import { Bubble, Sender } from '@ant-design/x';
 import type { PromptsItemType } from '@ant-design/x';
 import {
-  UserOutlined,
-  RobotOutlined,
   FileTextOutlined,
   DownloadOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
+import {
+  Sparkles,
+  TrendingUp,
+  UserCheck,
+  Briefcase,
+  LayoutGrid,
+} from 'lucide-react';
 import { Button, message as antMessage, Spin } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -145,6 +152,26 @@ const ChatPage: React.FC = () => {
       // System messages (file upload notifications, etc.)
       if (sys.metadata?.action === 'resume_ready') {
         antMessage.success('简历已准备就绪，可以开始优化！');
+      }
+
+      console.log('System message received:', sys);
+      if (sys.metadata?.stage) {
+        const { resumeId, stage, progress, error } = sys.metadata;
+        // Map backend stages to frontend status
+        let status: AttachmentStatus['status'] = 'parsing';
+        if (stage === 'finalizing') status = 'completed';
+        if (stage === 'error') status = 'error';
+
+        updateAttachmentStatus(
+          resumeId,
+          {
+            parseProgress: progress,
+            status: status,
+            mode: 'parse',
+            error: error,
+          },
+          'parse'
+        );
       }
     },
     onConnected: () => {
@@ -435,28 +462,11 @@ const ChatPage: React.FC = () => {
         },
       ]);
 
-      // Simulate parsing progress for better UX
-      let parseProgress = 0;
-      const parseInterval = setInterval(() => {
-        parseProgress += Math.random() * 15;
-        if (parseProgress > 90) {
-          clearInterval(parseInterval);
-          parseProgress = 90;
-        }
-        updateAttachmentStatus(
-          parsingMessageId,
-          {
-            parseProgress,
-          },
-          'parse'
-        );
-      }, 500);
-
+      // Real parsing progress will be handled by onSystem events from WebSocket
       const parsedData = await resumeService.parseResume(
         resume.id,
         currentConversation.id
       );
-      clearInterval(parseInterval);
 
       updateAttachmentStatus(
         parsingMessageId,
@@ -539,39 +549,6 @@ const ChatPage: React.FC = () => {
     );
   };
 
-  const suggestions: PromptsItemType[] = [
-    {
-      key: 'resume',
-      label: t('suggestions.resume_label'),
-      description: t('suggestions.resume_desc'),
-      icon: <span style={{ fontSize: '16px' }}>📄</span>,
-    },
-    {
-      key: 'job',
-      label: t('suggestions.job_label'),
-      description: t('suggestions.job_desc'),
-      icon: <span style={{ fontSize: '16px' }}>💼</span>,
-    },
-    {
-      key: 'pdf',
-      label: t('suggestions.pdf_label'),
-      description: t('suggestions.pdf_desc'),
-      icon: <span style={{ fontSize: '16px' }}>📋</span>,
-    },
-    {
-      key: 'interview',
-      label: t('suggestions.interview_label'),
-      description: t('suggestions.interview_desc'),
-      icon: <span style={{ fontSize: '16px' }}>🎤</span>,
-    },
-    {
-      key: 'optimize',
-      label: t('suggestions.optimize_label'),
-      description: t('suggestions.optimize_desc'),
-      icon: <span style={{ fontSize: '16px' }}>⚡</span>,
-    },
-  ];
-
   const handleSubmit = async (nextValue: string) => {
     if (!nextValue || !currentConversation) return;
 
@@ -617,26 +594,6 @@ const ChatPage: React.FC = () => {
 
   const handleOpenComparison = () => {
     setComparisonVisible(true);
-  };
-
-  const onPromptsItemClick = (info: { data: PromptsItemType }) => {
-    const key = info.data.key as string;
-    if (key === 'resume') {
-      // 不再打开 Dialog，用户可以直接使用上传按钮
-      antMessage.info(t('chat.use_upload_button', '请使用上传按钮上传简历'));
-    } else if (key === 'job') {
-      setJobInputDialogVisible(true);
-    } else if (key === 'pdf') {
-      // Show PDF generation card in chat
-      displayPDFGeneration('current-optimization-id');
-    } else if (key === 'optimize') {
-      handleStartOptimization();
-    } else {
-      const label = typeof info.data.label === 'string' ? info.data.label : '';
-      if (label) {
-        handleSubmit(label);
-      }
-    }
   };
 
   const handleStartOptimization = async () => {
@@ -711,7 +668,11 @@ const ChatPage: React.FC = () => {
       await sendMessage(
         currentConversation.id,
         t('chat.job_extracted_title'),
-        MessageRole.ASSISTANT
+        MessageRole.ASSISTANT,
+        {
+          type: 'job',
+          jobData: createdJob,
+        }
       );
 
       setJobInputDialogVisible(false);
@@ -721,6 +682,33 @@ const ChatPage: React.FC = () => {
       antMessage.error(t('common.error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleJobConfirm = (job: Job) => {
+    antMessage.success(t('chat.job_confirmed'));
+    // Start optimization automatically if resume exists
+    if (currentResume || lastParsedMarkdown) {
+      handleStartOptimization();
+    } else {
+      antMessage.info('职位信息已确认，请上传简历以开始优化。');
+    }
+  };
+
+  const handleJobEdit = (updatedJob: Job) => {
+    // Refresh messages or local items to show updated job data
+    // The card itself handles local state for editing, but we might want to update the store
+    if (currentConversation) {
+      loadMessages(currentConversation.id);
+    }
+  };
+
+  const handleJobDelete = (jobId: string) => {
+    // Remove from localItems if it's there
+    setLocalItems((prev) => prev.filter((item) => item.jobData?.id !== jobId));
+    // If it's a real message, we'd need to reload
+    if (currentConversation) {
+      loadMessages(currentConversation.id);
     }
   };
 
@@ -762,8 +750,58 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const welcomeActions = [
+    {
+      icon: <Briefcase size={20} />,
+      label: t('chat.actions.job_input', '职位输入'),
+      key: 'job_input',
+    },
+    {
+      icon: <Sparkles size={20} />,
+      label: t('chat.actions.resume_optimization', '简历优化'),
+      key: 'resume_optimization',
+    },
+    {
+      icon: <TrendingUp size={20} />,
+      label: t('chat.actions.interview_prediction', '面试预测'),
+      key: 'interview_prediction',
+    },
+    {
+      icon: <UserCheck size={20} />,
+      label: t('chat.actions.mock_interview', '模拟面试'),
+      key: 'mock_interview',
+    },
+    {
+      icon: <LayoutGrid size={20} />,
+      label: t('chat.actions.discover', '发现'),
+      key: 'discover',
+    },
+  ];
+
+  const handleActionClick = (action: (typeof welcomeActions)[0]) => {
+    if (action.key === 'job_input') {
+      setJobInputDialogVisible(true);
+    } else if (action.key === 'resume_optimization') {
+      if (currentResume || lastParsedMarkdown) {
+        handleStartOptimization();
+      } else {
+        antMessage.info('请先点击输入框左侧图标上传简历，再进行优化。');
+      }
+    } else if (action.key === 'interview_prediction') {
+      if (currentResume || lastParsedMarkdown) {
+        handleSubmit('面试预测');
+      } else {
+        antMessage.info('请先点击输入框左侧图标上传简历，以便我为您进行更准确的面试预测。');
+      }
+    } else if (action.key === 'mock_interview') {
+      handleSubmit('开始模拟面试');
+    } else {
+      handleSubmit(action.label);
+    }
+  };
+
   return (
-    <div className="flex h-full w-full relative overflow-hidden bg-primary/5">
+    <div className="chat-page-container flex h-full w-full relative overflow-hidden">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full relative z-10">
         {/* Messages Container */}
@@ -771,6 +809,44 @@ const ChatPage: React.FC = () => {
           {isLoadingMessages ? (
             <div className="flex items-center justify-center h-full">
               <Spin size="large" tip={t('common.loading')} />
+            </div>
+          ) : items.length <= 1 && !loading ? (
+            <div className="welcome-container">
+              <h1 className="welcome-title">你好，我是简历优化助手</h1>
+              
+              <div className="w-full max-w-3xl mx-auto px-4">
+                <div className="modern-sender-wrapper">
+                  <Sender
+                    value={value}
+                    onChange={setValue}
+                    onSubmit={handleSubmit}
+                    loading={loading}
+                    placeholder={t('chat.placeholder', '向助手提问...')}
+                    prefix={
+                      <ResumeUploadButton
+                        onFileSelect={handleFileSelect}
+                        className="!border-none !bg-transparent !text-gray-400 hover:!text-primary !p-0 !flex !items-center !justify-center"
+                      >
+                        <PaperClipOutlined style={{ fontSize: '20px' }} />
+                      </ResumeUploadButton>
+                    }
+                    className="modern-sender"
+                  />
+                </div>
+
+                <div className="quick-launch-grid">
+                  {welcomeActions.map((action) => (
+                    <div
+                      key={action.key}
+                      className="quick-launch-item"
+                      onClick={() => handleActionClick(action)}
+                    >
+                      <div className="quick-launch-icon">{action.icon}</div>
+                      <span className="quick-launch-label">{action.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -780,7 +856,7 @@ const ChatPage: React.FC = () => {
                   role: item.role,
                   placement: item.role === MessageRole.USER ? 'end' : 'start',
                   content: (
-                    <div className="message-content">
+                    <div className="markdown-content">
                       {item.key === 'streaming-optimization' ? (
                         <StreamingMarkdownBubble
                           content={item.content}
@@ -823,7 +899,12 @@ const ChatPage: React.FC = () => {
 
                       {item.type === 'job' && item.jobData && (
                         <div className="mt-4">
-                          <JobInfoCard job={item.jobData} />
+                          <JobInfoCard
+                            job={item.jobData}
+                            onConfirm={handleJobConfirm}
+                            onEdit={handleJobEdit}
+                            onDelete={handleJobDelete}
+                          />
                         </div>
                       )}
 
@@ -874,12 +955,12 @@ const ChatPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                          background: 'var(--chat-bubble-user-bg)',
                         }}
                       >
                         <UserOutlined
                           style={{
-                            color: 'var(--primary-color)',
+                            color: 'var(--chat-text-secondary)',
                             fontSize: '18px',
                           }}
                         />
@@ -893,12 +974,12 @@ const ChatPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                          background: 'rgba(22, 119, 255, 0.1)',
                         }}
                       >
                         <RobotOutlined
                           style={{
-                            color: 'var(--secondary-color)',
+                            color: 'var(--chat-primary)',
                             fontSize: '18px',
                           }}
                         />
@@ -906,84 +987,39 @@ const ChatPage: React.FC = () => {
                     ),
                 }))}
               />
-
-              {items.length <= 1 && !loading && (
-                <div className="max-w-2xl mx-auto mt-12 px-4">
-                  <div className="text-center mb-8">
-                    <span className="text-gray-400 font-medium tracking-wider uppercase text-xs">
-                      {t('chat.try_asking')}
-                    </span>
-                  </div>
-                  <Prompts
-                    items={suggestions.map((s) => ({
-                      ...s,
-                      className:
-                        'glass-card border-none hover:!bg-white/5 !transition-all duration-300',
-                    }))}
-                    onItemClick={onPromptsItemClick}
-                    className="bg-transparent"
-                  />
-                </div>
-              )}
             </>
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="relative z-20 pb-8 px-4 md:px-6">
-          <div className="max-w-3xl mx-auto">
-            {/* Quick Action Container */}
-            <div className="flex flex-wrap justify-center gap-2 mb-4 animate-fade-in">
-              <ResumeUploadButton
-                onFileSelect={handleFileSelect}
-                className="!rounded-full !bg-white/5 !border-white/10 !text-gray-400 hover:!text-white hover:!border-primary-500 transition-all font-medium"
+        {/* Input Area (Only shown when there are messages) */}
+        {items.length > 1 && (
+          <div className="relative z-20 pb-8 px-4 md:px-6">
+            <div className="max-w-3xl mx-auto">
+              <Sender
+                value={value}
+                onChange={setValue}
+                onSubmit={handleSubmit}
+                loading={loading}
+                placeholder={t('chat.placeholder')}
+                prefix={
+                  <ResumeUploadButton
+                    onFileSelect={handleFileSelect}
+                    className="!border-none !bg-transparent !text-gray-400 hover:!text-primary !p-0 !flex !items-center !justify-center"
+                  >
+                    <PaperClipOutlined style={{ fontSize: '20px' }} />
+                  </ResumeUploadButton>
+                }
+                className="modern-sender shadow-2xl"
               />
-              <Button
-                size="small"
-                className="!rounded-full !bg-white/5 !border-white/10 !text-gray-400 hover:!text-white hover:!border-primary-500 transition-all font-medium"
-                onClick={() => setJobInputDialogVisible(true)}
-              >
-                💼 {t('suggestions.job_label')}
-              </Button>
-              <Button
-                size="small"
-                className="!rounded-full !bg-white/5 !border-white/10 !text-gray-400 hover:!text-white hover:!border-primary-500 transition-all font-medium"
-                onClick={() => displayPDFGeneration('current-optimization-id')}
-              >
-                📋 {t('suggestions.pdf_label')}
-              </Button>
-              <Button
-                size="small"
-                className="!rounded-full !bg-white/5 !border-white/10 !text-gray-400 hover:!text-white hover:!border-primary-500 transition-all font-medium"
-                onClick={() => handleSubmit(t('suggestions.interview_label'))}
-              >
-                🎤 {t('suggestions.interview_label')}
-              </Button>
-            </div>
 
-            <Sender
-              value={value}
-              onChange={setValue}
-              onSubmit={handleSubmit}
-              loading={loading}
-              placeholder={t('chat.placeholder')}
-              prefix={
-                <ResumeUploadButton
-                  onFileSelect={handleFileSelect}
-                  className="!border-none !bg-transparent !text-gray-400 hover:!text-white !p-0 !flex !items-center !justify-center"
-                >
-                  {null}
-                </ResumeUploadButton>
-              }
-              className="modern-sender overflow-hidden shadow-2xl"
-            />
-
-            <div className="text-center mt-3 text-gray-500 text-xs tracking-wide">
-              {t('chat.ai_disclaimer')}
+              <div className="text-center mt-3 text-gray-500 text-xs tracking-wide">
+                {t('chat.ai_disclaimer')}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
+
 
       <ResumeComparisonDialog
         visible={comparisonVisible}

@@ -46,10 +46,10 @@ export const StrategistPage: React.FC = () => {
             level={1}
             className="!text-white !font-bold tracking-tight !mb-2 mt-2"
           >
-            面试策略专家
+            面试预测
           </Title>
           <Text className="!text-gray-400 text-lg block">
-            基于您的背景和目标职位，智能生成定制化面试题库
+            基于您的背景和目标职位，智能预测面试问题并提供对策
           </Text>
         </div>
 
@@ -58,12 +58,12 @@ export const StrategistPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-3">
                 <label className="text-gray-300 font-medium text-base ml-1">
-                  简历数据 (JSON格式)
+                  简历数据
                 </label>
                 <TextArea
                   value={resumeJson}
                   onChange={(e) => handleJsonChange(e.target.value)}
-                  placeholder="请粘贴解析后的简历 JSON 数据..."
+                  placeholder="请粘贴解析后的简历数据..."
                   autoSize={{ minRows: 6, maxRows: 12 }}
                   className="!bg-white/5 !border-white/10 !text-white placeholder:!text-gray-600 !rounded-xl transition-all"
                 />

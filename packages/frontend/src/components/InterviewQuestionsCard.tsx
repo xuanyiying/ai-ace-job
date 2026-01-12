@@ -12,7 +12,11 @@ import {
 } from 'antd';
 import { DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { theme } from 'antd';
-import type { InterviewQuestion } from '../types';
+import {
+  type InterviewQuestion,
+  QuestionType,
+  Difficulty,
+} from '../types';
 import { interviewService } from '../services/interview-service';
 
 interface InterviewQuestionsCardProps {
@@ -29,40 +33,36 @@ const InterviewQuestionsCard: React.FC<InterviewQuestionsCardProps> = ({
   const { token } = theme.useToken();
   const [exporting, setExporting] = useState(false);
 
-  const getQuestionTypeLabel = (
-    type: 'behavioral' | 'technical' | 'situational' | 'resume_based'
-  ) => {
-    const typeMap: Record<string, string> = {
-      behavioral: '行为面试',
-      technical: '技术面试',
-      situational: '情景面试',
-      resume_based: '简历相关',
+  const getQuestionTypeLabel = (type: QuestionType) => {
+    const typeMap: Record<QuestionType, string> = {
+      [QuestionType.BEHAVIORAL]: '行为面试',
+      [QuestionType.TECHNICAL]: '技术面试',
+      [QuestionType.SITUATIONAL]: '情景面试',
+      [QuestionType.RESUME_BASED]: '简历相关',
     };
     return typeMap[type] || type;
   };
 
-  const getQuestionTypeColor = (
-    type: 'behavioral' | 'technical' | 'situational' | 'resume_based'
-  ): string => {
-    const colorMap: Record<string, string> = {
-      behavioral: 'blue',
-      technical: 'purple',
-      situational: 'orange',
-      resume_based: 'green',
+  const getQuestionTypeColor = (type: QuestionType): string => {
+    const colorMap: Record<QuestionType, string> = {
+      [QuestionType.BEHAVIORAL]: 'blue',
+      [QuestionType.TECHNICAL]: 'purple',
+      [QuestionType.SITUATIONAL]: 'orange',
+      [QuestionType.RESUME_BASED]: 'green',
     };
     return colorMap[type] || 'default';
   };
 
-  const getDifficultyInfo = (difficulty: 'easy' | 'medium' | 'hard') => {
-    const difficultyMap: Record<string, { label: string; color: string }> = {
-      easy: { label: '简单', color: 'green' },
-      medium: { label: '中等', color: 'orange' },
-      hard: { label: '困难', color: 'red' },
+  const getDifficultyInfo = (difficulty: Difficulty) => {
+    const difficultyMap: Record<Difficulty, { label: string; color: string }> = {
+      [Difficulty.EASY]: { label: '简单', color: 'green' },
+      [Difficulty.MEDIUM]: { label: '中等', color: 'orange' },
+      [Difficulty.HARD]: { label: '困难', color: 'red' },
     };
     return difficultyMap[difficulty] || { label: difficulty, color: 'default' };
   };
 
-  const countByType = (type: string) => {
+  const countByType = (type: QuestionType) => {
     return questions.filter((q) => q.questionType === type).length;
   };
 
@@ -96,10 +96,18 @@ const InterviewQuestionsCard: React.FC<InterviewQuestionsCardProps> = ({
   }
 
   const groupedQuestions = {
-    behavioral: questions.filter((q) => q.questionType === 'behavioral'),
-    technical: questions.filter((q) => q.questionType === 'technical'),
-    situational: questions.filter((q) => q.questionType === 'situational'),
-    resume_based: questions.filter((q) => q.questionType === 'resume_based'),
+    behavioral: questions.filter(
+      (q) => q.questionType === QuestionType.BEHAVIORAL
+    ),
+    technical: questions.filter(
+      (q) => q.questionType === QuestionType.TECHNICAL
+    ),
+    situational: questions.filter(
+      (q) => q.questionType === QuestionType.SITUATIONAL
+    ),
+    resume_based: questions.filter(
+      (q) => q.questionType === QuestionType.RESUME_BASED
+    ),
   };
 
   const collapseItems = Object.entries(groupedQuestions)
@@ -248,69 +256,30 @@ const InterviewQuestionsCard: React.FC<InterviewQuestionsCardProps> = ({
         </Button>
       }
     >
-      <div
-        style={{
-          display: 'flex',
-          gap: '16px',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-        }}
-      >
-        {countByType('behavioral') > 0 && (
-          <div
-            style={{
-              padding: '8px 12px',
-              background: '#e6f7ff',
-              border: `1px solid #91d5ff`,
-              borderRadius: '4px',
-              fontSize: '13px',
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>行为面试:</span>{' '}
-            {countByType('behavioral')} 题
-          </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+        {countByType(QuestionType.BEHAVIORAL) > 0 && (
+          <Tag color={getQuestionTypeColor(QuestionType.BEHAVIORAL)}>
+            {getQuestionTypeLabel(QuestionType.BEHAVIORAL)}:{' '}
+            {countByType(QuestionType.BEHAVIORAL)} 题
+          </Tag>
         )}
-        {countByType('technical') > 0 && (
-          <div
-            style={{
-              padding: '8px 12px',
-              background: '#f9f0ff',
-              border: `1px solid #d3adf7`,
-              borderRadius: '4px',
-              fontSize: '13px',
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>技术面试:</span>{' '}
-            {countByType('technical')} 题
-          </div>
+        {countByType(QuestionType.TECHNICAL) > 0 && (
+          <Tag color={getQuestionTypeColor(QuestionType.TECHNICAL)}>
+            {getQuestionTypeLabel(QuestionType.TECHNICAL)}:{' '}
+            {countByType(QuestionType.TECHNICAL)} 题
+          </Tag>
         )}
-        {countByType('situational') > 0 && (
-          <div
-            style={{
-              padding: '8px 12px',
-              background: '#fff7e6',
-              border: `1px solid #ffd591`,
-              borderRadius: '4px',
-              fontSize: '13px',
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>情景面试:</span>{' '}
-            {countByType('situational')} 题
-          </div>
+        {countByType(QuestionType.SITUATIONAL) > 0 && (
+          <Tag color={getQuestionTypeColor(QuestionType.SITUATIONAL)}>
+            {getQuestionTypeLabel(QuestionType.SITUATIONAL)}:{' '}
+            {countByType(QuestionType.SITUATIONAL)} 题
+          </Tag>
         )}
-        {countByType('resume_based') > 0 && (
-          <div
-            style={{
-              padding: '8px 12px',
-              background: '#f6ffed',
-              border: `1px solid #b7eb8f`,
-              borderRadius: '4px',
-              fontSize: '13px',
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>简历相关:</span>{' '}
-            {countByType('resume_based')} 题
-          </div>
+        {countByType(QuestionType.RESUME_BASED) > 0 && (
+          <Tag color={getQuestionTypeColor(QuestionType.RESUME_BASED)}>
+            {getQuestionTypeLabel(QuestionType.RESUME_BASED)}:{' '}
+            {countByType(QuestionType.RESUME_BASED)} 题
+          </Tag>
         )}
       </div>
 

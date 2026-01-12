@@ -37,13 +37,41 @@ export class AIQueueProcessor {
         data: { parseStatus: ParseStatus.PROCESSING },
       });
 
+      // Send progress update: Extracting text
+      if (conversationId) {
+        this.chatGateway.emitToUser(userId, 'system', {
+          type: 'system',
+          content: '正在提取简历文本...',
+          timestamp: Date.now(),
+          metadata: { resumeId, stage: 'extracting', progress: 20 },
+        });
+      }
+
       // 2. Call AI Engine to parse resume
+      // Send progress update: AI Parsing
+      if (conversationId) {
+        this.chatGateway.emitToUser(userId, 'system', {
+          type: 'system',
+          content: 'AI 正在分析您的技能和经历...',
+          timestamp: Date.now(),
+          metadata: { resumeId, stage: 'parsing', progress: 40 },
+        });
+      }
       const parsedData = await this.aiEngine.parseResumeContent(content);
 
       // 3. Optimize resume content
       this.logger.log(`Starting resume optimization for resume ${resumeId}`);
       let optimizedContent: string | null = null;
       try {
+        // Send progress update: Optimizing
+        if (conversationId) {
+          this.chatGateway.emitToUser(userId, 'system', {
+            type: 'system',
+            content: '正在根据您的背景优化简历内容...',
+            timestamp: Date.now(),
+            metadata: { resumeId, stage: 'optimizing', progress: 70 },
+          });
+        }
         optimizedContent = await this.aiEngine.optimizeResumeContent(content);
         this.logger.log(`Resume optimization completed for resume ${resumeId}`);
 
@@ -61,6 +89,16 @@ export class AIQueueProcessor {
           `Resume optimization failed for ${resumeId}, continuing with parsed data only:`,
           optimizeError
         );
+      }
+
+      // Send progress update: Finalizing
+      if (conversationId) {
+        this.chatGateway.emitToUser(userId, 'system', {
+          type: 'system',
+          content: '解析完成，正在同步结果...',
+          timestamp: Date.now(),
+          metadata: { resumeId, stage: 'finalizing', progress: 95 },
+        });
       }
 
       // 5. Update resume with results (include optimized content if available)

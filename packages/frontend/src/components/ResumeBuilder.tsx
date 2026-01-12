@@ -35,7 +35,56 @@ interface ResumeSection {
   content: string;
 }
 
+interface ResumeTheme {
+  id: string;
+  name: string;
+  primary: string;
+  background: string;
+  text: string;
+  accent: string;
+  fontFamily: string;
+}
+
 // --- Constants ---
+
+const THEMES: ResumeTheme[] = [
+  {
+    id: 'modern',
+    name: 'Modern Dark',
+    primary: '#ffffff',
+    background: '#050505',
+    text: '#ffffff',
+    accent: '#3b82f6',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal Light',
+    primary: '#000000',
+    background: '#ffffff',
+    text: '#000000',
+    accent: '#6b7280',
+    fontFamily: 'Georgia, serif',
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald Professional',
+    primary: '#10b981',
+    background: '#064e3b',
+    text: '#ecfdf5',
+    accent: '#34d399',
+    fontFamily: 'system-ui, sans-serif',
+  },
+  {
+    id: 'royal',
+    name: 'Royal Serif',
+    primary: '#d4af37',
+    background: '#1c1917',
+    text: '#fafaf9',
+    accent: '#a8a29e',
+    fontFamily: 'Playfair Display, serif',
+  },
+];
 
 const DEFAULT_SECTIONS: ResumeSection[] = [
   {
@@ -79,12 +128,23 @@ export const ResumeBuilder: React.FC = () => {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(
     sections[0]?.id || null
   );
+  const [currentTheme, setCurrentTheme] = useState<ResumeTheme>(THEMES[0]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [previewMode, setPreviewMode] = useState<
     'desktop' | 'tablet' | 'mobile'
   >('desktop');
   const [isEditView, setIsEditView] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // --- Theme Management ---
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--resume-primary', currentTheme.primary);
+    root.style.setProperty('--resume-bg', currentTheme.background);
+    root.style.setProperty('--resume-text', currentTheme.text);
+    root.style.setProperty('--resume-accent', currentTheme.accent);
+    root.style.setProperty('--resume-font', currentTheme.fontFamily);
+  }, [currentTheme]);
 
   const activeSection = sections.find((s) => s.id === activeSectionId);
 
@@ -280,6 +340,21 @@ export const ResumeBuilder: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 mr-4 bg-white/5 p-1 rounded-xl border border-white/5">
+              {THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setCurrentTheme(theme)}
+                  className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                    currentTheme.id === theme.id
+                      ? 'border-white scale-110 shadow-lg'
+                      : 'border-transparent hover:border-white/20'
+                  }`}
+                  style={{ backgroundColor: theme.primary }}
+                  title={theme.name}
+                />
+              ))}
+            </div>
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               className={BUTTON_SECONDARY}
@@ -473,13 +548,20 @@ export const ResumeBuilder: React.FC = () => {
                   <div
                     className={`w-full transition-all duration-700 ease-in-out ${getPreviewWidth()}`}
                   >
-                    <div className="bg-white text-slate-900 rounded-[3rem] p-16 shadow-[0_40px_100px_rgba(0,0,0,0.4)] min-h-[1100px] prose prose-slate prose-lg max-w-none selection:bg-blue-100">
+                    <div
+                      className="rounded-[3rem] p-16 shadow-[0_40px_100px_rgba(0,0,0,0.4)] min-h-[1100px] prose prose-lg max-w-none selection:bg-blue-100"
+                      style={{
+                        backgroundColor: 'var(--resume-bg)',
+                        color: 'var(--resume-text)',
+                        fontFamily: 'var(--resume-font)',
+                      }}
+                    >
                       <style>{`
-                        .prose h1 { font-family: 'Syne', sans-serif; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 2rem; border-bottom: 4px solid #f1f5f9; padding-bottom: 1rem; }
-                        .prose h2 { font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: -0.02em; margin-top: 3rem; color: #64748b; text-transform: uppercase; font-size: 0.875rem; letter-spacing: 0.2em; }
-                        .prose p { line-height: 1.8; color: #334155; }
-                        .prose li { margin-bottom: 0.5rem; color: #475569; }
-                        .prose strong { color: #0f172a; font-weight: 600; }
+                        .prose h1 { font-family: var(--resume-font); font-weight: 800; letter-spacing: -0.04em; margin-bottom: 2rem; border-bottom: 4px solid var(--resume-primary); padding-bottom: 1rem; color: var(--resume-text); }
+                        .prose h2 { font-family: var(--resume-font); font-weight: 700; letter-spacing: -0.02em; margin-top: 3rem; color: var(--resume-accent); text-transform: uppercase; font-size: 0.875rem; letter-spacing: 0.2em; }
+                        .prose p { line-height: 1.8; color: var(--resume-text); opacity: 0.9; }
+                        .prose li { margin-bottom: 0.5rem; color: var(--resume-text); opacity: 0.8; }
+                        .prose strong { color: var(--resume-primary); font-weight: 600; }
                       `}</style>
                       {sections.map((section) => (
                         <div key={section.id} className="mb-16 last:mb-0">

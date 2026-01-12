@@ -80,6 +80,11 @@
     "pricing": "价格方案",
     "logout": "退出登录",
     "admin": "管理",
+    "agents": "AI 助手",
+    "resume_optimization": "简历优化",
+    "interview_prediction": "面试预测",
+    "mock_interview": "模拟面试",
+    "job_input": "职位输入",
     "admin_system": "系统管理",
     "dashboard": "控制台",
     "user_management": "用户管理",
@@ -144,6 +149,13 @@
     "match_score_calculation": "匹配度计算"
   },
   "chat": {
+    "actions": {
+      "resume_optimization": "简历优化",
+      "interview_prediction": "面试预测",
+      "mock_interview": "模拟面试",
+      "job_input": "职位输入",
+      "discover": "发现"
+    },
     "welcome": "你好，我是 AI 简历助手。我可以帮你优化简历、进行模拟面试或润色自我介绍。",
     "placeholder": "输入您的问题，或上传简历文件...",
     "ai_disclaimer": "AI 生成的内容可能不准确，请核对重要信息。",
@@ -177,13 +189,13 @@
   "suggestions": {
     "resume_label": "上传简历",
     "resume_desc": "上传并解析您的简历文件",
-    "job_label": "输入职位",
+    "job_label": "职位输入",
     "job_desc": "输入目标职位信息进行匹配分析",
     "pdf_label": "导出 PDF",
     "pdf_desc": "将优化后的内容导出为 PDF",
-    "interview_label": "面试解忧",
+    "interview_label": "模拟面试",
     "interview_desc": "针对职位的模拟面试",
-    "optimize_label": "深度优化",
+    "optimize_label": "简历优化",
     "optimize_desc": "基于目标职位对简历进行深度优化"
   },
   "pricing": {

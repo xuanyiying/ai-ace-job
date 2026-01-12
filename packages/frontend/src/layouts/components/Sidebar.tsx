@@ -14,6 +14,10 @@ import {
   ToolOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  StarOutlined,
+  LineChartOutlined,
+  SolutionOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +52,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [searchText, setSearchText] = React.useState('');
 
   const isAdmin = user?.role === Role.ADMIN;
+
+  const agentNavItems = [
+    {
+      key: 'resume-optimization',
+      icon: <StarOutlined />,
+      label: t('menu.resume_optimization', '简历优化'),
+      path: '/agents/resume-optimization-expert',
+    },
+    {
+      key: 'interview-prediction',
+      icon: <LineChartOutlined />,
+      label: t('menu.interview_prediction', '面试预测'),
+      path: '/agents/interview-prediction',
+    },
+    {
+      key: 'mock-interview',
+      icon: <UserOutlined />,
+      label: t('menu.mock_interview', '模拟面试'),
+      path: '/agents/mock-interview',
+    },
+  ];
 
   const filteredConversations = React.useMemo(() => {
     if (!searchText.trim()) return conversations;
@@ -209,6 +234,48 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
       )}
+
+      {/* AI Agents */}
+      <div className="px-2 mb-4 space-y-1">
+        {!isCollapsed && (
+          <div className="px-3 py-2 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            {t('menu.agents', 'AI 助手')}
+          </div>
+        )}
+        {agentNavItems.map((item) => (
+          <Tooltip
+            key={item.key}
+            title={isCollapsed ? item.label : ''}
+            placement="right"
+          >
+            <div
+              onClick={() => {
+                navigate(item.path);
+                if (setMobileDrawerOpen) setMobileDrawerOpen(false);
+              }}
+              className={`
+                group flex items-center gap-3 rounded-xl cursor-pointer transition-all duration-200
+                ${location.pathname.startsWith(item.path) ? 'text-primary-500 bg-[var(--sidebar-item-active)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--sidebar-item-hover)]'}
+              `}
+              style={{
+                paddingLeft: 'var(--sidebar-item-padding-x)',
+                paddingRight: 'var(--sidebar-item-padding-x)',
+                paddingTop: 'var(--sidebar-item-padding-y)',
+                paddingBottom: 'var(--sidebar-item-padding-y)',
+              }}
+            >
+              <span className="flex items-center justify-center w-5">
+                {item.icon}
+              </span>
+              {!isCollapsed && (
+                <span className="truncate text-sm font-medium">
+                  {item.label}
+                </span>
+              )}
+            </div>
+          </Tooltip>
+        ))}
+      </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 scrollbar-hide">

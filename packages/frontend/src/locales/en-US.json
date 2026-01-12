@@ -80,6 +80,11 @@
     "pricing": "Pricing",
     "logout": "Logout",
     "admin": "Admin",
+    "agents": "AI Agents",
+    "resume_optimization": "Resume Optimization",
+    "interview_prediction": "Interview Prediction",
+    "mock_interview": "Mock Interview",
+    "job_input": "Job Input",
     "admin_system": "System Management",
     "dashboard": "Dashboard",
     "user_management": "User Management",
@@ -144,6 +149,13 @@
     "match_score_calculation": "Match Score"
   },
   "chat": {
+    "actions": {
+      "resume_optimization": "Optimize Resume",
+      "interview_prediction": "Interview Prediction",
+      "mock_interview": "Mock Interview",
+      "job_input": "Job Input",
+      "discover": "Discover"
+    },
     "welcome": "Hello, I am AI Resume Assistant. I can help you optimize resume, conduct mock interviews, or polish self-introduction.",
     "placeholder": "Type your question, or upload resume file...",
     "ai_disclaimer": "AI generated content may be inaccurate, please check important information.",

@@ -67,34 +67,34 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
 
   return (
     <div className="pitch-perfect-card">
-      <h2>Pitch Perfect - Personal Introduction Optimizer</h2>
+      <h2>简历优化 - 个人介绍优化器</h2>
 
       {/* Configuration Section */}
       <div className="pitch-config">
         <div className="config-group">
-          <label htmlFor="style">Style:</label>
+          <label htmlFor="style">风格：</label>
           <select
             id="style"
             value={style}
             onChange={(e) => setStyle(e.target.value as any)}
             disabled={loading || refining}
           >
-            <option value="technical">Technical</option>
-            <option value="managerial">Managerial</option>
-            <option value="sales">Sales-Oriented</option>
+            <option value="technical">技术型</option>
+            <option value="managerial">管理型</option>
+            <option value="sales">销售/市场型</option>
           </select>
         </div>
 
         <div className="config-group">
-          <label htmlFor="duration">Duration:</label>
+          <label htmlFor="duration">时长：</label>
           <select
             id="duration"
             value={duration}
             onChange={(e) => setDuration(parseInt(e.target.value) as any)}
             disabled={loading || refining}
           >
-            <option value={30}>30 seconds</option>
-            <option value={60}>60 seconds</option>
+            <option value={30}>30 秒</option>
+            <option value={60}>60 秒</option>
           </select>
         </div>
 
@@ -103,7 +103,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
           disabled={loading || refining}
           className="btn-primary"
         >
-          {loading ? 'Generating...' : 'Generate Introduction'}
+          {loading ? '正在生成...' : '生成优化介绍'}
         </button>
       </div>
 
@@ -115,7 +115,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
         <div className="pitch-results">
           {/* Generated Introduction */}
           <div className="result-section">
-            <h3>Generated Introduction</h3>
+            <h3>生成的个人介绍</h3>
             <div className="introduction-box">
               <p>{result.introduction}</p>
             </div>
@@ -123,7 +123,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
 
           {/* Key Highlights */}
           <div className="result-section">
-            <h3>Key Highlights</h3>
+            <h3>关键亮点</h3>
             <ul className="highlights-list">
               {result.highlights.map((highlight, idx) => (
                 <li key={idx}>{highlight}</li>
@@ -133,10 +133,10 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
 
           {/* Keyword Overlap Visualization */}
           <div className="result-section">
-            <h3>Keyword Alignment</h3>
+            <h3>关键词匹配度</h3>
             <div className="keyword-overlap">
               <div className="overlap-stat">
-                <span className="stat-label">Overlap Score:</span>
+                <span className="stat-label">匹配分数：</span>
                 <span className="stat-value">
                   {result.keywordOverlap.overlapPercentage}%
                 </span>
@@ -145,7 +145,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
               <div className="overlap-details">
                 <div className="matched-keywords">
                   <h4>
-                    Matched Keywords ({result.keywordOverlap.matched.length})
+                    已匹配关键词 ({result.keywordOverlap.matched.length})
                   </h4>
                   <div className="keyword-tags">
                     {result.keywordOverlap.matched
@@ -157,7 +157,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
                       ))}
                     {result.keywordOverlap.matched.length > 5 && (
                       <span className="keyword-tag more">
-                        +{result.keywordOverlap.matched.length - 5} more
+                        + 还有 {result.keywordOverlap.matched.length - 5} 个
                       </span>
                     )}
                   </div>
@@ -165,7 +165,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
 
                 <div className="missing-keywords">
                   <h4>
-                    Missing Keywords ({result.keywordOverlap.missing.length})
+                    建议增加关键词 ({result.keywordOverlap.missing.length})
                   </h4>
                   <div className="keyword-tags">
                     {result.keywordOverlap.missing
@@ -177,7 +177,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
                       ))}
                     {result.keywordOverlap.missing.length > 5 && (
                       <span className="keyword-tag more">
-                        +{result.keywordOverlap.missing.length - 5} more
+                        + 还有 {result.keywordOverlap.missing.length - 5} 个
                       </span>
                     )}
                   </div>
@@ -189,7 +189,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
           {/* Suggestions */}
           {result.suggestions.length > 0 && (
             <div className="result-section">
-              <h3>Suggestions</h3>
+              <h3>改进建议</h3>
               <ul className="suggestions-list">
                 {result.suggestions.map((suggestion, idx) => (
                   <li key={idx}>{suggestion}</li>

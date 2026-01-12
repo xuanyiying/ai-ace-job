@@ -1,15 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Button, Progress, message, Space, theme } from 'antd';
-import {
-  CloudUploadOutlined,
-  FileTextOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
-import { resumeService } from '../services/resume-service';
-import { useResumeStore } from '../stores';
-import { ParseStatus, type Resume, type ParsedResumeData } from '../types';
+import React, { useRef } from 'react';
+import { Button, message } from 'antd';
+import { CloudUploadOutlined } from '@ant-design/icons';
 import './ResumeUploadButton.css';
 
 interface ResumeUploadButtonProps {
@@ -78,12 +69,14 @@ const ResumeUploadButton: React.FC<ResumeUploadButtonProps> = ({
         onChange={handleFileSelect}
       />
       <Button
-        icon={<CloudUploadOutlined />}
+        type="text"
+        icon={!children && <CloudUploadOutlined />}
         onClick={triggerFileSelect}
         className={className}
         disabled={disabled}
+        style={{ border: 'none', boxShadow: 'none' }}
       >
-        {children || '上传简历'}
+        {children}
       </Button>
     </>
   );

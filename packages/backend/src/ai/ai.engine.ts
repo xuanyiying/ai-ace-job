@@ -18,6 +18,81 @@ import {
   OptimizationSuggestion,
   InterviewQuestion,
 } from '@/types';
+import { z } from 'zod';
+
+// Define Zod schema for ParsedResumeData for validation and potential fixing
+const ParsedResumeDataSchema = z.object({
+  personalInfo: z.object({
+    name: z.string().default(''),
+    email: z.string().default(''),
+    phone: z.string().optional(),
+    location: z.string().optional(),
+    linkedin: z.string().optional(),
+    github: z.string().optional(),
+    website: z.string().optional(),
+  }),
+  summary: z.string().optional(),
+  education: z
+    .array(
+      z.object({
+        institution: z.string(),
+        degree: z.string(),
+        field: z.string().optional().default(''),
+        startDate: z.string().optional().default(''),
+        endDate: z.string().optional(),
+        gpa: z.string().optional(),
+        achievements: z.array(z.string()).optional(),
+      })
+    )
+    .default([]),
+  experience: z
+    .array(
+      z.object({
+        company: z.string(),
+        position: z.string(),
+        startDate: z.string().optional().default(''),
+        endDate: z.string().optional(),
+        location: z.string().optional(),
+        description: z.array(z.string()).default([]),
+        achievements: z.array(z.string()).optional(),
+      })
+    )
+    .default([]),
+  skills: z.array(z.string()).default([]),
+  projects: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        technologies: z.array(z.string()).default([]),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        url: z.string().optional(),
+        highlights: z.array(z.string()).default([]),
+      })
+    )
+    .default([]),
+  certifications: z
+    .array(
+      z.object({
+        name: z.string(),
+        issuer: z.string(),
+        date: z.string(),
+        expiryDate: z.string().optional(),
+        credentialId: z.string().optional(),
+      })
+    )
+    .optional(),
+  languages: z
+    .array(
+      z.object({
+        name: z.string(),
+        proficiency: z.string(),
+      })
+    )
+    .optional(),
+  markdown: z.string().optional(),
+});
 
 @Injectable()
 export class AIEngine {
@@ -176,25 +251,28 @@ ${content}`,
         );
 
         try {
-          const parsedData: ParsedResumeData = JSON.parse(jsonToParse);
+          const rawParsed = JSON.parse(jsonToParse);
+          // Use Zod to validate and fill in defaults
+          const parsedData = ParsedResumeDataSchema.parse(rawParsed);
           this.logger.log('Resume parsing completed successfully');
-          return parsedData;
+          return parsedData as ParsedResumeData;
         } catch (parseError: any) {
           this.logger.warn(
-            `Failed to parse JSON directly: ${parseError.message}. Attempting recovery...`
+            `Failed to parse or validate JSON: ${parseError.message}. Attempting recovery...`
           );
 
           // Try to fix common JSON issues
           const fixedJson = this.attemptJsonFix(jsonToParse);
           if (fixedJson) {
             try {
-              const parsedData: ParsedResumeData = JSON.parse(fixedJson);
+              const rawFixed = JSON.parse(fixedJson);
+              const parsedData = ParsedResumeDataSchema.parse(rawFixed);
               this.logger.log(
                 'Recovered JSON parsing after fixing common issues'
               );
-              return parsedData;
-            } catch (fixError) {
-              // Continue to retry
+              return parsedData as ParsedResumeData;
+            } catch (fixError: any) {
+              this.logger.warn(`Recovery attempt failed: ${fixError.message}`);
             }
           }
 

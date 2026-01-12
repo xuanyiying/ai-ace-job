@@ -112,16 +112,16 @@ const routes: RouteObject[] = [
         element: <InterviewPage />,
       },
       {
-        path: 'agents/pitch-perfect',
-        element: <PitchPerfectPage />,
-      },
-      {
-        path: 'agents/strategist',
+        path: 'agents/interview-prediction',
         element: <StrategistPage />,
       },
       {
-        path: 'agents/role-play',
+        path: 'agents/mock-interview',
         element: <RolePlayPage />,
+      },
+      {
+        path: 'agents/resume-optimization-expert',
+        element: <PitchPerfectPage />,
       },
       {
         path: 'agents/metrics',

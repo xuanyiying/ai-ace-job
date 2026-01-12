@@ -15,6 +15,7 @@ export interface AttachmentStatus {
   status: 'uploading' | 'parsing' | 'completed' | 'error';
   error?: string;
   mode?: 'upload' | 'parse'; // New field to distinguish between upload and parse view
+  resumeId?: string; // New field to track by resume ID
 }
 
 interface AttachmentMessageProps {

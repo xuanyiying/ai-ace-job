@@ -15,6 +15,9 @@ import { MessageRole } from '@prisma/client';
 export enum ChatIntent {
   OPTIMIZE_RESUME = 'optimize_resume',
   PARSE_RESUME = 'parse_resume',
+  MOCK_INTERVIEW = 'mock_interview',
+  INTERVIEW_PREDICTION = 'interview_prediction',
+  PARSE_JOB_DESCRIPTION = 'parse_job_description',
   GENERAL_CHAT = 'general_chat',
   HELP = 'help',
   UNKNOWN = 'unknown',
@@ -54,6 +57,36 @@ export class ChatIntentService {
       '优化简历',
       '改进简历',
       '润色简历',
+      '简历优化',
+    ],
+    [ChatIntent.MOCK_INTERVIEW]: [
+      '模拟面试',
+      '面试',
+      '练习',
+      'mock',
+      'interview',
+      'practice',
+      '模拟',
+      '面试解忧',
+    ],
+    [ChatIntent.INTERVIEW_PREDICTION]: [
+      '面试预测',
+      '预测',
+      '题目',
+      '考题',
+      'prediction',
+      'predict',
+      'questions',
+    ],
+    [ChatIntent.PARSE_JOB_DESCRIPTION]: [
+      '职位输入',
+      '输入职位',
+      '解析职位',
+      'JD',
+      '职位',
+      '职位描述',
+      'job',
+      'description',
     ],
     [ChatIntent.PARSE_RESUME]: [
       '解析',
@@ -185,6 +218,36 @@ export class ChatIntentService {
       switch (intentResult.intent) {
         case ChatIntent.OPTIMIZE_RESUME:
           await this.handleOptimizeResume(
+            userId,
+            conversationId,
+            content,
+            onChunk,
+            onComplete
+          );
+          break;
+
+        case ChatIntent.MOCK_INTERVIEW:
+          await this.handleMockInterview(
+            userId,
+            conversationId,
+            content,
+            onChunk,
+            onComplete
+          );
+          break;
+
+        case ChatIntent.INTERVIEW_PREDICTION:
+          await this.handleInterviewPrediction(
+            userId,
+            conversationId,
+            content,
+            onChunk,
+            onComplete
+          );
+          break;
+
+        case ChatIntent.PARSE_JOB_DESCRIPTION:
+          await this.handleParseJobDescription(
             userId,
             conversationId,
             content,
@@ -336,6 +399,169 @@ export class ChatIntentService {
   }
 
   /**
+   * Handle mock interview request
+   */
+  private async handleMockInterview(
+    userId: string,
+    conversationId: string,
+    userMessage: string,
+    onChunk: (chunk: ChatResponse) => void,
+    onComplete: (
+      finalContent: string,
+      metadata?: Record<string, any>
+    ) => Promise<void>
+  ): Promise<void> {
+    const resumeData = await this.getUserResumeContent(userId);
+
+    let systemPrompt =
+      '你是一个资深的面试官。请根据用户的简历内容，为用户进行一次模拟面试。你可以先提出一个面试问题，然后根据用户的回答进行追问或点评。';
+
+    if (resumeData) {
+      systemPrompt += `\n\n用户的简历内容如下：\n${resumeData.content}`;
+    } else {
+      systemPrompt += '\n\n用户尚未上传简历。你可以先建议用户上传简历，或者先进行一些通用的面试准备问题。';
+    }
+
+    onChunk({
+      type: 'chunk',
+      content: '准备好了！让我们开始模拟面试吧。\n\n',
+      timestamp: Date.now(),
+    });
+
+    await this.streamAIResponse(
+      userId,
+      systemPrompt,
+      userMessage,
+      onChunk,
+      async (finalContent) => {
+        await onComplete(finalContent, { type: 'mock_interview' });
+      }
+    );
+  }
+
+  /**
+   * Handle interview prediction request
+   */
+  private async handleInterviewPrediction(
+    userId: string,
+    conversationId: string,
+    userMessage: string,
+    onChunk: (chunk: ChatResponse) => void,
+    onComplete: (
+      finalContent: string,
+      metadata?: Record<string, any>
+    ) => Promise<void>
+  ): Promise<void> {
+    const resumeData = await this.getUserResumeContent(userId);
+
+    let systemPrompt =
+      '你是一个专业的职业顾问和面试专家。请根据用户的简历内容，预测面试中可能出现的问题，并提供相应的回答建议和核心考点分析。';
+
+    if (resumeData) {
+      systemPrompt += `\n\n用户的简历内容如下：\n${resumeData.content}`;
+    } else {
+      systemPrompt += '\n\n用户尚未上传简历。你可以先提供一些常见的通用面试问题预测，并建议用户上传简历以获取更精准的预测。';
+    }
+
+    onChunk({
+      type: 'chunk',
+      content: '正在为您分析简历并预测面试问题...\n\n',
+      timestamp: Date.now(),
+    });
+
+    await this.streamAIResponse(
+      userId,
+      systemPrompt,
+      userMessage,
+      onChunk,
+      async (finalContent) => {
+        await onComplete(finalContent, { type: 'interview_prediction' });
+      }
+    );
+  }
+
+  /**
+   * Handle job description parsing request
+   */
+  private async handleParseJobDescription(
+    userId: string,
+    conversationId: string,
+    userMessage: string,
+    onChunk: (chunk: ChatResponse) => void,
+    onComplete: (
+      finalContent: string,
+      metadata?: Record<string, any>
+    ) => Promise<void>
+  ): Promise<void> {
+    const systemPrompt =
+      '你是一个专业的职位分析专家。请帮用户解析职位描述（JD），提取出核心职责、技能要求、任职资格等关键信息，并给出简历投递的建议。';
+
+    onChunk({
+      type: 'chunk',
+      content: '好的，请提供职位描述信息，我将为您进行深度解析。\n\n',
+      timestamp: Date.now(),
+    });
+
+    await this.streamAIResponse(
+      userId,
+      systemPrompt,
+      userMessage,
+      onChunk,
+      async (finalContent) => {
+        await onComplete(finalContent, { type: 'parse_job_description' });
+      }
+    );
+  }
+
+  /**
+   * Helper to stream AI response
+   */
+  private async streamAIResponse(
+    userId: string,
+    systemPrompt: string,
+    userMessage: string,
+    onChunk: (chunk: ChatResponse) => void,
+    onComplete: (finalContent: string) => Promise<void>
+  ): Promise<void> {
+    const prompt = `${systemPrompt}\n\n用户消息：${userMessage}\n\n请用中文回复：`;
+
+    try {
+      const aiRequest: AIRequest = {
+        model: '',
+        prompt,
+        temperature: 0.7,
+        maxTokens: 1500,
+      };
+
+      let fullContent = '';
+      const stream = this.aiEngineService.stream(
+        aiRequest,
+        userId,
+        PromptScenario.RESUME_OPTIMIZATION,
+        'zh-CN'
+      );
+
+      for await (const chunk of stream) {
+        if (chunk.content) {
+          fullContent += chunk.content;
+          onChunk({
+            type: 'chunk',
+            content: chunk.content,
+            timestamp: Date.now(),
+          });
+        }
+      }
+
+      await onComplete(fullContent);
+    } catch (error) {
+      this.logger.error(
+        `AI streaming failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      await onComplete('抱歉，处理您的请求时出现了问题，请稍后再试。');
+    }
+  }
+
+  /**
    * Handle help request
    */
   private async handleHelp(
@@ -349,18 +575,21 @@ export class ChatIntentService {
 ## 🎯 我可以帮您做什么？
 
 ### 📄 简历优化
-- 上传您的简历（支持 PDF、Word 格式）
-- 说"优化简历"或"改进简历"，我会帮您润色内容
+- 上传您的简历，说"优化简历"或"简历优化"，我会帮您润色内容，提升竞争力。
+
+### 📈 面试预测
+- 基于您的背景和目标职位，预测面试中可能出现的问题，并提供核心考点分析。
+
+### 🎭 模拟面试
+- 进入实战演练，我将作为面试官与您对话，提供即时反馈和改进建议。
+
+### 💼 职位输入
+- 粘贴职位描述（JD），我将为您深度解析核心需求，并给出针对性的投递建议。
 
 ### 💡 使用技巧
-1. **上传简历**：点击上传按钮或拖拽文件
-2. **优化内容**：上传后说"优化"即可开始
-3. **查看对比**：优化完成后可查看前后对比
-4. **下载结果**：满意后可下载优化后的简历
-
-### 🔧 常用命令
-- "优化简历" - 开始优化您的简历
-- "帮助" - 显示此帮助信息
+1. **上传简历**：点击上传按钮或拖拽文件开始。
+2. **选择功能**：点击欢迎卡片上的功能图标，或直接在输入框中说明您的需求。
+3. **深度对话**：您可以对我的回答进行追问，获取更详细的建议。
 
 有任何问题，随时问我！
 `;

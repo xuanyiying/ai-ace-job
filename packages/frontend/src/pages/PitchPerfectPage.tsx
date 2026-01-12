@@ -18,10 +18,9 @@ export const PitchPerfectPage: React.FC = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>Pitch Perfect - Personal Introduction Optimizer</h1>
+        <h1>简历优化专家</h1>
         <p>
-          Generate optimized self-introductions tailored to specific job
-          positions
+          基于目标职位深度优化您的个人简介和简历核心内容
         </p>
       </div>
 
@@ -29,7 +28,7 @@ export const PitchPerfectPage: React.FC = () => {
         <div className="form-container">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="resume">Resume Data (JSON):</label>
+              <label htmlFor="resume">简历数据 (JSON):</label>
               <textarea
                 id="resume"
                 value={resumeData ? JSON.stringify(resumeData, null, 2) : ''}
@@ -40,19 +39,19 @@ export const PitchPerfectPage: React.FC = () => {
                     // Invalid JSON, ignore
                   }
                 }}
-                placeholder="Paste your parsed resume data as JSON"
+                placeholder="粘贴您的简历数据 JSON"
                 rows={8}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="jd">Job Description:</label>
+              <label htmlFor="jd">职位描述:</label>
               <textarea
                 id="jd"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description"
+                placeholder="粘贴职位描述内容"
                 rows={6}
                 required
               />
@@ -60,7 +59,7 @@ export const PitchPerfectPage: React.FC = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary">
-                Continue
+                继续
               </button>
             </div>
           </form>
@@ -74,7 +73,7 @@ export const PitchPerfectPage: React.FC = () => {
             />
           )}
           <button onClick={() => setShowForm(true)} className="btn-secondary">
-            ← Back to Input
+            ← 返回输入
           </button>
         </div>
       )}

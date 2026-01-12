@@ -181,39 +181,47 @@ const JobInfoCard: React.FC<JobInfoCardProps> = ({
 
   return (
     <Card
-      style={{ marginBottom: '16px' }}
-      title={
-        <div>
-          <strong>{job.title}</strong>
-          <span style={{ marginLeft: '12px', color: '#666' }}>
-            @ {job.company}
-          </span>
-        </div>
-      }
-      extra={
-        <Space>
-          <Button
-            type="primary"
-            icon={<CheckOutlined />}
-            onClick={handleConfirm}
-          >
-            确认
-          </Button>
-          <Button icon={<EditOutlined />} onClick={handleEdit}>
-            编辑
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={handleDelete}
-            loading={loading}
-          >
-            删除
-          </Button>
-        </Space>
-      }
+      style={{ marginBottom: '16px', borderRadius: '12px', overflow: 'hidden' }}
+      bodyStyle={{ padding: '20px' }}
     >
       <Spin spinning={loading}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <span>{job.title}</span>
+              <span style={{ color: '#8c8c8c', fontSize: '14px', fontWeight: 400 }}>
+                @ {job.company}
+              </span>
+            </h3>
+          </div>
+          <Space wrap size="small">
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              onClick={handleConfirm}
+              style={{ borderRadius: '8px' }}
+            >
+              确认
+            </Button>
+            <Button 
+              icon={<EditOutlined />} 
+              onClick={handleEdit}
+              style={{ borderRadius: '8px' }}
+            >
+              编辑
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleDelete}
+              loading={loading}
+              style={{ borderRadius: '8px' }}
+            >
+              删除
+            </Button>
+          </Space>
+        </div>
+
         <div style={{ marginBottom: '12px' }}>
           {job.location && (
             <Tag color="blue" style={{ marginRight: '8px' }}>

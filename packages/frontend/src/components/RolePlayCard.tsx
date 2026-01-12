@@ -162,32 +162,32 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
 
   return (
     <div className="role-play-card">
-      <h2>Role-Play - Mock Interview Simulator</h2>
+      <h2>模拟面试 - AI 面试官模拟器</h2>
 
       {!interviewActive && !feedback && (
         <div className="interview-setup">
           <div className="setup-group">
-            <label htmlFor="style">Interviewer Style:</label>
+            <label htmlFor="style">面试官风格：</label>
             <select
               id="style"
               value={interviewerStyle}
               onChange={(e) => setInterviewerStyle(e.target.value as any)}
               disabled={loading}
             >
-              <option value="friendly">Friendly & Supportive</option>
-              <option value="strict">Strict & Formal</option>
-              <option value="stress-test">Stress Test</option>
+              <option value="friendly">亲切 & 鼓励</option>
+              <option value="strict">严谨 & 正式</option>
+              <option value="stress-test">压力测试</option>
             </select>
           </div>
 
           <div className="setup-group">
-            <label htmlFor="focus">Focus Areas (comma-separated):</label>
+            <label htmlFor="focus">关注领域 (逗号分隔)：</label>
             <input
               id="focus"
               type="text"
               value={focusAreas}
               onChange={(e) => setFocusAreas(e.target.value)}
-              placeholder="e.g., System Design, Leadership, Problem Solving"
+              placeholder="例如：系统设计, 领导力, 解决问题"
               disabled={loading}
             />
           </div>
@@ -197,7 +197,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
             disabled={loading}
             className="btn-primary"
           >
-            {loading ? 'Starting Interview...' : 'Start Interview'}
+            {loading ? '正在开始面试...' : '开始面试'}
           </button>
         </div>
       )}
@@ -216,8 +216,8 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
                 >
                   <div className="message-role">
                     {msg.role === MessageRole.ASSISTANT
-                      ? '👤 Interviewer'
-                      : '👤 You'}
+                      ? '👤 面试官'
+                      : '👤 您'}
                   </div>
                   <div className="message-content">{msg.content}</div>
                   <div className="message-time">
@@ -233,11 +233,12 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
               <textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Type your response here..."
+                placeholder="在此输入您的回答..."
                 disabled={analyzing}
                 rows={3}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey) {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
                     handleSubmitResponse();
                   }
                 }}
@@ -245,17 +246,17 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
               <div className="input-actions">
                 <button
                   onClick={handleSubmitResponse}
-                  disabled={analyzing || !userInput.trim()}
-                  className="btn-submit"
+                  disabled={!userInput.trim() || analyzing}
+                  className="btn-primary"
                 >
-                  {analyzing ? 'Analyzing...' : 'Submit Response'}
+                  {analyzing ? '分析中...' : '提交回答'}
                 </button>
                 <button
                   onClick={handleConcludeInterview}
                   disabled={analyzing}
                   className="btn-conclude"
                 >
-                  End Interview
+                  结束面试
                 </button>
               </div>
             </div>
@@ -265,17 +266,20 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
 
       {feedback && (
         <div className="feedback-container">
-          <h3>Interview Feedback</h3>
+          <h3>面试反馈</h3>
 
           {/* Scores */}
           <div className="feedback-section scores-section">
-            <h4>Performance Scores</h4>
+            <h4>表现评分</h4>
             <div className="scores-grid">
               {feedback.scores &&
                 Object.entries(feedback.scores).map(([key, value]) => (
                   <div key={key} className="score-item">
                     <div className="score-label">
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                      {key === 'clarity' ? '清晰度' : 
+                       key === 'relevance' ? '相关性' : 
+                       key === 'depth' ? '深度' : 
+                       key === 'communication' ? '沟通能力' : key}
                     </div>
                     <div className="score-bar">
                       <div
@@ -292,7 +296,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
           {/* Strengths */}
           {feedback.strengths && feedback.strengths.length > 0 && (
             <div className="feedback-section">
-              <h4>Strengths</h4>
+              <h4>优点</h4>
               <ul className="feedback-list strengths">
                 {feedback.strengths.map((strength, idx) => (
                   <li key={idx}>✓ {strength}</li>
@@ -304,7 +308,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
           {/* Areas for Improvement */}
           {feedback.improvements && feedback.improvements.length > 0 && (
             <div className="feedback-section">
-              <h4>Areas for Improvement</h4>
+              <h4>待改进领域</h4>
               <ul className="feedback-list improvements">
                 {feedback.improvements.map((improvement, idx) => (
                   <li key={idx}>→ {improvement}</li>
@@ -316,7 +320,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
           {/* Radar Chart Data */}
           {feedback.radarChartData && feedback.radarChartData.length > 0 && (
             <div className="feedback-section">
-              <h4>Skill Assessment</h4>
+              <h4>技能评估</h4>
               <div className="radar-data">
                 {feedback.radarChartData.map((item, idx) => (
                   <div key={idx} className="radar-item">
@@ -335,7 +339,7 @@ export const RolePlayCard: React.FC<RolePlayCardProps> = ({
           )}
 
           <button onClick={handleReset} className="btn-primary">
-            Start New Interview
+            开始新面试
           </button>
         </div>
       )}

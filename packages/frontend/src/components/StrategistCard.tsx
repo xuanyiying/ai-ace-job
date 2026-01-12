@@ -119,21 +119,21 @@ export const StrategistCard: React.FC<StrategistCardProps> = ({
 
   return (
     <div className="strategist-card">
-      <h2>Strategist - Interview Question Bank Generator</h2>
+      <h2>面试预测 - 问题库生成器</h2>
 
       {/* Configuration Section */}
       <div className="strategist-config">
         <div className="config-group">
-          <label htmlFor="experience">Experience Level:</label>
+          <label htmlFor="experience">经验等级：</label>
           <select
             id="experience"
             value={experienceLevel}
             onChange={(e) => setExperienceLevel(e.target.value as any)}
             disabled={loading}
           >
-            <option value="junior">Junior (0-2 years)</option>
-            <option value="mid">Mid-level (2-5 years)</option>
-            <option value="senior">Senior (5+ years)</option>
+            <option value="junior">初级 (0-2年)</option>
+            <option value="mid">中级 (2-5年)</option>
+            <option value="senior">高级 (5年以上)</option>
           </select>
         </div>
 
@@ -142,7 +142,7 @@ export const StrategistCard: React.FC<StrategistCardProps> = ({
           disabled={loading}
           className="btn-primary"
         >
-          {loading ? 'Generating...' : 'Generate Question Bank'}
+          {loading ? '正在生成...' : '生成面试题库'}
         </button>
       </div>
 
@@ -154,29 +154,29 @@ export const StrategistCard: React.FC<StrategistCardProps> = ({
         <div className="strategist-results">
           {/* Summary Stats */}
           <div className="result-section summary-section">
-            <h3>Question Bank Summary</h3>
+            <h3>题库概览</h3>
             <div className="summary-stats">
               <div className="stat-card">
                 <div className="stat-number">{result.totalQuestions}</div>
-                <div className="stat-label">Total Questions</div>
+                <div className="stat-label">总题目数</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">
                   {result.categorization.technical}
                 </div>
-                <div className="stat-label">Technical</div>
+                <div className="stat-label">技术面试</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">
                   {result.categorization.behavioral}
                 </div>
-                <div className="stat-label">Behavioral</div>
+                <div className="stat-label">行为面试</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">
                   {result.categorization.scenario}
                 </div>
-                <div className="stat-label">Scenario</div>
+                <div className="stat-label">场景面试</div>
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ export const StrategistCard: React.FC<StrategistCardProps> = ({
           {/* Focus Areas */}
           {result.focusAreas && result.focusAreas.length > 0 && (
             <div className="result-section">
-              <h3>Focus Areas</h3>
+              <h3>重点关注领域</h3>
               <div className="focus-areas">
                 {result.focusAreas.map((area, idx) => (
                   <span key={idx} className="focus-tag">
