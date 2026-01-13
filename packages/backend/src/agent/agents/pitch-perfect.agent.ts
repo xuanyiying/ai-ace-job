@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AIEngineService } from '../../ai-providers/ai-engine.service';
 import { PromptTemplateManager } from '../../ai-providers/config/prompt-template.manager';
+import { ScenarioType } from '../../ai-providers/interfaces/model.interface';
 import { ParsedResumeData } from '../../types';
 
 /**
@@ -179,7 +180,7 @@ Return JSON with keys: situation, task, action, result`;
         maxTokens: 300,
       },
       userId,
-      'pitch-perfect-star-extraction'
+      ScenarioType.AGENT_STAR_EXTRACTION
     );
 
     try {
@@ -238,7 +239,7 @@ Return a JSON array with exactly 3-5 selected achievements (or fewer if less tha
         maxTokens: 500,
       },
       userId,
-      'pitch-perfect-keyword-matching'
+      ScenarioType.AGENT_KEYWORD_MATCHING
     );
 
     try {
@@ -291,7 +292,7 @@ Generate a compelling, natural-sounding introduction that:
         maxTokens: 300,
       },
       userId,
-      'pitch-perfect-generation'
+      ScenarioType.AGENT_INTRODUCTION_GENERATION
     );
 
     return response.content.trim();
@@ -467,7 +468,7 @@ Generate an improved version that addresses the feedback while maintaining profe
         maxTokens: 300,
       },
       userId,
-      'pitch-perfect-refinement'
+      ScenarioType.AGENT_RESPONSE_PROCESSING
     );
 
     return response.content.trim();

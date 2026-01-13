@@ -231,6 +231,16 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
     minQualityScore: 6,
   },
 
+  // Embedding generation - cost optimized
+  [ScenarioType.AGENT_EMBEDDING_GENERATION]: {
+    scenario: ScenarioType.AGENT_EMBEDDING_GENERATION,
+    strategy: SelectionStrategyType.COST,
+    primaryModels: ['qwen:qwen-flash', 'ollama:deepseek-r1:1.5b'],
+    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
+    weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
+    minQualityScore: 6,
+  },
+
   // General scenario - balanced
   [ScenarioType.GENERAL]: {
     scenario: ScenarioType.GENERAL,

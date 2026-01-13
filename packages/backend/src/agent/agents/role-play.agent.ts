@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AIEngineService } from '../../ai-providers/ai-engine.service';
 import { RedisService } from '../../redis/redis.service';
 import { PerformanceMonitorService } from '../../ai-providers/monitoring/performance-monitor.service';
+import { ScenarioType } from '../../ai-providers/interfaces/model.interface';
 import {
   ContextCompressorService,
   Message,
@@ -248,7 +249,7 @@ Return JSON only.`;
         maxTokens: 400,
       },
       userId,
-      'role-play-analysis'
+      ScenarioType.AGENT_RESPONSE_ANALYSIS
     );
 
     try {
@@ -460,7 +461,7 @@ Generate a brief persona description (2-3 sentences) that describes the intervie
         maxTokens: 200,
       },
       userId,
-      'role-play-persona'
+      ScenarioType.AGENT_INTERVIEW_INITIALIZATION
     );
 
     return response.content.trim();
@@ -492,7 +493,7 @@ Generate a single, engaging opening question that sets the tone for the intervie
         maxTokens: 200,
       },
       userId,
-      'role-play-opening'
+      ScenarioType.AGENT_CUSTOM_QUESTION_GENERATION
     );
 
     return response.content.trim();
@@ -536,7 +537,7 @@ Generate a follow-up question that:
         maxTokens: 200,
       },
       userId,
-      'role-play-followup'
+      ScenarioType.AGENT_RESPONSE_PROCESSING
     );
 
     return response.content.trim();
@@ -576,7 +577,7 @@ Return JSON only.`;
         maxTokens: 500,
       },
       userId,
-      'role-play-feedback'
+      ScenarioType.AGENT_INTERVIEW_CONCLUSION
     );
 
     try {

@@ -25,6 +25,7 @@ import { AIProvidersModule } from './ai-providers/ai-providers.module';
 import { InvitationModule } from './invitation/invitation.module';
 import { ResumeOptimizerModule } from './resume-optimizer/resume-optimizer.module';
 import { ChatModule } from './chat/chat.module';
+import { AgentModule } from './agent/agent.module';
 import { loggerConfig } from './logger/logger.config';
 import {
   PerformanceMiddleware,
@@ -63,6 +64,7 @@ import { AuthModule } from './auth/auth.module';
     AIProvidersModule,
     InvitationModule,
     ChatModule,
+    AgentModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

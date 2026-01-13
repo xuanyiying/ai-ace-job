@@ -8,6 +8,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AIEngineService } from '../../ai-providers/ai-engine.service';
 import { RedisService } from '../../redis/redis.service';
+import { ScenarioType } from '../../ai-providers/interfaces';
 
 export interface EmbeddingResult {
   embedding: number[];
@@ -46,28 +47,11 @@ export class EmbeddingService {
 
       // Generate embedding via AIEngineService
       // Using a special scenario for embeddings
-      const response = await this.aiEngineService.call(
-        {
-          model: '',
-          prompt: text,
-          metadata: {
-            embeddingModel: this.EMBEDDING_MODEL,
-          },
-        },
+      const embedding = await this.aiEngineService.embed(
+        text,
         'system',
-        'embedding-generation'
+        ScenarioType.AGENT_EMBEDDING_GENERATION
       );
-
-      // Parse embedding from response
-      // The response should contain the embedding vector
-      let embedding: number[];
-      try {
-        const parsed = JSON.parse(response.content);
-        embedding = parsed.embedding || parsed;
-      } catch {
-        // If not JSON, treat as error
-        throw new Error('Invalid embedding response format');
-      }
 
       // Validate embedding
       if (!Array.isArray(embedding) || embedding.length === 0) {

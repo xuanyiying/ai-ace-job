@@ -101,7 +101,15 @@ export interface AIProvider {
   listModels(): Promise<string[]>;
 
   /**
-   * Get detailed information about a specific model
+   * Generate embedding for text
+   * @param text - The text to embed
+   * @param model - Optional model name
+   * @returns Promise resolving to embedding vector
+   */
+  embed(text: string, model?: string): Promise<number[]>;
+
+  /**
+   * Get model information
    * @param modelName - Name of the model
    * @returns Promise resolving to model information
    */

@@ -108,6 +108,7 @@ export enum ScenarioType {
   AGENT_INTERVIEW_CONCLUSION = 'agent-interview-conclusion',
   AGENT_CONTEXT_COMPRESSION = 'agent-context-compression',
   AGENT_RAG_RETRIEVAL = 'agent-rag-retrieval',
+  AGENT_EMBEDDING_GENERATION = 'agent-embedding-generation',
 
   // General scenario
   GENERAL = 'general',

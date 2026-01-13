@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AIEngineService } from '../../ai-providers/ai-engine.service';
+import { PromptTemplateManager } from '../../ai-providers/config/prompt-template.manager';
+import { ScenarioType } from '../../ai-providers/interfaces/model.interface';
 import { RAGService, InterviewQuestion } from '../services/rag.service';
 import { UsageTrackerService } from '../../ai-providers/tracking/usage-tracker.service';
 import { ParsedResumeData } from '../../types';
@@ -172,7 +174,7 @@ Return a JSON array with 3-5 focus areas. Format: ["area1", "area2", ...]`;
         maxTokens: 200,
       },
       userId,
-      'strategist-context-analysis'
+      ScenarioType.AGENT_CONTEXT_ANALYSIS
     );
 
     let analyzedFocusAreas: string[] = [];
@@ -280,7 +282,7 @@ Format: [{"question": "...", "difficulty": "...", "type": "..."}, ...]`;
         maxTokens: 800,
       },
       userId,
-      'strategist-custom-generation'
+      ScenarioType.AGENT_CUSTOM_QUESTION_GENERATION
     );
 
     const customQuestions: InterviewQuestionWithMetadata[] = [];
@@ -437,7 +439,7 @@ Format: [{"question": "...", "difficulty": "...", "type": "..."}, ...]`;
         maxTokens: 600,
       },
       userId,
-      'strategist-performance-update'
+      ScenarioType.AGENT_RESPONSE_ANALYSIS
     );
 
     const targetedQuestions: InterviewQuestionWithMetadata[] = [];

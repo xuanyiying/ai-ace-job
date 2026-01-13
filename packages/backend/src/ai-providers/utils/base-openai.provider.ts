@@ -143,6 +143,24 @@ export abstract class BaseOpenAIProvider implements AIProvider {
   }
 
   /**
+   * Generate embedding for text
+   */
+  async embed(text: string, model?: string): Promise<number[]> {
+    return this.retryHandler.executeWithRetry(async () => {
+      try {
+        const response = await this.client.embeddings.create({
+          model: model || 'text-embedding-3-small',
+          input: text,
+        });
+
+        return response.data[0].embedding;
+      } catch (error) {
+        throw toAIError(error, this.name, model || 'unknown');
+      }
+    });
+  }
+
+  /**
    * Get model info
    */
   abstract getModelInfo(modelName: string): Promise<ModelInfo>;

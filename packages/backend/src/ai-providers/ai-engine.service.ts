@@ -295,6 +295,100 @@ export class AIEngineService implements OnModuleInit, OnApplicationBootstrap {
   }
 
   /**
+   * Record latency and cost
+   */
+  private async recordMetrics(
+    selectedModel: string,
+    providerName: string,
+    response: AIResponse,
+    startTime: number,
+    scenario: string,
+    userId: string,
+    modelInfo: ModelInfo
+  ): Promise<void> {
+    const latency = Date.now() - startTime;
+    const cost =
+      response.usage.inputTokens * modelInfo.costPerInputToken +
+      response.usage.outputTokens * modelInfo.costPerOutputToken;
+
+    await this.usageTracker.recordUsage({
+      userId,
+      model: selectedModel,
+      provider: providerName,
+      scenario,
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens,
+      cost,
+      latency,
+      success: true,
+      agentType: null,
+      workflowStep: null,
+      errorCode: null,
+    });
+
+    await this.performanceMonitor.recordMetrics(
+      selectedModel,
+      providerName,
+      latency,
+      true
+    );
+  }
+
+  /**
+   * Generate embedding for text
+   * @param text - The text to embed
+   * @param scenario - Scenario name for model selection
+   * @param userId - User ID for tracking
+   * @returns Promise resolving to embedding vector
+   */
+  async embed(
+    text: string,
+    userId: string,
+    scenario: string = ScenarioType.AGENT_EMBEDDING_GENERATION
+  ): Promise<number[]> {
+    const startTime = Date.now();
+    let selectedModel = '';
+    let providerName = '';
+
+    try {
+      // Select model
+      selectedModel = await this.selectModelForScenario(scenario);
+
+      // Get provider
+      const firstColonIndex = selectedModel.indexOf(':');
+      providerName = selectedModel.substring(0, firstColonIndex);
+      const modelName = selectedModel.substring(firstColonIndex + 1);
+      const providerInstance = this.providerFactory.getProvider(providerName);
+
+      if (!providerInstance) {
+        throw new AIError(
+          AIErrorCode.PROVIDER_UNAVAILABLE,
+          `Provider ${providerName} not found`
+        );
+      }
+
+      // Generate embedding
+      const embedding = await providerInstance.embed(text, modelName);
+
+      // Record metrics (with dummy usage for now as embeddings usage is simpler)
+      const latency = Date.now() - startTime;
+      await this.performanceMonitor.recordMetrics(
+        selectedModel,
+        providerName,
+        latency,
+        true
+      );
+
+      return embedding;
+    } catch (error) {
+      this.logger.error(
+        `Embedding generation failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Call AI with unified interface
    * Property 5: Unified request format
    * Property 6: Unified response format
