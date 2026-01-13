@@ -25,6 +25,10 @@ import {
   SafetyCertificateOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
+  UserOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useResumeStore } from '../stores';
@@ -251,20 +255,32 @@ const MyResumesPage: React.FC = () => {
                       </div>
                       <div className="info-grid">
                         <div className="info-card">
-                          <div className="info-label">{t('resume.name', '姓名')}</div>
-                          <div className="info-value">{currentResume.parsedData.personalInfo?.name || '-'}</div>
+                          <div className="info-card-icon"><UserOutlined /></div>
+                          <div className="info-card-content">
+                            <div className="info-label">{t('resume.name', '姓名')}</div>
+                            <div className="info-value">{currentResume.parsedData.personalInfo?.name || '-'}</div>
+                          </div>
                         </div>
                         <div className="info-card">
-                          <div className="info-label">{t('resume.email', '邮箱')}</div>
-                          <div className="info-value">{currentResume.parsedData.personalInfo?.email || '-'}</div>
+                          <div className="info-card-icon"><MailOutlined /></div>
+                          <div className="info-card-content">
+                            <div className="info-label">{t('resume.email', '邮箱')}</div>
+                            <div className="info-value">{currentResume.parsedData.personalInfo?.email || '-'}</div>
+                          </div>
                         </div>
                         <div className="info-card">
-                          <div className="info-label">{t('resume.phone', '电话')}</div>
-                          <div className="info-value">{currentResume.parsedData.personalInfo?.phone || '-'}</div>
+                          <div className="info-card-icon"><PhoneOutlined /></div>
+                          <div className="info-card-content">
+                            <div className="info-label">{t('resume.phone', '电话')}</div>
+                            <div className="info-value">{currentResume.parsedData.personalInfo?.phone || '-'}</div>
+                          </div>
                         </div>
                         <div className="info-card">
-                          <div className="info-label">{t('resume.location', '地点')}</div>
-                          <div className="info-value">{currentResume.parsedData.personalInfo?.location || '-'}</div>
+                          <div className="info-card-icon"><EnvironmentOutlined /></div>
+                          <div className="info-card-content">
+                            <div className="info-label">{t('resume.location', '地点')}</div>
+                            <div className="info-value">{currentResume.parsedData.personalInfo?.location || '-'}</div>
+                          </div>
                         </div>
                       </div>
                     </section>
