@@ -29,11 +29,14 @@ import {
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useResumeStore } from '../stores';
-import { ParseStatus, Resume } from '../types';
+import { ParseStatus, Resume, Optimization } from '../types';
 import { resumeService } from '../services/resume-service';
+import { optimizationService } from '../services/optimization-service';
+import { ResumeOptimizationDialog } from '../components/ResumeOptimizationDialog';
 import './MyResumesPage.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -44,6 +47,10 @@ const MyResumesPage: React.FC = () => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [optimizationVisible, setOptimizationVisible] = useState(false);
+  const [optimizations, setOptimizations] = useState<Optimization[]>([]);
+  const [historyVisible, setHistoryVisible] = useState(false);
+  const [selectedOptimizationId, setSelectedOptimizationId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchResumes();
@@ -58,6 +65,24 @@ const MyResumesPage: React.FC = () => {
 
     return () => clearInterval(pollInterval);
   }, [fetchResumes, resumes]);
+
+  useEffect(() => {
+    if (currentResume) {
+      fetchOptimizations(currentResume.id);
+    }
+  }, [currentResume]);
+
+  const fetchOptimizations = async (resumeId: string) => {
+    try {
+      const all = await optimizationService.listOptimizations();
+      const filtered = all.filter((opt: Optimization) => opt.resumeId === resumeId);
+      setOptimizations(filtered.sort((a: Optimization, b: Optimization) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ));
+    } catch (error) {
+      console.error('Failed to fetch optimizations:', error);
+    }
+  };
 
   const handlePreview = (resume: Resume) => {
     setSelectedResume(resume);
@@ -223,6 +248,23 @@ const MyResumesPage: React.FC = () => {
                     >
                       预览原文
                     </Button>
+                    <Button 
+                      icon={<HistoryOutlined />}
+                      onClick={() => setHistoryVisible(true)}
+                      className="glass-button"
+                    >
+                      {t('resume.optimization_history', '优化历史')}
+                    </Button>
+                    {currentResume.parseStatus === ParseStatus.COMPLETED && (
+                      <Button
+                        type="primary"
+                        icon={<RocketOutlined />}
+                        onClick={() => setOptimizationVisible(true)}
+                        className="bg-gradient-to-r from-primary to-blue-600 border-none shadow-lg shadow-primary/20"
+                      >
+                        {t('resume.optimize', '优化简历')}
+                      </Button>
+                    )}
                     {!currentResume.isPrimary && (
                       <Button 
                         type="primary" 
@@ -523,7 +565,80 @@ const MyResumesPage: React.FC = () => {
         </main>
       </div>
 
-      {/* File Preview Modal */}
+      <ResumeOptimizationDialog
+        visible={optimizationVisible}
+        resumeId={currentResume?.id || ''}
+        initialOptimizationId={selectedOptimizationId}
+        onClose={() => {
+          setOptimizationVisible(false);
+          setSelectedOptimizationId(undefined);
+        }}
+        onSuccess={() => {
+          setOptimizationVisible(false);
+          setSelectedOptimizationId(undefined);
+          fetchResumes();
+          message.success(t('resume.optimization_success', '简历优化已完成并保存为新版本'));
+        }}
+      />
+
+      <Modal
+        title={
+          <Space>
+            <HistoryOutlined className="text-primary" />
+            <span>{t('resume.optimization_history', '优化历史')}</span>
+          </Space>
+        }
+        open={historyVisible}
+        onCancel={() => setHistoryVisible(false)}
+        footer={null}
+        width={700}
+        className="history-modal"
+      >
+        <div className="py-2">
+          {!optimizations || optimizations.length === 0 ? (
+            <Empty description={t('resume.no_history', '暂无优化记录')} />
+          ) : (
+            <div className="history-list max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+              {optimizations.map((opt) => (
+                <div key={opt.id} className="history-item p-4 mb-4 rounded-xl border border-solid hover:border-primary/30 transition-all group">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-bold text-primary mb-1 flex items-center gap-2">
+                        <RocketOutlined className="text-primary text-xs" />
+                        {opt.job?.title || 'Target Position'}
+                      </div>
+                      <div className="text-xs text-secondary">
+                        {new Date(opt.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <Tag color={opt.status === 'COMPLETED' ? 'success' : 'processing'}>
+                      {opt.status === 'COMPLETED' ? t('common.completed') : t('common.processing')}
+                    </Tag>
+                  </div>
+                  <div className="flex justify-between items-center mt-3">
+                    <div className="text-xs text-tertiary">
+                      {opt.suggestions?.length || 0} {t('resume.suggestions_count', '个优化建议')}
+                    </div>
+                    <Button 
+                      type="link" 
+                      size="small" 
+                      onClick={() => {
+                        setSelectedOptimizationId(opt.id);
+                        setOptimizationVisible(true);
+                        setHistoryVisible(false);
+                      }}
+                    >
+                      查看详情
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Preview Modal */}
       <Modal
         title={
           <Space>

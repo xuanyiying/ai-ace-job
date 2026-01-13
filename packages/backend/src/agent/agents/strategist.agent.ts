@@ -154,13 +154,15 @@ export class StrategistAgent {
     );
 
     // Extract relevant skills from resume
-    const relevantSkills = input.resumeData.skills.slice(0, 10);
+    const relevantSkills = Array.isArray(input.resumeData.skills)
+      ? input.resumeData.skills.slice(0, 10).filter((s) => typeof s === 'string')
+      : [];
 
     // Use LLM to identify key focus areas
     const prompt = `Based on the following resume and job description, identify the top 3-5 key focus areas for interview preparation.
 
-Resume Skills: ${input.resumeData.skills.join(', ')}
-Experience: ${input.resumeData.experience.map((e) => e.position).join(', ')}
+Resume Skills: ${relevantSkills.join(', ')}
+Experience: ${Array.isArray(input.resumeData.experience) ? input.resumeData.experience.map((e) => e.position || 'Unknown').join(', ') : 'None'}
 
 Job Description:
 ${input.jobDescription}
@@ -254,14 +256,18 @@ Return a JSON array with 3-5 focus areas. Format: ["area1", "area2", ...]`;
   ): Promise<InterviewQuestionWithMetadata[]> {
     this.logger.debug('Generating custom questions');
 
-    const focusAreasText = analysis.focusAreas.join(', ');
-    const skillsText = analysis.relevantSkills.join(', ');
+    const focusAreasText = Array.isArray(analysis.focusAreas)
+      ? analysis.focusAreas.join(', ')
+      : '';
+    const skillsText = Array.isArray(analysis.relevantSkills)
+      ? analysis.relevantSkills.join(', ')
+      : '';
 
     const prompt = `Generate 5 highly personalized interview questions for a ${input.experienceLevel} level candidate.
 
 Focus Areas: ${focusAreasText}
 Key Skills: ${skillsText}
-Experience: ${input.resumeData.experience.map((e) => e.position).join(', ')}
+Experience: ${Array.isArray(input.resumeData.experience) ? input.resumeData.experience.map((e) => e.position || 'Unknown').join(', ') : 'None'}
 
 Job Description:
 ${input.jobDescription}
@@ -331,9 +337,10 @@ Format: [{"question": "...", "difficulty": "...", "type": "..."}, ...]`;
       let priority: 'must-prepare' | 'important' | 'optional' = 'optional';
 
       // Determine priority based on relevance to focus areas
-      const questionText = question.question.toLowerCase();
-      const focusAreaMatches = analysis.focusAreas.filter((area) =>
-        questionText.includes(area.toLowerCase())
+      const questionText = (question.question || '').toLowerCase();
+      const focusAreas = Array.isArray(analysis.focusAreas) ? analysis.focusAreas : [];
+      const focusAreaMatches = focusAreas.filter((area) =>
+        typeof area === 'string' && questionText.includes(area.toLowerCase())
       ).length;
 
       if (focusAreaMatches >= 2 || question.source === 'custom') {
@@ -466,12 +473,14 @@ Format: [{"question": "...", "difficulty": "...", "type": "..."}, ...]`;
     // Combine with existing questions, prioritizing targeted ones
     const updated = [
       ...targetedQuestions,
-      ...currentQuestions.filter(
-        (q) =>
-          !weakAreas.some((area) =>
-            q.question.toLowerCase().includes(area.toLowerCase())
-          )
-      ),
+      ...currentQuestions.filter((q) => {
+        const questionText = (q.question || '').toLowerCase();
+        return !weakAreas.some(
+          (area) =>
+            typeof area === 'string' &&
+            questionText.includes(area.toLowerCase())
+        );
+      }),
     ];
 
     this.logger.debug(
@@ -488,19 +497,33 @@ Format: [{"question": "...", "difficulty": "...", "type": "..."}, ...]`;
     const keywords = new Set<string>();
 
     // Add skills
-    for (const skill of resumeData.skills) {
-      keywords.add(skill.toLowerCase());
+    if (Array.isArray(resumeData.skills)) {
+      for (const skill of resumeData.skills) {
+        if (typeof skill === 'string') {
+          keywords.add(skill.toLowerCase());
+        }
+      }
     }
 
     // Add positions
-    for (const exp of resumeData.experience) {
-      keywords.add(exp.position.toLowerCase());
+    if (Array.isArray(resumeData.experience)) {
+      for (const exp of resumeData.experience) {
+        if (exp && typeof exp.position === 'string') {
+          keywords.add(exp.position.toLowerCase());
+        }
+      }
     }
 
     // Add technologies from projects
-    for (const project of resumeData.projects) {
-      for (const tech of project.technologies) {
-        keywords.add(tech.toLowerCase());
+    if (Array.isArray(resumeData.projects)) {
+      for (const project of resumeData.projects) {
+        if (project && Array.isArray(project.technologies)) {
+          for (const tech of project.technologies) {
+            if (typeof tech === 'string') {
+              keywords.add(tech.toLowerCase());
+            }
+          }
+        }
       }
     }
 

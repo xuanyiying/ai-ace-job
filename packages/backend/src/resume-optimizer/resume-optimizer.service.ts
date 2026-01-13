@@ -262,6 +262,9 @@ export class ResumeOptimizerService {
   async listOptimizations(userId: string): Promise<Optimization[]> {
     return this.prisma.optimization.findMany({
       where: { userId },
+      include: {
+        job: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

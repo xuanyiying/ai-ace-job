@@ -81,7 +81,7 @@
     "logout": "退出登录",
     "admin": "管理",
     "agents": "AI 助手",
-    "resume_optimization": "简历优化",
+    "pitch_perfect": "履历点睛",
     "interview_prediction": "面试预测",
     "mock_interview": "模拟面试",
     "job_input": "职位输入",
@@ -94,7 +94,41 @@
     "invite_code_management": "邀请码管理",
     "knowledge_base": "知识库管理",
     "dark_mode": "深色模式",
-    "light_mode": "浅色模式"
+    "light_mode": "浅色模式",
+    "resume_optimization": "简历优化"
+  },
+  "resume": {
+    "my_resumes": "我的简历",
+    "my_resumes_desc": "管理您的简历版本，查看解析后的结构化数据",
+    "list_title": "简历记录",
+    "no_resumes": "暂无简历",
+    "upload_success": "简历上传成功",
+    "upload_failed": "简历上传失败",
+    "delete_confirm_title": "确认删除简历",
+    "delete_confirm_content": "您确定要删除这份简历吗？此操作无法撤销。",
+    "delete_success": "简历删除成功",
+    "delete_failed": "简历删除失败",
+    "set_primary_success": "已设为活跃简历",
+    "set_primary_failed": "设置失败",
+    "set_as_active": "设为活跃",
+    "status_completed": "已解析",
+    "status_processing": "解析中",
+    "status_failed": "解析失败",
+    "status_pending": "待处理",
+    "optimize": "优化简历",
+    "optimization_title": "AI 简历优化",
+    "optimization_desc": "根据目标职位描述 (JD) 智能优化您的简历内容",
+    "jd_input_placeholder": "请粘贴目标职位的描述 (Job Description)...",
+    "optimizing": "正在为您优化简历，请稍候...",
+    "accept_all": "全部接受",
+    "reject_all": "全部拒绝",
+    "apply_changes": "应用更改并保存新版本",
+    "copy_content": "复制内容",
+    "diff_original": "原始内容",
+    "diff_optimized": "优化内容",
+    "suggestion_reason": "优化建议",
+    "no_suggestions": "未发现可优化的建议",
+    "optimization_success": "简历优化已完成并保存为新版本"
   },
   "models": {
     "title": "模型配置管理",
@@ -144,13 +178,13 @@
   "scenario": {
     "resume_parsing": "简历解析",
     "job_description_parsing": "职位描述解析",
-    "resume_optimization": "简历优化",
+    "resume_optimization": "履历点睛",
     "interview_question_generation": "面试问题生成",
     "match_score_calculation": "匹配度计算"
   },
   "chat": {
     "actions": {
-      "resume_optimization": "简历优化",
+      "resume_optimization": "履历点睛",
       "interview_prediction": "面试预测",
       "mock_interview": "模拟面试",
       "job_input": "职位输入",
@@ -195,8 +229,8 @@
     "pdf_desc": "将优化后的内容导出为 PDF",
     "interview_label": "模拟面试",
     "interview_desc": "针对职位的模拟面试",
-    "optimize_label": "简历优化",
-    "optimize_desc": "基于目标职位对简历进行深度优化"
+    "optimize_label": "履历点睛",
+    "optimize_desc": "生成适配岗位的黄金自我介绍"
   },
   "pricing": {
     "title": "简单透明的价格方案",

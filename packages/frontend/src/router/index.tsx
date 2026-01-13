@@ -125,7 +125,7 @@ const routes: RouteObject[] = [
         element: <RolePlayPage />,
       },
       {
-        path: 'agents/resume-optimization-expert',
+        path: 'agents/pitch-perfect',
         element: <PitchPerfectPage />,
       },
       {

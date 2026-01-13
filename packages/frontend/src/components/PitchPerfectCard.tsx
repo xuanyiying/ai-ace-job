@@ -119,7 +119,7 @@ export const PitchPerfectCard: React.FC<PitchPerfectCardProps> = ({
                 className="integrated-back-btn"
               />
             )}
-            <Title level={4} className="!text-white !m-0">个人介绍优化器</Title>
+            <Title level={4} className="!text-white !m-0">履历点睛</Title>
           </div>
           <Button 
             icon={<HistoryOutlined />} 

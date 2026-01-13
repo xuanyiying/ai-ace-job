@@ -282,6 +282,7 @@ export interface Optimization {
   userId: string;
   resumeId: string;
   jobId: string;
+  job?: Job;
   matchScore?: MatchScore;
   suggestions: Suggestion[];
   optimizedContent?: ParsedResumeData;

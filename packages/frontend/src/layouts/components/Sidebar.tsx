@@ -67,10 +67,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       path: '/resumes',
     },
     {
-      key: 'resume-optimization',
+      key: 'pitch-perfect',
       icon: <StarOutlined />,
-      label: t('menu.resume_optimization', '简历优化'),
-      path: '/agents/resume-optimization-expert',
+      label: t('menu.pitch_perfect', '履历点睛'),
+      path: '/agents/pitch-perfect',
     },
     {
       key: 'interview-prediction',

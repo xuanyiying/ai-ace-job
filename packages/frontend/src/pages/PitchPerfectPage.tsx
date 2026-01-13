@@ -32,8 +32,8 @@ export const PitchPerfectPage: React.FC = () => {
         <div className="header-icon-wrapper">
           <HighlightOutlined className="header-icon" />
         </div>
-        <h1>简历优化专家</h1>
-        <p>基于目标职位深度优化您的个人简介和简历核心内容</p>
+        <h1>履历点睛</h1>
+        <p>生成一段黄金自我介绍，让您在众多候选人中脱颖而出。</p>
       </div>
 
       {showForm ? (
