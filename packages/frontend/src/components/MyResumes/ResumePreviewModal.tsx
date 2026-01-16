@@ -53,7 +53,7 @@ export const ResumePreviewModal: React.FC<ResumePreviewModalProps> = ({
       }}
       className="full-screen-modal"
     >
-      <div className="bg-gray-800 h-full overflow-hidden">
+      <div className="bg-[#F5F5F5] dark:bg-gray-800 h-full overflow-hidden">
         {resume?.fileUrl ? (
           <iframe
             src={resume.fileUrl}

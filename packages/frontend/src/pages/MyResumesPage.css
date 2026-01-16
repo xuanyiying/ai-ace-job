@@ -8,86 +8,19 @@
 
 .resumes-layout {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 1.5rem;
   max-width: 1600px;
   margin: 0 auto;
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles - Migrated to Tailwind in ResumeSidebar.tsx */
 .resume-sidebar {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.resume-list-card {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border) !important;
-  border-radius: 20px !important;
-  overflow: hidden;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-}
-
-.resume-list-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--glass-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.resume-item {
-  padding: 0.75rem 1rem;
-  margin: 0.25rem 0.75rem;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.resume-item:hover {
-  background: var(--glass-bg-hover);
-  transform: translateX(4px);
-}
-
-.resume-item.active {
-  background: rgba(var(--primary-rgb), 0.1);
-  border-color: rgba(var(--primary-rgb), 0.3);
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.05);
-}
-
-.resume-item-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--glass-bg-hover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--primary-color) !important;
-  transition: all 0.3s;
-}
-
-[data-theme='light'] .resume-item-icon {
-  background: rgba(var(--primary-rgb), 0.08);
-  color: var(--primary-color) !important;
-}
-
-.resume-item-icon .anticon {
-  color: inherit !important;
-}
-
-.active .resume-item-icon {
-  background: var(--primary-color) !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-}
 
 /* Content Area Styles */
 .resume-content {

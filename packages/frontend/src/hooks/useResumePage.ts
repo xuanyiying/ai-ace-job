@@ -81,22 +81,24 @@ export const useResumePage = () => {
     }
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await resumeService.deleteResume(id);
+      removeResume(id);
+      message.success(t('resume.delete_success', '简历已删除'));
+    } catch (error) {
+      message.error(t('resume.delete_failed', '删除失败'));
+    }
+  };
+
+  const handleDeleteWithConfirm = (id: string, title: string) => {
     Modal.confirm({
       title: t('resume.delete_confirm_title', '确定要删除这份简历吗？'),
       content: `${t('resume.delete_confirm_content', '删除后将无法找回：')}${title}`,
       okText: t('common.delete', '删除'),
       okType: 'danger',
       cancelText: t('common.cancel', '取消'),
-      onOk: async () => {
-        try {
-          await resumeService.deleteResume(id);
-          removeResume(id);
-          message.success(t('resume.delete_success', '简历已删除'));
-        } catch (error) {
-          message.error(t('resume.delete_failed', '删除失败'));
-        }
-      },
+      onOk: () => handleDelete(id),
     });
   };
 
@@ -121,6 +123,7 @@ export const useResumePage = () => {
     fetchResumes,
     handleUpload,
     handleDelete,
+    handleDeleteWithConfirm,
     handleSetPrimary,
   };
 };

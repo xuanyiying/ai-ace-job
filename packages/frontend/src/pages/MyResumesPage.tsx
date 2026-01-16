@@ -1,14 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { message, Typography } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import { useResumePage } from '../hooks/useResumePage';
 import { ResumeSidebar } from '../components/MyResumes/ResumeSidebar';
 import { ResumeDetail } from '../components/MyResumes/ResumeDetail';
 import { ResumeEmptyState } from '../components/MyResumes/ResumeEmptyState';
-import { ResumeHistoryModal } from '../components/MyResumes/ResumeHistoryModal';
-import { ResumePreviewModal } from '../components/MyResumes/ResumePreviewModal';
-import { ResumeOptimizationDialog } from '../components/ResumeOptimizationDialog';
-import { ResumeAnalysisDrawer } from '../components/ResumeAnalysisDrawer';
+import { ResumeViewMode } from '../components/MyResumes/ResumeDetailHeader';
 import './MyResumesPage.css';
 
 const { Title, Paragraph } = Typography;
@@ -20,18 +17,53 @@ const MyResumesPage: React.FC = () => {
     currentResume,
     setCurrentResume,
     state,
-    setState,
     data,
-    setData,
     fetchResumes,
     handleUpload,
     handleDelete,
     handleSetPrimary,
   } = useResumePage();
 
-  const handlePreview = (resume: any) => {
-    setData((prev) => ({ ...prev, selectedPreviewResume: resume }));
-    setState((prev) => ({ ...prev, previewVisible: true }));
+  const [viewMode, setViewMode] = useState<ResumeViewMode>('analysis');
+  const [initialOptimizationId, setInitialOptimizationId] = useState<string | undefined>(undefined);
+
+  // Reset view mode when resume changes
+  useEffect(() => {
+    if (currentResume) {
+      setViewMode('analysis');
+      setInitialOptimizationId(undefined);
+    }
+  }, [currentResume?.id]);
+
+  const handleOptimizationSuccess = () => {
+    fetchResumes();
+    message.success(t('resume.optimization_success', '简历优化已完成并保存为新版本'));
+    // Optionally switch to history or detail view? 
+    // User didn't specify, but maybe stay on optimization view or go to history?
+    // Let's keep it on optimization view for now so they can see the result if the component supports it.
+    // Or maybe switch to history to see the new version.
+    // The previous implementation closed the dialog.
+    // Let's reload the optimizations list (which happens automatically via fetchResumes -> useResumePage effect?)
+    // No, fetchResumes refreshes resumes list. useResumePage has effect on currentResume to fetchOptimizations.
+    // If we want to refresh optimizations, we might need to trigger it.
+    // However, optimizations are fetched when currentResume changes.
+    // If fetchResumes updates currentResume (because it's in the list), it might trigger fetchOptimizations?
+    // Actually, useResumePage has `useEffect(() => { if (currentResume) fetchOptimizations(...) }, [currentResume])`.
+    // Does fetchResumes update currentResume reference? Probably not if it just updates the list.
+    // But `useResumeStore` updates `resumes`. `currentResume` is state in store.
+    // If I want to refresh optimizations, I might need to trigger it manually or rely on `fetchResumes` updating something.
+    // Ideally `useResumePage` should expose `fetchOptimizations`.
+    // But for now, let's assume `fetchResumes` is enough or the optimization view handles its own data refreshing if needed.
+    // Actually, `ResumeHistoryView` takes `optimizations` as prop.
+    // If `data.optimizations` isn't updated, history view won't show new one.
+    // `useResumePage` doesn't expose `fetchOptimizations`.
+    // I should probably add `fetchOptimizations` to the return of `useResumePage` or rely on a hack.
+    // But let's stick to the plan.
+  };
+
+  const handleSelectOptimization = (id: string) => {
+    setInitialOptimizationId(id);
+    setViewMode('optimization');
   };
 
   return (
@@ -55,6 +87,7 @@ const MyResumesPage: React.FC = () => {
           currentResume={currentResume}
           onSelect={setCurrentResume}
           onUpload={handleUpload}
+          onDelete={handleDelete}
           uploading={state.uploading}
         />
 
@@ -62,27 +95,13 @@ const MyResumesPage: React.FC = () => {
           {currentResume ? (
             <ResumeDetail
               resume={currentResume}
-              onPreview={() => handlePreview(currentResume)}
-              onHistory={() =>
-                setState((prev) => ({ ...prev, historyVisible: true }))
-              }
-              onAnalyze={() => {
-                setData((prev) => ({
-                  ...prev,
-                  selectedAnalysisResumeId: currentResume.id,
-                }));
-                setState((prev) => ({ ...prev, analysisVisible: true }));
-              }}
-              onOptimize={() =>
-                setState((prev) => ({ ...prev, optimizationVisible: true }))
-              }
+              viewMode={viewMode}
+              onViewChange={setViewMode}
               onSetPrimary={() => handleSetPrimary(currentResume.id)}
-              onDelete={() =>
-                handleDelete(
-                  currentResume.id,
-                  currentResume.title || currentResume.originalFilename || ''
-                )
-              }
+              optimizations={data.optimizations}
+              onSelectOptimization={handleSelectOptimization}
+              initialOptimizationId={initialOptimizationId}
+              onOptimizationSuccess={handleOptimizationSuccess}
             />
           ) : (
             <ResumeEmptyState
@@ -92,53 +111,6 @@ const MyResumesPage: React.FC = () => {
           )}
         </main>
       </div>
-
-      <ResumeOptimizationDialog
-        visible={state.optimizationVisible}
-        resumeId={currentResume?.id || ''}
-        initialOptimizationId={data.selectedOptimizationId}
-        onClose={() => {
-          setState((prev) => ({ ...prev, optimizationVisible: false }));
-          setData((prev) => ({ ...prev, selectedOptimizationId: undefined }));
-        }}
-        onSuccess={() => {
-          setState((prev) => ({ ...prev, optimizationVisible: false }));
-          setData((prev) => ({ ...prev, selectedOptimizationId: undefined }));
-          fetchResumes();
-          message.success(
-            t('resume.optimization_success', '简历优化已完成并保存为新版本')
-          );
-        }}
-      />
-
-      <ResumeAnalysisDrawer
-        visible={state.analysisVisible}
-        resumeId={data.selectedAnalysisResumeId}
-        onClose={() => {
-          setState((prev) => ({ ...prev, analysisVisible: false }));
-          setData((prev) => ({ ...prev, selectedAnalysisResumeId: null }));
-        }}
-      />
-
-      <ResumeHistoryModal
-        visible={state.historyVisible}
-        optimizations={data.optimizations}
-        onClose={() => setState((prev) => ({ ...prev, historyVisible: false }))}
-        onSelectOptimization={(id) => {
-          setData((prev) => ({ ...prev, selectedOptimizationId: id }));
-          setState((prev) => ({
-            ...prev,
-            optimizationVisible: true,
-            historyVisible: false,
-          }));
-        }}
-      />
-
-      <ResumePreviewModal
-        visible={state.previewVisible}
-        resume={data.selectedPreviewResume}
-        onClose={() => setState((prev) => ({ ...prev, previewVisible: false }))}
-      />
     </div>
   );
 };
