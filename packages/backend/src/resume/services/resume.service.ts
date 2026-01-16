@@ -4,6 +4,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AIEngine } from '@/ai';
@@ -32,6 +34,7 @@ export class ResumeService {
     private prisma: PrismaService,
     private aiEngine: AIEngine,
     private storageService: StorageService,
+    @Inject(forwardRef(() => AIQueueService))
     private aiQueueService: AIQueueService
   ) {}
 

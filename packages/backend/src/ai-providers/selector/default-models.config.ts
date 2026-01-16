@@ -51,7 +51,7 @@ export const DEFAULT_OPEN_SOURCE_MODELS: ModelRegistrationData[] = [
   },
 
   {
-    name: 'qwen-flash',
+    name: 'qwen-turbo',
     provider: 'qwen',
     family: ModelFamily.QWEN,
     parameterSize: 'unknown',
@@ -151,6 +151,21 @@ export const DEFAULT_OPEN_SOURCE_MODELS: ModelRegistrationData[] = [
     avgLatencyMs: 1000,
     qualityRating: 8,
     supportedFeatures: ['chat'],
+    isAvailable: true,
+    status: 'active',
+  },
+
+  {
+    name: 'text-embedding-v3',
+    provider: 'qwen',
+    family: ModelFamily.QWEN,
+    parameterSize: 'unknown',
+    contextWindow: 8192,
+    costPerInputToken: 0.00001,
+    costPerOutputToken: 0,
+    avgLatencyMs: 200,
+    qualityRating: 9,
+    supportedFeatures: ['embedding'],
     isAvailable: true,
     status: 'active',
   },

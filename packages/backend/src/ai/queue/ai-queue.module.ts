@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { AIQueueService } from './ai-queue.service';
 import { AIQueueProcessor } from './ai-queue.processor';
@@ -17,7 +17,7 @@ import { ChatModule } from '@/chat/chat.module';
     }),
     AIModule,
     PrismaModule,
-    ChatModule,
+    forwardRef(() => ChatModule),
   ],
   providers: [AIQueueService, AIQueueProcessor],
   exports: [AIQueueService],

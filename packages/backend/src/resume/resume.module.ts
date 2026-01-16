@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ResumeService } from './services/resume.service';
 import { ResumeOptimizerService } from './services/resume-optimizer.service';
 import { PdfGenerationService } from './services/pdf-generation.service';
@@ -18,7 +18,7 @@ import { AIProvidersModule } from '../ai-providers/ai-providers.module';
     PrismaModule,
     AIModule,
     StorageModule,
-    AIQueueModule,
+    forwardRef(() => AIQueueModule),
     QuotaModule,
     AIProvidersModule,
   ],

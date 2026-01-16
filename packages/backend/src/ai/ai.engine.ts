@@ -9,6 +9,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import mammoth from 'mammoth';
 import pdfParse from 'pdf-parse';
 import { AIEngineService } from '@/ai-providers/ai-engine.service';
+import { PromptTemplateManager } from '@/ai-providers/config';
 import { AIRequest } from '@/ai-providers';
 import { PromptScenario } from '@/ai-providers/interfaces/prompt-template.interface';
 import { ScenarioType } from '@/ai-providers/interfaces/model.interface';
@@ -102,7 +103,10 @@ const ParsedResumeDataSchema = z.object({
 export class AIEngine {
   private readonly logger = new Logger(AIEngine.name);
 
-  constructor(private aiEngineService: AIEngineService) {}
+  constructor(
+    private aiEngineService: AIEngineService,
+    private promptTemplateManager: PromptTemplateManager,
+  ) {}
 
   /**
    * Extract text content from a file buffer based on file type
@@ -588,14 +592,52 @@ ${description}`,
     try {
       this.logger.debug('Analyzing resume using AI engine service');
 
+      // Get system prompt template
+      const systemTemplate = await this.promptTemplateManager.getTemplate(
+        PromptScenario.RESUME_ANALYSIS_SYSTEM,
+        'zh-CN'
+      );
+
+      // Get user prompt template
+      const userTemplate = await this.promptTemplateManager.getTemplate(
+        PromptScenario.RESUME_ANALYSIS_USER,
+        'zh-CN'
+      );
+
+      if (!systemTemplate || !userTemplate) {
+        this.logger.warn(
+          'Resume analysis templates not found, falling back to default single prompt'
+        );
+        // Fallback logic could go here, or just proceed with default
+      }
+
+      let systemPrompt = '';
+      let userPrompt = '';
+
+      if (systemTemplate) {
+        systemPrompt = await this.promptTemplateManager.renderTemplate(
+          systemTemplate,
+          {}
+        );
+      }
+
+      if (userTemplate) {
+        userPrompt = await this.promptTemplateManager.renderTemplate(
+          userTemplate,
+          {
+            resume_content: JSON.stringify(resumeData, null, 2),
+          }
+        );
+      }
+
       const request: AIRequest = {
         model: '', // Will be auto-selected based on scenario
-        prompt: '', // Will be filled by template
+        prompt: '', // Will be filled by messages
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
         metadata: {
-          templateName: PromptScenario.RESUME_ANALYSIS,
-          templateVariables: {
-            resume_data: JSON.stringify(resumeData, null, 2),
-          },
           response_format: { type: 'json_object' },
         },
       };
@@ -610,15 +652,18 @@ ${description}`,
       const jsonToParse = this.extractJson(response.content);
 
       try {
-        const analysis = JSON.parse(jsonToParse);
-        this.logger.debug('Resume analysis completed successfully');
-        return analysis;
+        const analysisResult = JSON.parse(jsonToParse);
+        this.logger.log('Resume analysis completed successfully');
+        return analysisResult;
       } catch (parseError) {
         this.logger.warn(
-          `Failed to parse resume analysis JSON: ${response.content.substring(0, 200)}...`
+          `Failed to parse analysis JSON: ${response.content.substring(0, 200)}...`
         );
-        // Return text content if JSON parsing fails
-        return { content: response.content };
+        // Return raw content if parsing fails, but wrapped in an object
+        return {
+          raw_content: response.content,
+          error: 'Failed to parse JSON response',
+        };
       }
     } catch (error) {
       this.logger.error('Failed to analyze resume:', error);

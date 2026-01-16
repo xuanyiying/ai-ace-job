@@ -134,8 +134,10 @@ export const useOptimization = ({
   }, [comparisonData.optimized, setLocalItems, t]);
 
   const handleStartOptimization = useCallback(
-    async (hasResume: boolean) => {
-      if (!currentConversation) return;
+    async (hasResume: boolean, overrideConversationId?: string) => {
+      const targetId = overrideConversationId || currentConversation?.id;
+
+      if (!targetId) return;
 
       if (!hasResume) {
         message.warning(
@@ -146,7 +148,7 @@ export const useOptimization = ({
 
       try {
         setIsOptimizationLoading(true);
-        sendSocketMessage(currentConversation.id, '优化简历', {
+        sendSocketMessage(targetId, '优化简历', {
           action: 'optimize_resume',
         });
       } catch (error) {

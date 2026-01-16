@@ -1,5 +1,5 @@
 import { Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { Job } from 'bull';
 import { AIEngine } from '../ai.engine';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -13,6 +13,7 @@ export class AIQueueProcessor {
   constructor(
     private aiEngine: AIEngine,
     private prisma: PrismaService,
+    @Inject(forwardRef(() => ChatGateway))
     private chatGateway: ChatGateway
   ) {}
 

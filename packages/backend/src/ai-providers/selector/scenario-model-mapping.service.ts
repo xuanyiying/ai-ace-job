@@ -24,7 +24,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
     strategy: SelectionStrategyType.COST,
     primaryModels: [
       'ollama:deepseek-r1:1.5b',
-      'qwen:qwen-flash',
+      'qwen:qwen-turbo',
       'qwen:qwen3-coder-flash',
     ],
     fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-max-preview'],
@@ -83,7 +83,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
       'qwen:deepseek-v3.2',
       'qwen:Moonshot-Kimi-K2-Instruct',
     ],
-    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen-flash'],
+    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen-turbo'],
     weights: { quality: 0.4, cost: 0.3, latency: 0.3 },
   },
 
@@ -91,7 +91,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.JOB_DESCRIPTION_PARSING]: {
     scenario: ScenarioType.JOB_DESCRIPTION_PARSING,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['ollama:deepseek-r1:1.5b', 'qwen:qwen-flash'],
+    primaryModels: ['ollama:deepseek-r1:1.5b', 'qwen:qwen-turbo'],
     fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -106,7 +106,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
       'qwen:deepseek-v3.2',
       'qwen:glm-4.7',
     ],
-    fallbackModels: ['qwen:qwen-flash', 'qwen:Moonshot-Kimi-K2-Instruct'],
+    fallbackModels: ['qwen:qwen-turbo', 'qwen:Moonshot-Kimi-K2-Instruct'],
     weights: { quality: 0.4, cost: 0.3, latency: 0.3 },
   },
 
@@ -115,7 +115,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_STAR_EXTRACTION]: {
     scenario: ScenarioType.AGENT_STAR_EXTRACTION,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'qwen:qwen3-coder-flash'],
+    primaryModels: ['qwen:qwen-turbo', 'qwen:qwen3-coder-flash'],
     fallbackModels: ['qwen:glm-4.7', 'ollama:deepseek-r1:1.5b'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -125,7 +125,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_KEYWORD_MATCHING]: {
     scenario: ScenarioType.AGENT_KEYWORD_MATCHING,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'qwen:qwen3-coder-flash'],
+    primaryModels: ['qwen:qwen-turbo', 'qwen:qwen3-coder-flash'],
     fallbackModels: ['qwen:glm-4.7', 'ollama:deepseek-r1:1.5b'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -149,7 +149,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_CONTEXT_ANALYSIS]: {
     scenario: ScenarioType.AGENT_CONTEXT_ANALYSIS,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'ollama:deepseek-r1:1.5b'],
+    primaryModels: ['qwen:qwen-turbo', 'ollama:deepseek-r1:1.5b'],
     fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -174,7 +174,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
     scenario: ScenarioType.AGENT_QUESTION_PRIORITIZATION,
     strategy: SelectionStrategyType.BALANCED,
     primaryModels: ['qwen:glm-4.7', 'qwen:deepseek-v3.2'],
-    fallbackModels: ['qwen:qwen-flash', 'qwen:Moonshot-Kimi-K2-Instruct'],
+    fallbackModels: ['qwen:qwen-turbo', 'qwen:Moonshot-Kimi-K2-Instruct'],
     weights: { quality: 0.4, cost: 0.3, latency: 0.3 },
   },
 
@@ -196,7 +196,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_RESPONSE_PROCESSING]: {
     scenario: ScenarioType.AGENT_RESPONSE_PROCESSING,
     strategy: SelectionStrategyType.LATENCY,
-    primaryModels: ['qwen:qwen-flash', 'qwen:glm-4.7'],
+    primaryModels: ['qwen:qwen-turbo', 'qwen:glm-4.7'],
     fallbackModels: ['ollama:deepseek-r1:1.5b', 'qwen:qwen3-coder-flash'],
     weights: { quality: 0.2, cost: 0.2, latency: 0.6 },
     maxLatencyMs: 2000,
@@ -207,7 +207,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
     scenario: ScenarioType.AGENT_RESPONSE_ANALYSIS,
     strategy: SelectionStrategyType.BALANCED,
     primaryModels: ['qwen:deepseek-v3.2', 'qwen:glm-4.7'],
-    fallbackModels: ['qwen:qwen-flash', 'qwen:Moonshot-Kimi-K2-Instruct'],
+    fallbackModels: ['qwen:qwen-turbo', 'qwen:Moonshot-Kimi-K2-Instruct'],
     weights: { quality: 0.4, cost: 0.3, latency: 0.3 },
   },
 
@@ -229,7 +229,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_CONTEXT_COMPRESSION]: {
     scenario: ScenarioType.AGENT_CONTEXT_COMPRESSION,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'ollama:deepseek-r1:1.5b'],
+    primaryModels: ['qwen:qwen-turbo', 'ollama:deepseek-r1:1.5b'],
     fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -239,7 +239,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_RAG_RETRIEVAL]: {
     scenario: ScenarioType.AGENT_RAG_RETRIEVAL,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'ollama:deepseek-r1:1.5b'],
+    primaryModels: ['qwen:qwen-turbo', 'ollama:deepseek-r1:1.5b'],
     fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
@@ -249,8 +249,8 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
   [ScenarioType.AGENT_EMBEDDING_GENERATION]: {
     scenario: ScenarioType.AGENT_EMBEDDING_GENERATION,
     strategy: SelectionStrategyType.COST,
-    primaryModels: ['qwen:qwen-flash', 'ollama:deepseek-r1:1.5b'],
-    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen3-coder-flash'],
+    primaryModels: ['qwen:text-embedding-v3', 'ollama:deepseek-r1:1.5b'],
+    fallbackModels: ['qwen:text-embedding-v3'],
     weights: { quality: 0.3, cost: 0.5, latency: 0.2 },
     minQualityScore: 6,
   },
@@ -260,7 +260,7 @@ const DEFAULT_SCENARIO_CONFIGS: Record<ScenarioType, ScenarioConfig> = {
     scenario: ScenarioType.GENERAL,
     strategy: SelectionStrategyType.BALANCED,
     primaryModels: ['qwen:qwen3-max-preview', 'qwen:deepseek-v3.2'],
-    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen-flash'],
+    fallbackModels: ['qwen:glm-4.7', 'qwen:qwen-turbo'],
     weights: { quality: 0.4, cost: 0.3, latency: 0.3 },
   },
 };

@@ -53,6 +53,8 @@ export enum PromptScenario {
   MOCK_INTERVIEW = 'mock_interview',
   KNOWLEDGE_BASE_QUERY = 'knowledge_base_query',
   RESUME_ANALYSIS = 'resume_analysis',
+  RESUME_ANALYSIS_SYSTEM = 'resume_analysis_system',
+  RESUME_ANALYSIS_USER = 'resume_analysis_user',
 }
 
 /**

@@ -56,11 +56,12 @@ const ChatPage: React.FC = () => {
     failedFiles,
   } = useResumeUpload({
     currentConversationId: currentConversation?.id,
-    onResumeParsed: (resumeId, markdown) => {
+    onResumeParsed: (resumeId, markdown, conversationId) => {
+      const targetId = conversationId || currentConversation?.id;
       // Notify socket about parsed resume
-      if (currentConversation) {
-        notifyResumeParsed(currentConversation.id, resumeId, markdown);
-        sendSocketMessage(currentConversation.id, '优化简历', {
+      if (targetId) {
+        notifyResumeParsed(targetId, resumeId, markdown);
+        sendSocketMessage(targetId, '优化简历', {
           action: 'optimize_resume',
           resumeId: resumeId,
         });
@@ -191,21 +192,11 @@ const ChatPage: React.FC = () => {
         }
         return;
       }
-      if (!currentConversation && !isLoadingMessages && !loading) {
-        try {
-          await createConversation();
-        } catch (error) {
-          console.error('Failed to create initial conversation:', error);
-        }
-      }
     };
     init();
   }, [
     conversationId,
     currentConversation?.id,
-    isLoadingMessages,
-    loading,
-    createConversation,
     loadMessages,
     setCurrentConversation,
   ]);
@@ -218,11 +209,24 @@ const ChatPage: React.FC = () => {
 
   // Handlers
   const handleSubmit = async (nextValue: string) => {
-    if (!nextValue || !currentConversation) return;
+    if (!nextValue) return;
+
+    let targetId = currentConversation?.id;
+    if (!targetId) {
+      try {
+        const newConvo = await createConversation();
+        targetId = newConvo.id;
+      } catch (error) {
+        console.error('Failed to create conversation:', error);
+        message.error(t('common.error'));
+        return;
+      }
+    }
+
     try {
       setValue('');
       setLoading(true);
-      sendSocketMessage(currentConversation.id, nextValue, {
+      sendSocketMessage(targetId, nextValue, {
         hasResume: !!comparisonData.original,
       });
       setLoading(false);
@@ -247,11 +251,41 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleActionClick = (key: string, label: string) => {
+  const handleFileUploadWrapper = async (file: File) => {
+    let targetId = currentConversation?.id;
+    if (!targetId) {
+      try {
+        const newConvo = await createConversation();
+        targetId = newConvo.id;
+      } catch (error) {
+        console.error('Failed to create conversation:', error);
+        message.error(t('common.error'));
+        return;
+      }
+    }
+    if (targetId) {
+      await handleResumeUpload(file, undefined, targetId);
+    }
+  };
+
+  const handleActionClick = async (key: string, label: string) => {
     if (key === 'job_input') {
       setJobInputDialogVisible(true);
     } else if (key === 'resume_optimization') {
-      handleStartOptimization(!!(currentResume || comparisonData.original));
+      let targetId = currentConversation?.id;
+      if (!targetId && (currentResume || comparisonData.original)) {
+        try {
+          const newConvo = await createConversation();
+          targetId = newConvo.id;
+        } catch (error) {
+          console.error('Failed to create conversation:', error);
+          return;
+        }
+      }
+      handleStartOptimization(
+        !!(currentResume || comparisonData.original),
+        targetId
+      );
     } else if (key === 'interview_prediction') {
       navigate('/agents/interview-prediction');
     } else if (key === 'mock_interview') {
@@ -276,7 +310,7 @@ const ChatPage: React.FC = () => {
             onChange={setValue}
             onSubmit={handleSubmit}
             loading={loading}
-            onFileSelect={handleResumeUpload}
+            onFileSelect={handleFileUploadWrapper}
             onActionClick={handleActionClick}
           />
         ) : (

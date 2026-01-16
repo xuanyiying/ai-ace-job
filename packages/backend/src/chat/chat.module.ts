@@ -3,7 +3,7 @@
  * Provides unified WebSocket chat functionality
  */
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatGateway } from './chat.gateway';
@@ -16,7 +16,7 @@ import { ResumeModule } from '@/resume/resume.module';
   imports: [
     PrismaModule,
     AIProvidersModule,
-    ResumeModule,
+    forwardRef(() => ResumeModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

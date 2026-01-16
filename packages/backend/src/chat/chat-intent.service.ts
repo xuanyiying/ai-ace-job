@@ -3,7 +3,7 @@
  * Handles intent recognition and dispatches to appropriate handlers
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AIEngineService } from '@/ai-providers/ai-engine.service';
 import { ResumeOptimizerService } from '@/resume/services/resume-optimizer.service';
@@ -116,6 +116,7 @@ export class ChatIntentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiEngineService: AIEngineService,
+    @Inject(forwardRef(() => ResumeOptimizerService))
     private readonly resumeOptimizerService: ResumeOptimizerService
   ) {}
 

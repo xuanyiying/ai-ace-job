@@ -11,7 +11,11 @@ import {
 
 interface UseResumeUploadProps {
   currentConversationId?: string;
-  onResumeParsed?: (resumeId: string, markdown: string) => void;
+  onResumeParsed?: (
+    resumeId: string,
+    markdown: string,
+    conversationId?: string
+  ) => void;
 }
 
 export const useResumeUpload = ({
@@ -52,8 +56,14 @@ export const useResumeUpload = ({
   );
 
   const handleResumeUpload = useCallback(
-    async (file: File, retryMessageId?: string) => {
-      if (!currentConversationId) {
+    async (
+      file: File,
+      retryMessageId?: string,
+      overrideConversationId?: string
+    ) => {
+      const targetConversationId = overrideConversationId || currentConversationId;
+
+      if (!targetConversationId) {
         message.warning('请等待会话初始化完成');
         return;
       }
@@ -181,7 +191,7 @@ export const useResumeUpload = ({
 
         const parsePromise = resumeService.parseResume(
           resume.id,
-          currentConversationId
+          targetConversationId
         );
         const parseTimeoutPromise = new Promise((_, reject) =>
           setTimeout(
@@ -224,7 +234,7 @@ export const useResumeUpload = ({
             parsedData?.extractedText ||
             JSON.stringify(parsedData);
           if (resumeMarkdown && onResumeParsed) {
-            onResumeParsed(resume.id, resumeMarkdown);
+            onResumeParsed(resume.id, resumeMarkdown, targetConversationId);
           }
         } catch (parseError: any) {
           const isTimeout = parseError.message?.includes('超时');

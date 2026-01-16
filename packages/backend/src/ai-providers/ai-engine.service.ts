@@ -1041,7 +1041,11 @@ export class AIEngineService implements OnModuleInit, OnApplicationBootstrap {
    * Validates: Requirements 2.3
    */
   private validateRequest(request: AIRequest): void {
-    if (!request.prompt || !request.prompt.trim()) {
+    // If templateName is provided, prompt can be empty as it will be generated from template
+    const hasTemplate = !!request.metadata?.templateName;
+    const hasPrompt = !!(request.prompt && request.prompt.trim());
+
+    if (!hasPrompt && !hasTemplate) {
       throw new AIError(
         AIErrorCode.INVALID_REQUEST,
         'Prompt is required',
