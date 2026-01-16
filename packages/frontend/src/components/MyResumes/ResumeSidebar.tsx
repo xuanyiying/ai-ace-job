@@ -60,7 +60,7 @@ export const ResumeSidebar: React.FC<ResumeSidebarProps> = ({
 
   return (
     <aside className="resume-sidebar h-full flex flex-col">
-      <div className="resume-list-card flex-1 flex flex-col min-h-0 bg-white/50 backdrop-blur-xl border-0 rounded-2xl overflow-hidden shadow-lg">
+      <div className="resume-list-card flex-1 flex flex-col min-h-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-0 rounded-2xl overflow-hidden shadow-lg">
         {/* Header Section - Simplified */}
         <div className="p-4 border-none flex justify-end">
           <Upload
@@ -99,8 +99,8 @@ export const ResumeSidebar: React.FC<ResumeSidebarProps> = ({
                 className={`
                   group relative flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200
                   ${item.id === currentResume?.id 
-                    ? 'bg-white shadow-sm ring-1 ring-black/5' 
-                    : 'hover:bg-white/60'
+                    ? 'bg-white dark:bg-white/10 shadow-sm ring-1 ring-black/5 dark:ring-white/10' 
+                    : 'hover:bg-white/60 dark:hover:bg-white/5'
                   }
                 `}
                 onClick={() => onSelect(item)}
