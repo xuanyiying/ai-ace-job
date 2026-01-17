@@ -29,7 +29,7 @@ ENV SHARP_LIBVIPS_BINARY_HOST=https://npmmirror.com/mirrors/sharp-libvips
 ENV SASS_BINARY_SITE=https://npmmirror.com/mirrors/node-sass
 ENV PYTHON_MIRROR=https://npmmirror.com/mirrors/python
 ENV NVM_NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
-ENV PUPPETEER_DOWNLOAD_HOST=https://npmmirror.com/mirrors
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV SENTRYCLI_CDNURL=https://npmmirror.com/mirrors/sentry-cli/
 ENV ESBUILD_BINARY_SITE=https://npmmirror.com/mirrors/esbuild
 
@@ -42,6 +42,7 @@ RUN cd packages/backend && pnpm prisma generate
 RUN pnpm run build --filter=@resume-optimizer/backend...
 
 # Deploy the package with production dependencies to a specific directory
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm deploy --filter=@resume-optimizer/backend --prod /app/deploy
 
 # Copy built artifacts and other necessary files to the deploy directory
@@ -57,6 +58,12 @@ RUN npm install -g prisma@5.22.0 && \
 # Stage 3: Runtime
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+# Install Chromium
+RUN apk add --no-cache chromium
+
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
