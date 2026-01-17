@@ -19,6 +19,11 @@ RUN npm config set fetch-retries 5 && \
     npm install -g pnpm@9
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Set Prisma binary mirror to speed up download
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+
 RUN pnpm config set registry https://registry.npmmirror.com && \
     pnpm config set fetch-retries 10 && \
     pnpm config set fetch-retry-factor 2 && \

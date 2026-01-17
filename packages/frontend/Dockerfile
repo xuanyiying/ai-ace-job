@@ -24,7 +24,7 @@ RUN pnpm run build --filter=@resume-optimizer/frontend...
 
 # Stage 3: Runtime
 FROM nginx:alpine
-COPY packages/frontend/nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/packages/frontend/nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /app/packages/frontend/dist /usr/share/nginx/html
 
 EXPOSE 80
