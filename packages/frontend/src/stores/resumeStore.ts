@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Resume } from '../types';
+import { resumeService } from '../services/resume-service';
 
 interface ResumeState {
   resumes: Resume[];
@@ -40,7 +41,6 @@ export const useResumeStore = create<ResumeState>((set, get) => ({
     if (get().isLoading) return;
     set({ isLoading: true });
     try {
-      const { resumeService } = await import('../services/resume-service');
       const resumes = await resumeService.getResumes();
       set({ resumes });
       // Set primary as current if exists
@@ -56,7 +56,6 @@ export const useResumeStore = create<ResumeState>((set, get) => ({
   },
   setPrimary: async (id) => {
     try {
-      const { resumeService } = await import('../services/resume-service');
       const updated = await resumeService.setPrimaryResume(id);
       set((state) => ({
         resumes: state.resumes.map((r) => ({
