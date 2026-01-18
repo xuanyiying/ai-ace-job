@@ -14,14 +14,36 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { EndSessionDto } from './dto/end-session.dto';
 import { QuestionGeneratorService } from './services/question-generator.service';
 import { InterviewSessionService } from './services/interview-session.service';
+import { AIEngine } from '@/ai';
+import { PromptScenario } from '@/ai-providers/interfaces/prompt-template.interface';
+import { GetPreparationGuideDto } from './dto/get-preparation-guide.dto';
 
 @Injectable()
 export class InterviewService {
   constructor(
     private prisma: PrismaService,
     private questionGenerator: QuestionGeneratorService,
-    private sessionService: InterviewSessionService
+    private sessionService: InterviewSessionService,
+    private aiEngine: AIEngine
   ) {}
+
+  async getPreparationGuide(dto: GetPreparationGuideDto): Promise<string> {
+    const variables: Record<string, any> = {
+      resume_content: dto.resumeData ? JSON.stringify(dto.resumeData) : '',
+      job_description: dto.jobDescription || '',
+      experience_description: dto.question || '', // reusing question field for STAR scenario input
+      question: dto.question || '',
+    };
+
+    return this.aiEngine.generateContent(
+      PromptScenario.INTERVIEW_PREPARATION,
+      variables,
+      {
+        variant: dto.type,
+        language: dto.language,
+      }
+    );
+  }
 
   async generateQuestions(
     optimizationId: string,

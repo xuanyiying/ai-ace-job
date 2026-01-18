@@ -229,4 +229,23 @@ export const interviewService = {
     window.URL.revokeObjectURL(url);
     return url;
   },
+
+  /**
+   * Get interview preparation guide or strategy
+   * @param params - Configuration for the guide generation
+   * @returns The generated guide content
+   */
+  getPreparationGuide: async (params: {
+    type: 'guide' | 'strategy' | 'star';
+    language?: string;
+    resumeData?: Record<string, any>;
+    jobDescription?: string;
+    question?: string;
+  }): Promise<{ content: string }> => {
+    const response = await axios.post<{ content: string }>(
+      '/interview/preparation-guide',
+      params
+    );
+    return response.data;
+  },
 };

@@ -25,6 +25,7 @@ import {
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { EndSessionDto } from './dto/end-session.dto';
+import { GetPreparationGuideDto } from './dto/get-preparation-guide.dto';
 
 @Controller('interview')
 @UseGuards(JwtAuthGuard)
@@ -34,6 +35,20 @@ export class InterviewController {
     private questionService: InterviewQuestionService,
     private sessionService: InterviewSessionService
   ) {}
+
+  /**
+   * Get interview preparation guide or strategy
+   * POST /api/v1/interview/preparation-guide
+   */
+  @Post('preparation-guide')
+  @HttpCode(HttpStatus.OK)
+  async getPreparationGuide(
+    @Request() req: any,
+    @Body() dto: GetPreparationGuideDto
+  ): Promise<{ content: string }> {
+    const content = await this.interviewService.getPreparationGuide(dto);
+    return { content };
+  }
 
   /**
    * Generate interview questions for an optimization

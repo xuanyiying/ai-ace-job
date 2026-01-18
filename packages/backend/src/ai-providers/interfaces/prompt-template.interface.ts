@@ -55,6 +55,12 @@ export enum PromptScenario {
   RESUME_ANALYSIS = 'resume_analysis',
   RESUME_ANALYSIS_SYSTEM = 'resume_analysis_system',
   RESUME_ANALYSIS_USER = 'resume_analysis_user',
+  // New scenarios
+  GENERAL_QA = 'general_qa',
+  SMART_QA = 'smart_qa',
+  TECHNICAL_LEARNING = 'technical_learning',
+  JOB_MATCHING = 'job_matching',
+  INTERVIEW_PREPARATION = 'interview_preparation',
 }
 
 /**
