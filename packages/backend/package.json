@@ -1,8 +1,8 @@
 {
-  "name": "@resume-optimizer/backend",
+  "name": "@interview-ai/backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Backend service for resume optimizer",
+  "description": "Backend service for IntervAI",
   "main": "dist/main.js",
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive GitHub Actions CI/CD pipeline has been configured for the Resume Optimizer MVP project. This includes automated testing, building, security scanning, and deployment workflows.
+A comprehensive GitHub Actions CI/CD pipeline has been configured for the IntervAI MVP project. This includes automated testing, building, security scanning, and deployment workflows.
 
 ## Files Created
 

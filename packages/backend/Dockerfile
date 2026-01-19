@@ -5,7 +5,7 @@ WORKDIR /app
 RUN npm config set registry https://registry.npmmirror.com
 RUN npm install -g pnpm@9
 COPY . .
-RUN pnpm dlx turbo prune --scope=@resume-optimizer/backend --docker
+RUN pnpm dlx turbo prune --scope=@interview-ai/backend --docker
 
 # Stage 2: Build
 # Stage 2: Build
@@ -39,11 +39,11 @@ RUN pnpm config set registry https://registry.npmmirror.com && \
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 RUN cd packages/backend && pnpm prisma generate
-RUN pnpm run build --filter=@resume-optimizer/backend...
+RUN pnpm run build --filter=@interview-ai/backend...
 
 # Deploy the package with production dependencies to a specific directory
 ENV PUPPETEER_SKIP_DOWNLOAD=true
-RUN pnpm deploy --filter=@resume-optimizer/backend --prod /app/deploy
+RUN pnpm deploy --filter=@interview-ai/backend --prod /app/deploy
 
 # Copy built artifacts and other necessary files to the deploy directory
 RUN cp -r packages/backend/dist /app/deploy/dist && \

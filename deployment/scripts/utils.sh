@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 通用工具脚本 - Resume Optimizer
+# 通用工具脚本 - IntervAI
 # ==============================================================================
 
 # 颜色定义
@@ -18,20 +18,20 @@ log() {
     local level=$1
     local msg=$2
     local color=$NC
-    
+
     case $level in
         "INFO") color=$GREEN ;;
         "WARN") color=$YELLOW ;;
         "ERROR") color=$RED ;;
         "STEP") color=$BLUE ;;
     esac
-    
+
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local formatted_msg="[${timestamp}] [${level}] ${msg}"
-    
+
     # 输出到控制台
     echo -e "${color}${formatted_msg}${NC}"
-    
+
     # 写入日志文件（去除颜色代码）
     echo "${formatted_msg}" | sed 's/\x1b\[[0-9;]*m//g' >> "${LOG_FILE}"
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive guide for deploying the Resume Optimizer MVP in a production environment. It covers infrastructure requirements, security configuration, deployment steps, and post-deployment validation.
+This document provides a comprehensive guide for deploying the IntervAI MVP in a production environment. It covers infrastructure requirements, security configuration, deployment steps, and post-deployment validation.
 
 ## Infrastructure Requirements
 

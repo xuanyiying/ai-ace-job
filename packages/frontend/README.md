@@ -1,6 +1,6 @@
-# Resume Optimizer Frontend
+# Interview AI Frontend
 
-React + Vite 前端应用，为 AI Resume Optimizer 平台提供用户界面。
+React + Vite 前端应用，为 Interview AI 平台提供用户界面。
 
 ## 🛠️ 技术栈
 

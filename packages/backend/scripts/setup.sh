@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Backend Setup Script for Resume Optimizer MVP
+# Backend Setup Script for IntervAI MVP
 
 set -e
 
-echo "🚀 Starting Resume Optimizer Backend Setup..."
+echo "🚀 Starting IntervAI Backend Setup..."
 echo ""
 
 # Check if Node.js is installed
@@ -47,7 +47,7 @@ if [ "$DOCKER_AVAILABLE" = true ]; then
         docker-compose up -d
         echo "⏳ Waiting for services to be ready..."
         sleep 5
-        
+
         # Check if services are healthy
         if docker-compose ps | grep -q "healthy"; then
             echo "✅ Docker services are running"
@@ -63,10 +63,10 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🗄️  Generating Prisma Client..."
     npm run prisma:generate
-    
+
     echo "🗄️  Running database migrations..."
     npm run prisma:migrate
-    
+
     echo ""
     read -p "🌱 Do you want to seed initial data (templates)? (y/n) " -n 1 -r
     echo

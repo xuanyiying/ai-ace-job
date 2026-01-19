@@ -427,7 +427,7 @@ describe('AIEngine', () => {
 
   describe('Property Tests', () => {
     /**
-     * **Feature: resume-optimizer-mvp, Property 5: 简历解析性能**
+     * **Feature: interview-ai-mvp, Property 5: 简历解析性能**
      * For any valid resume content, the system should handle parsing request
      */
     it('should handle resume parsing for various inputs', async () => {
@@ -470,7 +470,7 @@ describe('AIEngine', () => {
     });
 
     /**
-     * **Feature: resume-optimizer-mvp, Property 6: 解析数据结构完整性**
+     * **Feature: interview-ai-mvp, Property 6: 解析数据结构完整性**
      * For any successfully parsed resume, the returned JSON data should contain
      * personalInfo, education, experience, and skills fields
      */
@@ -524,7 +524,7 @@ describe('AIEngine', () => {
     });
 
     /**
-     * **Feature: resume-optimizer-mvp, Property 32: AI 调用重试机制**
+     * **Feature: interview-ai-mvp, Property 32: AI 调用重试机制**
      * For any AI model call failure, the system should handle errors gracefully
      */
     it('should handle AI call failures gracefully', async () => {

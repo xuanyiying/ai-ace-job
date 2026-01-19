@@ -80,7 +80,7 @@ tail -f logs/nginx/error.log
 ### Connect to PostgreSQL
 
 ```bash
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod
 ```
 
 ### Run Database Migrations
@@ -104,19 +104,19 @@ ls -lh backups/postgres/
 ### Restore Database
 
 ```bash
-./scripts/restore-postgres.sh resume_optimizer_20240101_120000.sql.gz
+./scripts/restore-postgres.sh interview_ai_20240101_120000.sql.gz
 ```
 
 ### Check Database Size
 
 ```bash
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod -c "SELECT pg_size_pretty(pg_database_size('resume_optimizer_prod'));"
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod -c "SELECT pg_size_pretty(pg_database_size('interview_ai_prod'));"
 ```
 
 ### Vacuum Database
 
 ```bash
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod -c "VACUUM ANALYZE;"
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod -c "VACUUM ANALYZE;"
 ```
 
 ## Redis Operations
@@ -195,7 +195,7 @@ curl https://yourdomain.com/api/v1/health
 ### Database Health
 
 ```bash
-docker-compose -f docker-compose.prod.yml exec postgres pg_isready -U resume_prod_user
+docker-compose -f docker-compose.prod.yml exec postgres pg_isready -U interview_ai_prod_user
 ```
 
 ### Redis Health
@@ -279,7 +279,7 @@ docker-compose -f docker-compose.prod.yml exec redis redis-cli -a ${REDIS_PASSWO
 docker-compose -f docker-compose.prod.yml logs postgres
 
 # Check connections
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod -c "SELECT count(*) FROM pg_stat_activity;"
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Restart database
 docker-compose -f docker-compose.prod.yml restart postgres
@@ -364,10 +364,10 @@ docker-compose -f docker-compose.prod.yml restart backend
 
 ```bash
 # 1. Connect to database
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod
 
 # 2. Change password
-ALTER USER resume_prod_user WITH PASSWORD 'new-strong-password';
+ALTER USER interview_ai_prod_user WITH PASSWORD 'new-strong-password';
 
 # 3. Update .env.production.local
 nano .env.production.local
@@ -488,7 +488,7 @@ docker-compose -f docker-compose.prod.yml stop backend
 ./scripts/restore-postgres.sh <latest-backup>
 
 # 3. Verify integrity
-docker-compose -f docker-compose.prod.yml exec postgres psql -U resume_prod_user -d resume_optimizer_prod -c "SELECT count(*) FROM users;"
+docker-compose -f docker-compose.prod.yml exec postgres psql -U interview_ai_prod_user -d interview_ai_prod -c "SELECT count(*) FROM users;"
 
 # 4. Restart application
 docker-compose -f docker-compose.prod.yml start backend

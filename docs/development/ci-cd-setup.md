@@ -1,6 +1,6 @@
 # CI/CD Setup Guide
 
-This guide provides step-by-step instructions to set up the complete CI/CD pipeline for the Resume Optimizer MVP project.
+This guide provides step-by-step instructions to set up the complete CI/CD pipeline for the IntervAI MVP project.
 
 ## Prerequisites
 

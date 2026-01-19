@@ -140,8 +140,8 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('Resume Optimizer API')
-    .setDescription('AI-powered resume optimization platform API')
+    .setTitle('Interview AI API')
+    .setDescription('AI-powered interview preparation and resume optimization platform API')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('auth', 'Authentication endpoints')

@@ -5,7 +5,7 @@ import * as fc from 'fast-check';
 
 /**
  * Logger Property-Based Tests
- * **Feature: resume-optimizer-mvp, Property 33: 结构化日志记录**
+ * **Feature: interview-ai-mvp, Property 33: 结构化日志记录**
  * **Validates: Requirements 12.5**
  */
 describe('Logger System - Property Tests', () => {

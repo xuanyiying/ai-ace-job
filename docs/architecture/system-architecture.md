@@ -1,4 +1,4 @@
-# AI Resume Optimizer - System Architecture
+# IntervAI - System Architecture
 
 ## Overview
 
@@ -202,7 +202,7 @@ graph TB
         RESUME_CTRL[Resume Controller]
         RESUME_SVC[Resume Service]
         PARSER[Resume Parser]
-        OPTIMIZER[Resume Optimizer]
+        OPTIMIZER[IntervAI]
     end
 
     subgraph "Payment Module"

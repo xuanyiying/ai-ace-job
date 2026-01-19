@@ -1,6 +1,6 @@
-# Resume Optimizer 部署指南
+# IntervAI 部署指南
 
-本指南将协助您将 Resume Optimizer 项目完整部署到腾讯云服务器。
+本指南将协助您将 IntervAI 项目完整部署到腾讯云服务器。
 
 ## 1. 环境预要求
 
@@ -85,4 +85,4 @@ nano .env.production
 - **数据库连接错误**: 检查 `.env.production` 中的 `DATABASE_URL` 是否与容器名及密码匹配。
 
 ---
-*Powered by AI Resume Optimizer Deployment Team*
+*Powered by IntervAI Deployment Team*

@@ -1,6 +1,6 @@
-# Contributing to AI Resume Optimizer
+# Contributing to IntervAI
 
-First off, thank you for considering contributing to AI Resume Optimizer! It's people like you that make this project such a great tool.
+First off, thank you for considering contributing to IntervAI! It's people like you that make this project such a great tool.
 
 ## Table of Contents
 

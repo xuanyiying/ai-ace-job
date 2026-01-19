@@ -10,12 +10,12 @@ Go to **Settings → Secrets and variables → Actions** and add:
 DEPLOY_KEY_STAGING          # SSH private key
 DEPLOY_HOST_STAGING         # e.g., staging.example.com
 DEPLOY_USER_STAGING         # e.g., deploy
-DEPLOY_PATH_STAGING         # e.g., /opt/resume-optimizer
+DEPLOY_PATH_STAGING         # e.g., /opt/interview-ai
 
 DEPLOY_KEY_PRODUCTION       # SSH private key
 DEPLOY_HOST_PRODUCTION      # e.g., api.example.com
 DEPLOY_USER_PRODUCTION      # e.g., deploy
-DEPLOY_PATH_PRODUCTION      # e.g., /opt/resume-optimizer
+DEPLOY_PATH_PRODUCTION      # e.g., /opt/interview-ai
 
 SLACK_WEBHOOK_URL           # Optional: Slack webhook
 ```
@@ -205,7 +205,7 @@ git push origin v1.0.0
 ssh user@staging-server
 
 # View logs
-cd /opt/resume-optimizer
+cd /opt/interview-ai
 docker-compose logs -f backend
 docker-compose logs -f frontend
 ```

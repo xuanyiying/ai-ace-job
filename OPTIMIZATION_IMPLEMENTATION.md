@@ -1,4 +1,4 @@
-# AI Resume Optimizer - 优化实施报告
+# IntervAI - 优化实施报告
 
 ## 执行日期
 

@@ -164,7 +164,7 @@ export class AlertingService {
                 short: false,
               },
             ],
-            footer: 'Resume Optimizer Monitoring',
+            footer: 'IntervAI Monitoring',
             ts: Math.floor(alert.timestamp.getTime() / 1000),
           },
         ],

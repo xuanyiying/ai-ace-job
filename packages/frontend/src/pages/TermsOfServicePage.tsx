@@ -14,7 +14,7 @@ const TermsOfServicePage: React.FC = () => {
           1. Acceptance of Terms
         </Title>
         <Paragraph>
-          By accessing and using AI Resume Optimizer ("Service"), you accept and
+          By accessing and using Interview AI ("Service"), you accept and
           agree to be bound by the terms and provision of this agreement.
         </Paragraph>
 
@@ -81,7 +81,7 @@ const TermsOfServicePage: React.FC = () => {
 
         <Title level={2}>9. Limitation of Liability</Title>
         <Paragraph>
-          In no event shall AI Resume Optimizer, nor its directors, employees,
+          In no event shall Interview AI, nor its directors, employees,
           partners, agents, suppliers, or affiliates, be liable for any
           indirect, incidental, special, consequential or punitive damages.
         </Paragraph>

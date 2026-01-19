@@ -1,6 +1,6 @@
 # End-to-End (E2E) Tests
 
-This directory contains comprehensive end-to-end tests for the Resume Optimizer MVP application. These tests validate complete user workflows and system behavior across multiple scenarios.
+This directory contains comprehensive end-to-end tests for the IntervAI MVP application. These tests validate complete user workflows and system behavior across multiple scenarios.
 
 ## Test Files
 

@@ -12,7 +12,7 @@ ENV ESBUILD_BINARY_SITE=https://npmmirror.com/mirrors/esbuild
 RUN npm config set registry https://registry.npmmirror.com
 RUN npm install -g pnpm@9
 COPY . .
-RUN pnpm dlx turbo prune --scope=@resume-optimizer/frontend --docker
+RUN pnpm dlx turbo prune --scope=@interview-ai/frontend --docker
 
 # Stage 2: Build
 FROM node:20-alpine AS builder
@@ -35,7 +35,7 @@ RUN pnpm config set registry https://registry.npmmirror.com && \
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm run build --filter=@resume-optimizer/frontend...
+RUN pnpm run build --filter=@interview-ai/frontend...
 
 # Stage 3: Runtime
 FROM nginx:alpine

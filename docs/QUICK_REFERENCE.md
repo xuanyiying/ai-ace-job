@@ -1,4 +1,4 @@
-# AI Resume Optimizer - Quick Reference Guide
+# IntervAI - Quick Reference Guide
 
 ## 📚 Documentation Index
 

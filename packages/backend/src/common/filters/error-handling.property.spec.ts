@@ -10,7 +10,7 @@ import {
 
 /**
  * Property-based tests for error handling system
- * **Feature: resume-optimizer-mvp, Property 31: 错误响应标准化**
+ * **Feature: interview-ai-mvp, Property 31: 错误响应标准化**
  * **Validates: Requirements 12.1**
  */
 describe('Error Handling - Property Tests', () => {

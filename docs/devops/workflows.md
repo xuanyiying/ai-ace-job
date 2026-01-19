@@ -1,6 +1,6 @@
 # GitHub Actions CI/CD Workflows
 
-This document describes the automated CI/CD workflows configured for the Resume Optimizer MVP project.
+This document describes the automated CI/CD workflows configured for the IntervAI MVP project.
 
 ## Workflows Overview
 
@@ -300,11 +300,11 @@ Security findings are uploaded to:
 - Container vulnerability scans
 - Secret detection alerts
 
-### Codecov
+### Codec
 
 Code coverage reports are available at:
 
-- <https://codecov.io/gh/your-org/resume-optimizer-mvp>
+- <https://codecov.io/gh/your-org/interview-ai-mvp>
 
 ## Future Enhancements
 

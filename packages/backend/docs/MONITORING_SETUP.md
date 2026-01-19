@@ -1,8 +1,8 @@
-# Resume Optimizer - Monitoring Setup Guide
+# IntervAI - Monitoring Setup Guide
 
 ## Overview
 
-This guide provides instructions for setting up monitoring and alerting for the Resume Optimizer service.
+This guide provides instructions for setting up monitoring and alerting for the IntervAI service.
 
 ## Key Metrics to Monitor
 
@@ -85,7 +85,7 @@ import { Counter, Histogram, Gauge } from 'prom-client';
 
 // Optimization metrics
 const optimizationCounter = new Counter({
-  name: 'resume_optimizer_optimizations_total',
+  name: 'interview_ai_optimizations_total',
   help: 'Total number of optimizations created',
   labelNames: ['status']
 });

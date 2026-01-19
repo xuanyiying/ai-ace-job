@@ -1,6 +1,6 @@
-# AI Resume Optimizer - Documentation Index
+# Interview AI - Documentation Index
 
-Welcome to the AI Resume Optimizer documentation. This index helps you find the right documentation for your needs.
+Welcome to the Interview AI documentation. This index helps you find the right documentation for your needs.
 
 ## 🚀 Getting Started
 

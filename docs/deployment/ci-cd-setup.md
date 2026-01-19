@@ -1,6 +1,6 @@
 # CI/CD Setup Guide
 
-This guide provides step-by-step instructions to set up the complete CI/CD pipeline for the Resume Optimizer MVP project.
+This guide provides step-by-step instructions to set up the complete CI/CD pipeline for the IntervAI MVP project.
 
 ## Prerequisites
 
@@ -150,14 +150,14 @@ sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 
 # Create deployment directory
-mkdir -p /opt/resume-optimizer
-cd /opt/resume-optimizer
+mkdir -p /opt/interview-ai
+cd /opt/interview-ai
 
 # Create .env file
 cat > .env << 'EOF'
 NODE_ENV=staging
-POSTGRES_DB=resume_optimizer
-POSTGRES_USER=resume_user
+POSTGRES_DB=interview_ai
+POSTGRES_USER=interview_ai_user
 POSTGRES_PASSWORD=your-secure-password
 JWT_SECRET=your-jwt-secret
 OPENAI_API_KEY=your-openai-key
@@ -183,14 +183,14 @@ sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 
 # Create deployment directory
-mkdir -p /opt/resume-optimizer
-cd /opt/resume-optimizer
+mkdir -p /opt/interview-ai
+cd /opt/interview-ai
 
 # Create .env file with production values
 cat > .env << 'EOF'
 NODE_ENV=production
-POSTGRES_DB=resume_optimizer
-POSTGRES_USER=resume_user
+POSTGRES_DB=interview_ai_prod
+POSTGRES_USER=interview_ai_prod_user
 POSTGRES_PASSWORD=your-secure-password
 JWT_SECRET=your-jwt-secret
 OPENAI_API_KEY=your-openai-key
@@ -265,7 +265,7 @@ git push origin v0.1.0
 ```bash
 # SSH into server and check logs
 ssh user@staging-server
-cd /opt/resume-optimizer
+cd /opt/interview-ai
 docker-compose logs -f backend
 docker-compose logs -f frontend
 ```

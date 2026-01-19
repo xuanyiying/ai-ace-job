@@ -1,9 +1,9 @@
 {
-  "name": "@resume-optimizer/frontend",
+  "name": "@interview-ai/frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend application for resume optimizer",
+  "description": "Frontend application for Interview AI",
   "scripts": {
     "dev": "vite",
     "start:dev": "vite",

@@ -1,11 +1,11 @@
-# 🚀 AI Resume Optimizer | 智能简历优化平台
+# 🚀 Interview AI | 智能求职辅助平台
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/yiying/ai-resume/main/docs/assets/logo.png" alt="AI Resume Optimizer Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/yiying/ai-resume/main/docs/assets/logo.png" alt="Interview AI Logo" width="200"/>
 </p>
 
 <p align="center">
-  <strong>基于大模型驱动的智能化简历优化 SaaS 平台，助力求职者精准匹配，大幅提升面试率。</strong>
+  <strong>基于大模型驱动的智能化面试准备与简历优化 SaaS 平台，助力求职者精准匹配，大幅提升面试率。</strong>
 </p>
 
 <p align="center">
@@ -30,9 +30,9 @@
 
 ## 📖 项目简介
 
-**AI Resume Optimizer** 是一款革命性的简历优化工具。它利用先进的自然语言处理（NLP）技术和大语言模型（LLM），为求职者提供从简历解析、匹配度分析、内容润色到模拟面试的全流程支持。
+**Interview AI** 是一款革命性的求职辅助工具。它利用先进的自然语言处理（NLP）技术和大语言模型（LLM），为求职者提供从简历解析、匹配度分析、内容润色到模拟面试的全流程支持。
 
-> **为什么选择 AI Resume Optimizer？**
+> **为什么选择 Interview AI？**
 > 在竞争激烈的就业市场中，一份针对性强、符合 ATS 扫描规则的简历是敲开面试大门的关键。本项目通过 AI 技术消除简历与职位描述（JD）之间的信息差，让你的优势脱颖而出。
 
 ---

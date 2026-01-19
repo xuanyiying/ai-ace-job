@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Resume Optimizer is a full-stack application designed to help users optimize their resumes using AI technology.
+The IntervAI is a full-stack application designed to help users optimize their resumes using AI technology.
 
 ### Tech Stack
 

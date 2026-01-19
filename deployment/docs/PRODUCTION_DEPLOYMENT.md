@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-This guide covers the complete production deployment of the Resume Optimizer application, including PostgreSQL database, Redis cache, object storage, SSL/TLS configuration, and load balancing.
+This guide covers the complete production deployment of the IntervAI application, including PostgreSQL database, Redis cache, object storage, SSL/TLS configuration, and load balancing.
 
 ## Requirements
 
@@ -107,8 +107,8 @@ newgrp docker
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/resume-optimizer.git
-cd resume-optimizer
+git clone https://github.com/your-org/interview-ai.git
+cd interview-ai
 
 # Checkout production branch
 git checkout main
@@ -129,8 +129,9 @@ nano .env.production.local
 1. **Database Credentials** (Requirement 9.1)
 
    ```bash
-   POSTGRES_PASSWORD=<strong-random-password>
-   DATABASE_URL=postgresql://resume_prod_user:<password>@postgres:5432/resume_optimizer_prod
+   POSTGRES_DB=interview_ai_prod
+   POSTGRES_USER=admin
+   POSTGRES_PASSWORD=secure_production_password
    ```
 
 2. **Redis Password** (Requirement 9.1)
@@ -161,7 +162,7 @@ nano .env.production.local
    AWS_ACCESS_KEY_ID=<your-access-key>
    AWS_SECRET_ACCESS_KEY=<your-secret-key>
    AWS_REGION=us-east-1
-   AWS_S3_BUCKET=resume-optimizer-prod-files
+   AWS_S3_BUCKET=interview-ai-prod-files
    AWS_S3_ENCRYPTION=AES256
    ```
 
@@ -172,7 +173,7 @@ nano .env.production.local
    ALIYUN_ACCESS_KEY_ID=<your-access-key>
    ALIYUN_ACCESS_KEY_SECRET=<your-secret-key>
    ALIYUN_OSS_REGION=oss-cn-hangzhou
-   ALIYUN_OSS_BUCKET=resume-optimizer-prod-files
+   ALIYUN_OSS_BUCKET=interview-ai-prod-files
    ALIYUN_OSS_ENCRYPTION=AES256
    ```
 
@@ -205,13 +206,13 @@ aws configure
 
 # Create S3 bucket with encryption
 aws s3api create-bucket \
-    --bucket resume-optimizer-prod-files \
+    --bucket interview-ai-prod-files \
     --region us-east-1 \
     --create-bucket-configuration LocationConstraint=us-east-1
 
 # Enable encryption (Requirement 9.3)
 aws s3api put-bucket-encryption \
-    --bucket resume-optimizer-prod-files \
+    --bucket interview-ai-prod-files \
     --server-side-encryption-configuration '{
         "Rules": [{
             "ApplyServerSideEncryptionByDefault": {
@@ -222,12 +223,12 @@ aws s3api put-bucket-encryption \
 
 # Enable versioning
 aws s3api put-bucket-versioning \
-    --bucket resume-optimizer-prod-files \
+    --bucket interview-ai-prod-files \
     --versioning-configuration Status=Enabled
 
 # Configure lifecycle policy (Requirement 9.6)
 aws s3api put-bucket-lifecycle-configuration \
-    --bucket resume-optimizer-prod-files \
+    --bucket interview-ai-prod-files \
     --lifecycle-configuration file://s3-lifecycle-policy.json
 ```
 
@@ -262,13 +263,13 @@ sudo mv ossutil64 /usr/local/bin/ossutil
 ossutil config
 
 # Create bucket with encryption
-ossutil mb oss://resume-optimizer-prod-files
+ossutil mb oss://interview-ai-prod-files
 
 # Enable encryption (Requirement 9.3)
-ossutil bucket-encryption --method put oss://resume-optimizer-prod-files AES256
+ossutil bucket-encryption --method put oss://interview-ai-prod-files AES256
 
 # Configure lifecycle rules (Requirement 9.6)
-ossutil lifecycle --method put oss://resume-optimizer-prod-files lifecycle.xml
+ossutil lifecycle --method put oss://interview-ai-prod-files lifecycle.xml
 ```
 
 ### Step 5: Deploy Application
@@ -628,7 +629,7 @@ docker-compose -f docker-compose.prod.yml start backend
 ./scripts/restore-postgres.sh <latest-backup>
 
 # Restore object storage (if needed)
-aws s3 sync s3://backup-bucket/resumes/ s3://resume-optimizer-prod-files/resumes/
+aws s3 sync s3://backup-bucket/resumes/ s3://interview-ai-prod-files/resumes/
 
 # Restart all services
 docker-compose -f docker-compose.prod.yml restart

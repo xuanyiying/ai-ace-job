@@ -12,7 +12,7 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-We take the security of our software very seriously. If you have found a security vulnerability in the AI Resume Optimizer, we encourage you to let us know right away. We will investigate all legitimate reports and do our best to quickly fix the problem.
+We take the security of our software very seriously. If you have found a security vulnerability in the IntervAI, we encourage you to let us know right away. We will investigate all legitimate reports and do our best to quickly fix the problem.
 
 ### How to Report
 

@@ -1,6 +1,6 @@
 # Branch Protection Rules
 
-This document describes the recommended branch protection rules for the Resume Optimizer MVP project.
+This document describes the recommended branch protection rules for the IntervAI MVP project.
 
 ## Main Branch Protection
 

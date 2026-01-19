@@ -1,6 +1,6 @@
-# Resume Optimizer Backend
+# Interview AI Backend
 
-NestJS backend service for the AI-powered Resume Optimizer platform.
+NestJS backend service for the Interview AI platform.
 
 ## 📁 项目结构
 

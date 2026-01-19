@@ -31,7 +31,7 @@ export class VectorDbService implements OnModuleInit {
   private readonly logger = new Logger(VectorDbService.name);
   private client: ChromaClient;
   private collection: Collection;
-  private readonly collectionName = 'resume-optimizer-vectors';
+  private readonly collectionName = 'interview-ai-vectors';
 
   constructor(
     private configService: ConfigService,

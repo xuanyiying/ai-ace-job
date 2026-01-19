@@ -1,7 +1,7 @@
 .PHONY: help dev prod deploy-dev deploy-prod backup restore docker-build docker-up docker-down docker-logs docker-ps docker-clean docker-db-migrate docker-db-seed docker-test docker-shell-backend docker-shell-frontend docker-shell-postgres docker-shell-redis
 
 help:
-	@echo "Resume Optimizer - 部署和管理命令"
+	@echo "IntervAI - 部署和管理命令"
 	@echo "=================================="
 	@echo ""
 	@echo "快速部署 (推荐):"
@@ -64,7 +64,7 @@ restore:
 	@echo "恢复数据库..."
 	@if [ -z "$(FILE)" ]; then \
 		echo "错误: 请指定备份文件"; \
-		echo "用法: make restore FILE=resume_optimizer_20231201_120000.sql.gz"; \
+		echo "用法: make restore FILE=interview_ai_20231201_120000.sql.gz"; \
 		exit 1; \
 	fi
 	./deployment/scripts/restore-database.sh $(FILE)
@@ -126,7 +126,7 @@ docker-shell-frontend:
 	docker-compose exec frontend sh
 
 docker-shell-postgres:
-	docker-compose exec postgres psql -U resume_user -d resume_optimizer
+	docker-compose exec postgres psql -U interview_ai_user -d interview_ai
 
 docker-shell-redis:
 	docker-compose exec redis redis-cli
@@ -135,7 +135,7 @@ docker-health-check:
 	@echo "Checking service health..."
 	@echo "Backend: $$(docker-compose exec backend wget --quiet --tries=1 --spider http://localhost:3000/health && echo 'OK' || echo 'FAILED')"
 	@echo "Frontend: $$(docker-compose exec frontend wget --quiet --tries=1 --spider http://localhost/health && echo 'OK' || echo 'FAILED')"
-	@echo "PostgreSQL: $$(docker-compose exec postgres pg_isready -U resume_user -d resume_optimizer && echo 'OK' || echo 'FAILED')"
+	@echo "PostgreSQL: $$(docker-compose exec postgres pg_isready -U interview_ai_user -d interview_ai && echo 'OK' || echo 'FAILED')"
 	@echo "Redis: $$(docker-compose exec redis redis-cli ping && echo 'OK' || echo 'FAILED')"
 
 docker-backup-db:

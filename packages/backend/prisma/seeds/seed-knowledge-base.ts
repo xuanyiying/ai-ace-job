@@ -434,7 +434,7 @@ export async function seedKnowledgeBase(prisma: PrismaClient) {
 
   const chromaUrl = process.env.CHROMA_DB_URL || 'http://150.158.20.143:8000';
   const client = new ChromaClient({ path: chromaUrl });
-  const collectionName = 'resume-optimizer-vectors';
+  const collectionName = 'interview-ai-vectors';
 
   const embedder = new QwenEmbeddings({
     apiKey,
